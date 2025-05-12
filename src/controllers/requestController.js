@@ -7,7 +7,7 @@ const createRequest = async (req, res) => {
     data.status = "PENDING";
     data.created_at = new Date();
 
-    const request = await db.insert("requests", data);
+    const request = await db.create("requests", data);
     res.status(201).json(request);
   } catch (err) {
     res.status(500);
