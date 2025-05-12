@@ -45,5 +45,4 @@ const constant = {
     }
 }
 
-export default constant;
-
+module.exports = constant;
