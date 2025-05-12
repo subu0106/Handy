@@ -3,7 +3,6 @@ const dotenv = require('dotenv').config();
 
 const port = process.env.PORT || 5000;
 
-const {router} = require("./src/routes/sampleRouter");
 const consumerRoutes = require("./src/routes/consumerRoutes");
 const offerRoutes = require("./src/routes/offerRoutes");
 const requestRoutes = require("./src/routes/requestRoutes");
@@ -13,8 +12,6 @@ const pairedJobsRoutes = require("./src/routes/pairedJobsRoutes");
 const app = express();
 
 app.use(express.json());
-app.use(require("./src/middleware/sampleErrorHandler"));
-app.use("/api/v1", router);
 app.use("/api/v1/consumer", consumerRoutes.router);
 app.use("/api/v1/offer", offerRoutes.router);
 app.use("/api/v1/request", requestRoutes.router);
