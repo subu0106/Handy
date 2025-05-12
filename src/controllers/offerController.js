@@ -15,7 +15,7 @@ const createOffers = async (req, res) => {
   }
 };
 
-const getOffer = async (req, res) => {
+const getOfferById = async (req, res) => {
   try {
     const offer_id = req.params.offer_id;
     // console.log(offer_id);
@@ -35,5 +35,5 @@ const getOffer = async (req, res) => {
 
 module.exports = {
     createOffers,
-    getOffer
+    getOfferById
     };
