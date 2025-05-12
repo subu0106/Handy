@@ -6,10 +6,10 @@ const registerProvider = async (req, res) => {
     const { name, email, user_type, phone, location, avatar, services_array, availability, average_rating, review_count, bio } = req.body;
 
     // Step 1: Insert into user table
-    const user = await db.insert(constant.DB_TABLES.USERS, { name, email, user_type: constant.USER_TYPES.PROVIDERS, phone, location, avatar });
+    const user = await db.create(constant.DB_TABLES.USERS, { name, email, user_type: constant.USER_TYPES.PROVIDERS, phone, location, avatar });
 
     // Step 2: Insert into providers table using same user_id
-    const provider = await db.insert(constant.DB_TABLES.PROVIDERS, {
+    const provider = await db.create(constant.DB_TABLES.PROVIDERS, {
       user_id: user.user_id,
       services_array,
       availability,
