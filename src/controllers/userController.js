@@ -1,12 +1,11 @@
 const constant = require('../helpers/constants');
 const pool = require('../helpers/dbHelper');
 
-const retrieveUser = async(req, res)=>{
-    console.log("IN GET USER");
+const retrieveUser = async(req, res)=> {
     const user_id = req.params.user_id;
     const statement = `SELECT * FROM public.user WHERE (user_id = $1);`;
     try {
-        console.log("User ID: ", user_id);
+        // console.log("User ID: ", user_id);
         const {rows} = await pool.query(statement, [user_id]);
 
         if (rows.length > 0) {
