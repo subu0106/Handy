@@ -1,22 +1,34 @@
 const constant = require('../helpers/constants');
-const pool = require('../helpers/dbHelper');
+const db = require('../helpers/dbHelper');
 
-const retrieveUser = async(req, res)=> {
+const getUserById = async(req, res)=> {
     const user_id = req.params.user_id;
-    const statement = `SELECT * FROM public.user WHERE (user_id = $1);`;
+    const condition = 'WHERE (user_id = $1)';
     try {
-        // console.log("User ID: ", user_id);
-        const {rows} = await pool.query(statement, [user_id]);
-
-        if (rows.length > 0) {
-            const user = rows[0];
-            res.status(constant.HTTP_STATUS.OK).json(user);
-        } else {
-            res.status(404).json({message: "User not found"});
+        // const user = await db.getOne(constant.DB_TABLES.USERS, condition, [user_id]);
+        const user = await db.getOne('public.users', condition, [user_id]);
+        if (!user){
+            res.status(constant.HTTP_STATUS.NOT_FOUND).json({message: "User not found"});
+        }else{
+            // check user_type and return response accordingly.
+            if (user.user_type && user.user_type === constant.USER_TYPES.PROVIDER){
+                // const provider = await db.getOne(constant.DB_TABLES.PROVIDERS, 'WHERE (user_id = $1)', [user_id]);
+                const providerDetails = await db.getOne('public.providers', 'WHERE (user_id = $1)', [user_id]);
+                const provider = {
+                    ...user,
+                    ... providerDetails
+                };
+                res.status(constant.HTTP_STATUS.OK).json(provider);
+            } else if (user.user_type && user.user_type === constant.USER_TYPES.CONSUMER){
+                res.status(constant.HTTP_STATUS.OK).json(user);
+            } else {
+                res.status(constant.HTTP_STATUS.UNPROCESSABLE_ENTITY).json({message: "User type not found"});
+            }
         }
     } catch(err){
-            throw new Error(err.stack);
+        res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR);
+        throw err;
     }
 }
 
-module.exports = retrieveUser;
+module.exports = getUserById;
