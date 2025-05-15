@@ -1,12 +1,13 @@
-import { Outlet, NavLink } from "react-router-dom";
+import { Outlet } from "react-router-dom";
+import NavBar from "@components/NavBar";
+import type { RootState } from "../store/store";
+import { useAppSelector } from "../store/hooks";
 
 const MainLayout = () => {
+  const user = useAppSelector((state: RootState) => state.user);
   return (
     <div>
-      <nav className="p-4 bg-gray-800 text-white flex gap-4">
-        <NavLink to="/">Home</NavLink>
-        <NavLink to="/about">About</NavLink>
-      </nav>
+      <NavBar userName={user.name} avatarUrl={user.avatarUrl} />
       <main className="p-4">
         <Outlet />
       </main>
