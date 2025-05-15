@@ -6,10 +6,11 @@ const constant = {
         UNAUTHORIZED: 401,
         FORBIDDEN: 403,
         NOT_FOUND: 404,
-        INTERNAL_SERVER_ERROR: 500
+        INTERNAL_SERVER_ERROR: 500,
+        UNPROCESSABLE_ENTITY: 422
     },
     DB_TABLES: {
-        USERS: "user",
+        USERS: "users",
         PROVIDERS: "providers",
         SERVICES: "services",
         PAIREDJOBS: "paired_jobs",
