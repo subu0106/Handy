@@ -8,17 +8,48 @@ import Typography from "@mui/material/Typography";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import MailIcon from "@mui/icons-material/Mail";
 import Box from "@mui/material/Box";
+import HomeIcon from "@mui/icons-material/Home";
+import Brightness4Icon from "@mui/icons-material/Brightness4";
+import Brightness7Icon from "@mui/icons-material/Brightness7";
+import { useNavigate } from "react-router-dom";
 
 interface NavBarProps {
   userName: string;
   avatarUrl?: string;
+  themeMode: "light" | "dark";
+  onToggleTheme: () => void;
 }
 
-const NavBar: React.FC<NavBarProps> = ({ userName, avatarUrl }) => {
+const NavBar: React.FC<NavBarProps> = ({ userName, avatarUrl, themeMode, onToggleTheme }) => {
+  const navigate = useNavigate();
   return (
-    <AppBar position="static" color="primary" elevation={1}>
+    <AppBar position="fixed" color="primary" elevation={1}>
       <Toolbar>
+        {/* Home Button and App Name at start */}
+        <Box sx={{ display: "flex", alignItems: "center" }}>
+          <IconButton color="inherit" sx={{ mr: 1 }} onClick={() => navigate("/")}>
+            <HomeIcon />
+          </IconButton>
+          <Typography
+            variant="h6"
+            sx={{
+              fontWeight: 700,
+              letterSpacing: 1,
+              cursor: "pointer",
+              userSelect: "none",
+              color: "inherit",
+              mr: 2,
+            }}
+            onClick={() => navigate("/")}
+          >
+            Handy
+          </Typography>
+        </Box>
         <Box sx={{ flexGrow: 1 }} />
+        {/* Theme Switch Icon */}
+        <IconButton color="inherit" sx={{ ml: 1 }} onClick={onToggleTheme} aria-label="toggle theme">
+          {themeMode === "dark" ? <Brightness7Icon /> : <Brightness4Icon />}
+        </IconButton>
         {/* Messages */}
         <IconButton color="inherit" sx={{ ml: 1 }}>
           <Badge badgeContent={2} color="error">
