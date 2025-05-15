@@ -13,11 +13,28 @@ const getUserById = async(req, res)=> {
             // check user_type and return response accordingly.
             if (user.user_type && user.user_type === constant.USER_TYPES.PROVIDER){
                 // const provider = await db.getOne(constant.DB_TABLES.PROVIDERS, 'WHERE (user_id = $1)', [user_id]);
-                const providerDetails = await db.getOne('public.providers', 'WHERE (user_id = $1)', [user_id]);
+                const providerDetails = await db.getOne(table=constant.DB_TABLES.PROVIDERS, conditions='WHERE (user_id = $1)', params=[user_id]);
+                
+
+                // obtain service_id to service_name mapping
+                const servicesDetails = await db.getAll(table = constant.DB_TABLES.SERVICES,conditions='', params=[]);
+                const serviceMap = new Map();
+                servicesDetails.forEach((service)=>{
+                    serviceMap.set(service.service_id, service.name);
+                });
+                
+                // resolve service_id to service_name
+                const serviceIdArray = providerDetails.services_array;
+                for (let i = 0; i < serviceIdArray.length; i++){
+                    serviceIdArray[i] = serviceMap.get(serviceIdArray[i]);
+                };
+
+                // prepare provider object
                 const provider = {
                     ...user,
                     ... providerDetails
                 };
+                
                 res.status(constant.HTTP_STATUS.OK).json(provider);
             } else if (user.user_type && user.user_type === constant.USER_TYPES.CONSUMER){
                 res.status(constant.HTTP_STATUS.OK).json(user);

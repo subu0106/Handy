@@ -13,7 +13,7 @@ const createPairedJob = async (req, res) => {
 };
 
 const getPairedJobs = async (req, res) => {
-  const {consumer_id, provider_id} = req.body;
+  const {consumer_id, provider_id} = req.query;
   if (consumer_id && provider_id) {
     try{
       const conditions = `WHERE consumer_id = $1 and provider_id = $2`;
