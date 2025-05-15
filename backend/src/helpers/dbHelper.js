@@ -35,6 +35,13 @@ const dbHelper = {
     return result.rows[0];
   },
 
+  // SELECT columns FROM table WHERE conditions
+  getSeletedProperties: async (table, columns, conditions = '', params = []) => {
+    const queryText = `SELECT ${columns} FROM ${table} ${conditions}`;
+    const result = await query(queryText, params);
+    return result.rows;
+  },
+
   // INSERT INTO table(columns) VALUES(values)
   create: async (table, data) => {
     const columns = Object.keys(data).join(', ');

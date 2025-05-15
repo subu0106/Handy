@@ -1,14 +1,13 @@
 const constant = require('../helpers/constants');
 const db = require('../helpers/dbHelper');
 
-const getUserById = async(req, res)=> {
-    const user_id = req.params.user_id;
+const getUserInformationbyId = async (user_id) => {
     const condition = 'WHERE (user_id = $1)';
     try {
         // const user = await db.getOne(constant.DB_TABLES.USERS, condition, [user_id]);
-        const user = await db.getOne('public.users', condition, [user_id]);
+        const user = await db.getOne(table=constant.DB_TABLES.USERS, conditions=condition, params=[user_id]);
         if (!user){
-            res.status(constant.HTTP_STATUS.NOT_FOUND).json({message: "User not found"});
+            return null;
         }else{
             // check user_type and return response accordingly.
             if (user.user_type && user.user_type === constant.USER_TYPES.PROVIDER){
@@ -34,18 +33,30 @@ const getUserById = async(req, res)=> {
                     ...user,
                     ... providerDetails
                 };
-                
-                res.status(constant.HTTP_STATUS.OK).json(provider);
+                return provider;
             } else if (user.user_type && user.user_type === constant.USER_TYPES.CONSUMER){
-                res.status(constant.HTTP_STATUS.OK).json(user);
+                return user;
             } else {
-                res.status(constant.HTTP_STATUS.UNPROCESSABLE_ENTITY).json({message: "User type not found"});
+                return null;
             }
         }
     } catch(err){
-        res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR);
         throw err;
     }
 }
 
-module.exports = getUserById;
+const getUserById = async(req, res)=> {
+    const user_id = req.params.user_id;
+    try {
+        const user = await getUserInformationbyId(user_id);
+        if (!user) {
+            res.status(constant.HTTP_STATUS.NOT_FOUND).json({ message: "User not found" });
+        } else {
+            res.status(constant.HTTP_STATUS.OK).json(user);
+        }
+    } catch (err) {
+        res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ message: "Internal server error" });
+    }
+}
+
+module.exports = {getUserById, getUserInformationbyId};
