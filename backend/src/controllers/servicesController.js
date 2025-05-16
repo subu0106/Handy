@@ -6,7 +6,7 @@ const getServiceProviders = async (req, res) => {
     const service_id = req.params.service_id;
     const condition = 'WHERE (service_id = $1)';
     try{
-        const service = await db.getOne(table=constant.DB_TABLES.SERVICES, condition=condition, params=[service_id]);
+        const service = await db.getOne(table=constant.DB_TABLES.SERVICES, conditions=condition, params=[service_id]);
         const providersIdArray = service.providers_array;
 
         const providerInfoArray = [];
