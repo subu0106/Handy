@@ -9,6 +9,8 @@ import Providers from "@pages/Providers";
 import Jobs from "@pages/Jobs";
 import Register from "@pages/Register";
 import Offers from "@pages/Offers";
+import RegisterProvider from "@pages/Register/RegisterProvider";
+import RegisterConsumer from "@pages/Register/RegisterConsumer";
 
 // Export a function to create the router, allowing injection of props into MainLayout
 export const createAppRouter = (mainLayoutProps: any) =>
@@ -24,6 +26,8 @@ export const createAppRouter = (mainLayoutProps: any) =>
         { path: "providers", element: <Providers /> },
         { path: "jobs", element: <Jobs /> },
         { path: "register", element: <Register /> },
+        { path: "register/provider", element: <RegisterProvider /> },
+        { path: "register/consumer", element: <RegisterConsumer /> },
         { path: "offers", element: <Offers /> },
       ],
     },
