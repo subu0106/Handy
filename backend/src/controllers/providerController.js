@@ -63,6 +63,42 @@ const registerProvider = async (req, res) => {
   }
 };
 
+const updateProvider = async (req, res) => {
+  const { user_id } = req.params;
+  const userFields = {};
+  const providerFields = {};
+  // Only add fields if they are present in req.body
+  const userUpdatable = ["name", "phone", "location", "avatar"];
+  const providerUpdatable = ["services_array", "availability", "average_rating", "review_count", "bio"];
+  userUpdatable.forEach(field => {
+    if (req.body[field] !== undefined) userFields[field] = req.body[field];
+  });
+  providerUpdatable.forEach(field => {
+    if (req.body[field] !== undefined) providerFields[field] = req.body[field];
+  });
+
+  try {
+    let updatedUser = true;
+    if (Object.keys(userFields).length > 0) {
+      updatedUser = await db.update(constant.DB_TABLES.USERS, userFields, 'WHERE user_id = $1', [user_id]);
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+    }
+    let updatedProvider = true;
+    if (Object.keys(providerFields).length > 0) {
+      updatedProvider = await db.update(constant.DB_TABLES.PROVIDERS, providerFields, 'WHERE user_id = $1', [user_id]);
+      if (!updatedProvider) {
+        return res.status(404).json({ message: "Provider not found" });
+      }
+    }
+    res.status(200).json({ message: "Provider updated successfully" });
+  } catch (err) {
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
+
 module.exports = {
   registerProvider,
+  updateProvider
 };
