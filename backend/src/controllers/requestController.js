@@ -1,19 +1,33 @@
 const constant = require("../helpers/constants");
 const db = require("../helpers/dbHelper");
 
+
 const createRequest = async (req, res) => {
   try {
     const data = req.body;
-    data.status = "PENDING";
+    data.status = constant.REQUESTS_STATUS.PENDING;
     data.created_at = new Date();
 
-    const request = await db.create("requests", data);
+    // Check if required fields are present
+    if (!data.user_id || !data.request_id) {
+      return res.status(constant.HTTP_STATUS.BAD_REQUEST).json({message: "consumer_id and request_id are required"});
+    }
+
+    const request = await db.create(constant.DB_TABLES.REQUESTS, data);
+
+    if (!request) {
+      return res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR).json({message: "Failed to create request"});
+    }
+
     res.status(constant.HTTP_STATUS.CREATED).json(request);
+
   } catch (err) {
     res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR);
     throw err;
   }
 };
+
+
 const getRequestById = async (req, res) => {
   try {
     const request_id = req.params.request_id;

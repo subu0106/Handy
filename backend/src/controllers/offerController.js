@@ -4,10 +4,10 @@ const db = require("../helpers/dbHelper");
 const createOffers = async (req, res) => {
   try {
     const data = req.body;
-    data.status = "PENDING";
+    data.status = constant.OFFERS_STATUS.PENDING;
     data.created_at = new Date();
 
-    const offer = await db.insert("offers", data);
+    const offer = await db.create(constant.DB_TABLES.OFFERS, data);
     res.status(constant.HTTP_STATUS.CREATED).json(offer);
   } catch (err) {
     res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR);
