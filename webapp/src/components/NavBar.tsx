@@ -12,6 +12,11 @@ import HomeIcon from "@mui/icons-material/Home";
 import Brightness4Icon from "@mui/icons-material/Brightness4";
 import Brightness7Icon from "@mui/icons-material/Brightness7";
 import { useNavigate } from "react-router-dom";
+import AccountCircleIcon from "@mui/icons-material/AccountCircle";
+import GroupIcon from "@mui/icons-material/Group";
+import WorkIcon from "@mui/icons-material/Work";
+import PersonAddIcon from "@mui/icons-material/PersonAdd";
+import LocalOfferIcon from "@mui/icons-material/LocalOffer";
 
 interface NavBarProps {
   userName: string;
@@ -44,6 +49,24 @@ const NavBar: React.FC<NavBarProps> = ({ userName, avatarUrl, themeMode, onToggl
           >
             Handy
           </Typography>
+        </Box>
+        {/* Navigation Links */}
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1, ml: 2 }}>
+          <IconButton color="inherit" onClick={() => navigate("/profile")} title="Profile">
+            <AccountCircleIcon />
+          </IconButton>
+          <IconButton color="inherit" onClick={() => navigate("/providers")} title="Providers">
+            <GroupIcon />
+          </IconButton>
+          <IconButton color="inherit" onClick={() => navigate("/jobs")} title="My Jobs">
+            <WorkIcon />
+          </IconButton>
+          <IconButton color="inherit" onClick={() => navigate("/offers")} title="Offers">
+            <LocalOfferIcon />
+          </IconButton>
+          <IconButton color="inherit" onClick={() => navigate("/register")} title="Register">
+            <PersonAddIcon />
+          </IconButton>
         </Box>
         <Box sx={{ flexGrow: 1 }} />
         {/* Theme Switch Icon */}
