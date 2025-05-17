@@ -8,15 +8,13 @@ import Typography from "@mui/material/Typography";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import MailIcon from "@mui/icons-material/Mail";
 import Box from "@mui/material/Box";
-import HomeIcon from "@mui/icons-material/Home";
 import Brightness4Icon from "@mui/icons-material/Brightness4";
 import Brightness7Icon from "@mui/icons-material/Brightness7";
 import { useNavigate } from "react-router-dom";
-import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import GroupIcon from "@mui/icons-material/Group";
 import WorkIcon from "@mui/icons-material/Work";
-import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import LocalOfferIcon from "@mui/icons-material/LocalOffer";
+import PersonAddIcon from "@mui/icons-material/PersonAdd";
 
 interface NavBarProps {
   userName: string;
@@ -32,9 +30,7 @@ const NavBar: React.FC<NavBarProps> = ({ userName, avatarUrl, themeMode, onToggl
       <Toolbar>
         {/* Home Button and App Name at start */}
         <Box sx={{ display: "flex", alignItems: "center" }}>
-          <IconButton color="inherit" sx={{ mr: 1 }} onClick={() => navigate("/")}>
-            <HomeIcon />
-          </IconButton>
+          {/* Remove HomeIcon button, only keep Handy symbol as home */}
           <Typography
             variant="h6"
             sx={{
@@ -43,7 +39,7 @@ const NavBar: React.FC<NavBarProps> = ({ userName, avatarUrl, themeMode, onToggl
               cursor: "pointer",
               userSelect: "none",
               color: "inherit",
-              mr: 2,
+              mr: 2
             }}
             onClick={() => navigate("/")}
           >
@@ -52,9 +48,6 @@ const NavBar: React.FC<NavBarProps> = ({ userName, avatarUrl, themeMode, onToggl
         </Box>
         {/* Navigation Links */}
         <Box sx={{ display: "flex", alignItems: "center", gap: 1, ml: 2 }}>
-          <IconButton color="inherit" onClick={() => navigate("/profile")} title="Profile">
-            <AccountCircleIcon />
-          </IconButton>
           <IconButton color="inherit" onClick={() => navigate("/providers")} title="Providers">
             <GroupIcon />
           </IconButton>
@@ -85,12 +78,54 @@ const NavBar: React.FC<NavBarProps> = ({ userName, avatarUrl, themeMode, onToggl
             <NotificationsIcon />
           </Badge>
         </IconButton>
-        {/* Profile */}
+        {/* Profile (right side, only icon, show info on hover after 2s) */}
         <Box sx={{ display: "flex", alignItems: "center", gap: 1, ml: 2 }}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
-            {userName}
-          </Typography>
-          <Avatar alt={userName} src={avatarUrl} />
+          {(() => {
+            const [showTooltip, setShowTooltip] = React.useState(false);
+            const hoverTimeout = React.useRef<NodeJS.Timeout | null>(null);
+
+            const handleMouseEnter = () => {
+              hoverTimeout.current = setTimeout(() => setShowTooltip(true), 500);
+            };
+            const handleMouseLeave = () => {
+              if (hoverTimeout.current) clearTimeout(hoverTimeout.current);
+              setShowTooltip(false);
+            };
+            return (
+              <div
+                style={{ position: "relative", display: "inline-block" }}
+                onMouseEnter={handleMouseEnter}
+                onMouseLeave={handleMouseLeave}
+              >
+                <IconButton
+                  color="inherit"
+                  onClick={() => navigate("/profile")}
+                  sx={{ p: 0 }}
+                >
+                  <Avatar alt={userName} src={avatarUrl} />
+                </IconButton>
+                {showTooltip && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      bottom: "-36px",
+                      left: "50%",
+                      transform: "translateX(-50%)",
+                      background: "#333",
+                      color: "#fff",
+                      padding: "4px 12px",
+                      borderRadius: "6px",
+                      fontSize: "0.95rem",
+                      whiteSpace: "nowrap",
+                      zIndex: "1000",
+                    }}
+                  >
+                    {userName || "Profile"}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </Box>
       </Toolbar>
     </AppBar>
