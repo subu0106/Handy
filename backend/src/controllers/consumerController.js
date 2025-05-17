@@ -1,20 +1,58 @@
-// const constant = require("../helpers/constants");
-// const db = require("../helpers/dbHelper");
+const db = require("../helpers/dbHelper");
+const constant = require("../helpers/constants");
 
 
 // Register Consumer
 const registerConsumer = async (req, res) => {
   try {
-    const data = req.body;
-    data.user_type = "consumer"; // force type
-    // const consumer = await db.create("user", data);
-    console.log("data", data);
-    res.status(201).json(data);
+    const {
+      user_id,
+      name,
+      email,
+      user_type,
+      phone,
+      location,
+      avatar,
+      created_at,
+      penalty_point,
+      is_deleted,
+      deleted_at
+    } = req.body;
+
+    // Set default values
+    const defaultUserType = constant.USER_TYPES.CONSUMER;
+    const defaultPenaltyPoint = 0;
+    const defaultIsDeleted = false;
+    const defaultCreatedAt = created_at || new Date().toISOString(); 
+
+    
+    // Ensure required fields are present
+    if (!user_id || !name || !email) {
+      return res.status(400).json({ error: "Missing required fields (user_id, name, email)" });
+    }
+
+    const consumer = await db.create(constant.DB_TABLES.USERS,
+      {
+        user_id,
+        name,
+        email,
+        user_type: user_type || defaultUserType, 
+        phone,
+        location,
+        avatar,
+        created_at: defaultCreatedAt, 
+        penalty_point: penalty_point === undefined ? defaultPenaltyPoint : penalty_point,
+        is_deleted: is_deleted === undefined ? defaultIsDeleted : is_deleted,     
+        deleted_at
+      }
+    );
+    res.status(201).json(consumer); 
   } catch (err) {
-    res.status(500);
-    throw err;
+    console.error("Error registering consumer:", err); 
+    res.status(500).json({ error: "Internal server error" });
   }
 };
+
 
 module.exports = {
   registerConsumer,
