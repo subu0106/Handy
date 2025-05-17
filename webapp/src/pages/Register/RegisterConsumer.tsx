@@ -25,8 +25,9 @@ export default function RegisterConsumer() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
+  // Google OAuth handler
   const handleGoogleSignIn = () => {
-    const clientId = "YOUR_GOOGLE_CLIENT_ID";
+    const clientId = "YOUR_GOOGLE_CLIENT_ID"; // Replace with your Google OAuth Client ID
     const redirectUri = window.location.origin + "/oauth2/callback";
     const scope = "email profile openid";
     const url =
@@ -43,11 +44,12 @@ export default function RegisterConsumer() {
       <Paper sx={{ p: 4, minWidth: 370, borderRadius: 4, boxShadow: 3 }}>
         <Box display="flex" flexDirection="column" alignItems="center" gap={2}>
           <Typography variant="h5" fontWeight={700} mb={1}>
-            {mode === 'register' ? 'Sign up to your account' : 'Sign in to your account'}
+            {mode === 'register' ? 'Create a new account' : 'Sign in to your account'}
           </Typography>
           <Typography variant="body2" color="text.secondary" mb={2}>
             {mode === 'register' ? (
-              <></>
+              <>
+              </>
             ) : (
               <>
                 New to Handy?{' '}
@@ -175,6 +177,12 @@ export default function RegisterConsumer() {
           )}
           {mode === 'register' && (
             <Box width="100%" maxWidth={340}>
+              <Typography variant="body2" color="text.secondary" align="center" mb={2}>
+                Already have an account?{' '}
+                <Button variant="text" size="small" onClick={() => setMode('signin')} sx={{ textTransform: 'none', fontWeight: 600, p: 0, minWidth: 0, color: '#1976d2' }}>
+                  Sign in
+                </Button>
+              </Typography>
               <TextField
                 fullWidth
                 label="Email"

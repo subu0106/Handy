@@ -179,7 +179,7 @@ export default function RegisterProvider() {
           {mode === 'register' && (
             <Box width="100%" maxWidth={340}>
               <Typography variant="body2" color="text.secondary" align="center" mb={2}>
-                New to Handy?{' '}
+                Already have an account?{' '}
                 <Button variant="text" size="small" onClick={() => setMode('signin')} sx={{ textTransform: 'none', fontWeight: 600, p: 0, minWidth: 0, color: '#1976d2' }}>
                   Sign in
                 </Button>
