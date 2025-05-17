@@ -56,9 +56,9 @@ const dbHelper = {
   update: async (table, data, conditions, params = []) => {
     const keys = Object.keys(data);
     const values = Object.values(data);
-    const setClause = keys.map((key, idx) => `${key} = $${idx + 1}`).join(', ');
+    const setClause = keys.map((key, idx) => `${key} = $${idx + 2}`).join(', ');
     const queryText = `UPDATE ${table} SET ${setClause} ${conditions} RETURNING *`;
-    const result = await query(queryText, [...values, ...params]);
+    const result = await query(queryText, [...params, ...values]);
     return result.rows[0];
   },
 

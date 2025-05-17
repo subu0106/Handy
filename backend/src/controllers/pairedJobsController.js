@@ -4,10 +4,20 @@ const db = require("../helpers/dbHelper");
 const createPairedJob = async (req, res) => {
   try {
     const data = req.body;
-    const job = await db.insert("paired_jobs", data);
-    res.status(201).json(job);
+
+    if (!data.consumer_id || !data.provider_id) {
+      return res.status(constant.HTTP_STATUS.BAD_REQUEST).json({message: "consumer_id and provider_id are required"});
+    }
+
+    const job = await db.create(constant.DB_TABLES.PAIREDJOBS, data);
+
+    if (!job) {
+      return res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR).json({message: "Failed to create paired job"});
+    }
+    
+    res.status(constant.HTTP_STATUS.CREATED).json(job);
   } catch (err) {
-    res.status(500);
+    res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR);
     throw err;
   }
 };
