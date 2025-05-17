@@ -33,7 +33,32 @@ const getOfferById = async (req, res) => {
   }
 }
 
+const updateOfferStatus = async (req, res) => {
+  const offer_id=req.params.offer_id;
+  const newStatus = req.body.status
+  const validOfferStatusArray = [constant.OFFERS_STATUS.ACCEPTED, constant.OFFERS_STATUS.PENDING, constant.OFFERS_STATUS.REJECTED];
+  const condition = 'WHERE offer_id=$1';
+
+  if (validOfferStatusArray.includes(newStatus)) {
+    try {
+      const updateData = {"status": newStatus};
+      const updatedOffer = await db.update(table=constant.DB_TABLES.OFFERS, data=updateData, conditions=condition, params=[offer_id]);
+      if (updatedOffer){
+        res.status(constant.HTTP_STATUS.OK).json(updatedOffer);
+      } else {
+        res.status(constant.HTTP_STATUS.NOT_FOUND).json({message:"Offer Not Found"});
+      }
+
+    } catch (error) {
+      res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR);
+    }
+  } else {
+    res.status(constant.HTTP_STATUS.BAD_REQUEST).json({message:"Invalid Offer Status Provided"});
+  }
+}
+
 module.exports = {
     createOffers,
-    getOfferById
+    getOfferById,
+    updateOfferStatus
     };

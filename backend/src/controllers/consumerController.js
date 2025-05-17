@@ -53,7 +53,28 @@ const registerConsumer = async (req, res) => {
   }
 };
 
+const updateConsumer = async (req, res) => {
+  const consumer_id = req.params.consumer_id;
+  const userFields = {};
+  const userUpdatableFields = ["name", "phone", "location", "avatar"];
+  try {
+    userUpdatableFields.forEach((field) => {
+      if (req.body[field]) {
+        userFields[field] = req.body[field];
+      }
+    });
+    const updatedUser = await db.update(table=constant.DB_TABLES.USERS, data=userFields, conditions='WHERE user_id = $1', params=[consumer_id]);
+    if (updatedUser) {
+      res.status(constant.HTTP_STATUS.OK).json(updatedUser);
+    } else {
+      res.status(constant.HTTP_STATUS.NOT_FOUND).json({message: "User Not Found"});
+    }   
+  } catch (err) {
+    res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR);
+  }
+}
 
 module.exports = {
   registerConsumer,
+  updateConsumer
 };
