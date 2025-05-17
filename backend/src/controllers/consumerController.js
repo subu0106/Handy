@@ -16,6 +16,18 @@ const registerConsumer = async (req, res) => {
   }
 };
 
+const updateConsumer = async(req, res) => {
+  const consumer_id = req.params.consumer_id;
+  const userFileds = {};
+  const userUpdatableFields = ["name", "phone", "location", "avatar"];
+  try {
+
+  } catch (err) {
+
+  }
+}
+
 module.exports = {
   registerConsumer,
+  updateConsumer
 };
