@@ -245,6 +245,47 @@ export default function RegisterProvider() {
           )}
         </Box>
       </Paper>
+      {/* Sample Service Providers Section */}
+      <Box mt={5} maxWidth={500} mx="auto">
+        <Typography variant="h6" fontWeight={700} mb={2} align="center">
+          Sample Service Providers
+        </Typography>
+        <Box display="flex" flexWrap="wrap" gap={2} justifyContent="center">
+          {[{
+            name: 'Alex Rivera',
+            skill: 'Plumber',
+            desc: 'Expert in residential and commercial plumbing with 10+ years experience.'
+          }, {
+            name: 'Priya Sharma',
+            skill: 'Electrician',
+            desc: 'Certified electrician specializing in smart home installations.'
+          }, {
+            name: 'Marcus Lee',
+            skill: 'Handyman',
+            desc: 'All-around handyman for repairs, furniture assembly, and more.'
+          }].map((p, i) => (
+            <Paper key={i} sx={{
+              p: 2, minWidth: 150, maxWidth: 180, borderRadius: 3, boxShadow: 2,
+              background: theme => theme.palette.mode === 'dark' ? '#23272f' : '#fafbfc',
+              display: 'flex', flexDirection: 'column', alignItems: 'center',
+            }}>
+              <Box
+                sx={{
+                  width: 48, height: 48, borderRadius: '50%', mb: 1.2,
+                  background: theme => theme.palette.primary.light,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontWeight: 700, fontSize: 22, color: '#fff',
+                }}
+              >
+                {p.name.split(' ').map(n => n[0]).join('')}
+              </Box>
+              <Typography fontWeight={600} fontSize={16} mb={0.5} align="center">{p.name}</Typography>
+              <Typography variant="caption" color="primary" fontWeight={500} mb={0.5} align="center">{p.skill}</Typography>
+              <Typography variant="caption" color="text.secondary" align="center">{p.desc}</Typography>
+            </Paper>
+          ))}
+        </Box>
+      </Box>
     </Box>
   );
 }

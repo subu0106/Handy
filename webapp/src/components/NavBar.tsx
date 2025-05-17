@@ -36,6 +36,36 @@ const NavBar: React.FC<NavBarProps> = ({ userName, avatarUrl, themeMode, onToggl
   const [selectedChatId, setSelectedChatId] = React.useState<string | null>(null);
   const [selectedNotif, setSelectedNotif] = React.useState<number | null>(null);
 
+  // Notification and chat data for badge counts
+  const notifications = [
+    {
+      title: "New Offer Received",
+      message: "You have a new offer for your service request: 'Fix kitchen sink'."
+    },
+    {
+      title: "Service Request Accepted",
+      message: "Your request 'Paint living room' was accepted by a provider."
+    },
+    {
+      title: "Offer Declined",
+      message: "Your offer for 'Repair AC unit' was declined."
+    }
+  ];
+  const chats = [
+    {
+      name: "Alex (Plumber)",
+      last: "Alex: I can come tomorrow at 10am."
+    },
+    {
+      name: "Maria (Painter)",
+      last: "You: Can you send a quote for the living room?"
+    },
+    {
+      name: "Handy Support",
+      last: "Support: How can we help you today?"
+    }
+  ];
+
   const handleNotifClick = () => {
     setAnchorEl(document.body); // force open
     setMessagesAnchorEl(null); // close messages popover if open
@@ -107,7 +137,7 @@ const NavBar: React.FC<NavBarProps> = ({ userName, avatarUrl, themeMode, onToggl
         </IconButton>
         {/* Messages */}
         <IconButton color="inherit" sx={{ ml: 1 }} onClick={handleMessagesClick}>
-          <Badge badgeContent={2} color="error">
+          <Badge badgeContent={chats.length} color="error">
             <MailIcon />
           </Badge>
         </IconButton>
@@ -144,30 +174,20 @@ const NavBar: React.FC<NavBarProps> = ({ userName, avatarUrl, themeMode, onToggl
             </Box>
           ) : (
             <List>
-              <ListItem divider onClick={() => setSelectedChatId('1')} component="button">
-                <ListItemText
-                  primary="Alex (Plumber)"
-                  secondary="Alex: I can come tomorrow at 10am."
-                />
-              </ListItem>
-              <ListItem divider onClick={() => setSelectedChatId('2')} component="button">
-                <ListItemText
-                  primary="Maria (Painter)"
-                  secondary="You: Can you send a quote for the living room?"
-                />
-              </ListItem>
-              <ListItem onClick={() => setSelectedChatId('3')} component="button">
-                <ListItemText
-                  primary="Handy Support"
-                  secondary="Support: How can we help you today?"
-                />
-              </ListItem>
+              {chats.map((chat, idx) => (
+                <ListItem divider={idx < chats.length - 1} onClick={() => setSelectedChatId((idx+1).toString())} component="button" key={idx}>
+                  <ListItemText
+                    primary={chat.name}
+                    secondary={chat.last}
+                  />
+                </ListItem>
+              ))}
             </List>
           )}
         </Popover>
         {/* Notifications */}
         <IconButton color="inherit" sx={{ ml: 1 }} onClick={handleNotifClick}>
-          <Badge badgeContent={3} color="error">
+          <Badge badgeContent={notifications.length} color="error">
             <NotificationsIcon />
           </Badge>
         </IconButton>
@@ -198,24 +218,14 @@ const NavBar: React.FC<NavBarProps> = ({ userName, avatarUrl, themeMode, onToggl
           </Box>
           {selectedNotif === null ? (
             <List dense>
-              <ListItem divider component="button" onClick={() => setSelectedNotif(0)}>
-                <ListItemText
-                  primary="New Offer Received"
-                  secondary="You have a new offer for your service request: 'Fix kitchen sink'."
-                />
-              </ListItem>
-              <ListItem divider component="button" onClick={() => setSelectedNotif(1)}>
-                <ListItemText
-                  primary="Service Request Accepted"
-                  secondary="Your request 'Paint living room' was accepted by a provider."
-                />
-              </ListItem>
-              <ListItem component="button" onClick={() => setSelectedNotif(2)}>
-                <ListItemText
-                  primary="Offer Declined"
-                  secondary="Your offer for 'Repair AC unit' was declined."
-                />
-              </ListItem>
+              {notifications.map((notif, idx) => (
+                <ListItem divider={idx < notifications.length - 1} component="button" onClick={() => setSelectedNotif(idx)} key={idx}>
+                  <ListItemText
+                    primary={notif.title}
+                    secondary={notif.message}
+                  />
+                </ListItem>
+              ))}
             </List>
           ) : (
             <Box sx={{ p: 1 }}>
