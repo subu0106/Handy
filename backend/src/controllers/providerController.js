@@ -98,7 +98,24 @@ const updateProvider = async (req, res) => {
   }
 }
 
+const updateAvailabilityProvider = async (req, res) => {
+  const provider_id = req.params.provider_id;
+  const updateData = {"availability": req.body.availability};
+  const condition = 'WHERE user_id=$1';
+  try {
+    const updatedProvider = await db.update(table=constant.DB_TABLES.PROVIDERS, data=updateData, conditions=condition, params=[provider_id]);
+    if (updatedProvider) {
+      res.status(constant.HTTP_STATUS.OK).json(updatedProvider);
+    } else {
+      res.status(constant.HTTP_STATUS.NOT_FOUND).json({message: "User Not Found"});
+    }
+  } catch (error) {
+    res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR);
+  }
+}
+
 module.exports = {
   registerProvider,
-  updateProvider
+  updateProvider,
+  updateAvailabilityProvider
 };
