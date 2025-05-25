@@ -60,7 +60,7 @@ const updateOfferStatus = async (req, res) => {
 const deleteOffer = async (req, res) => {
   const offer_id = req.params.offer_id;
   try {
-    const deletedOffer = await db.delete(
+    const deletedOffer = await db.remove(
       constant.DB_TABLES.OFFERS,
       'WHERE offer_id = $1',
       [offer_id]

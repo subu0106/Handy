@@ -96,7 +96,7 @@ const softDeleteConsumer = async (req, res) => {
 const hardDeleteConsumer = async (req, res) => {
   const consumer_id = req.params.consumer_id;
   try {
-    const deletedUser = await db.delete(
+    const deletedUser = await db.remove(
       constant.DB_TABLES.USERS,
       'WHERE user_id = $1',
       [consumer_id]//same as user_id

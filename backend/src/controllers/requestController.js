@@ -87,7 +87,7 @@ const deleteRequest = async (req, res) => {
   const request_id = req.params.request_id;
   const condition = 'WHERE request_id=$1';
   try {
-    const deletedRequest = await db.delete(constant.DB_TABLES.REQUESTS, condition, [request_id]);
+    const deletedRequest = await db.remove(constant.DB_TABLES.REQUESTS, condition, [request_id]);
     if (deletedRequest) {
       res.status(constant.HTTP_STATUS.OK).json({message: "Request deleted successfully"});
     } else {
