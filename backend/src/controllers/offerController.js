@@ -57,8 +57,27 @@ const updateOfferStatus = async (req, res) => {
   }
 }
 
+const deleteOffer = async (req, res) => {
+  const offer_id = req.params.offer_id;
+  try {
+    const deletedOffer = await db.delete(
+      constant.DB_TABLES.OFFERS,
+      'WHERE offer_id = $1',
+      [offer_id]
+    );
+    if (deletedOffer) {
+      res.status(constant.HTTP_STATUS.OK).json({ message: "Offer deleted successfully" });
+    } else {
+      res.status(constant.HTTP_STATUS.NOT_FOUND).json({ message: "Offer Not Found" });
+    }
+  } catch (err) {
+    res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
+  }
+};
+
 module.exports = {
     createOffers,
     getOfferById,
-    updateOfferStatus
+    updateOfferStatus,
+    deleteOffer
     };
