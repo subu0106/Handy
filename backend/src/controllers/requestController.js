@@ -70,8 +70,24 @@ const updateRequestStatus = async (req, res) => {
   }
 }
 
+const deleteRequest = async (req, res) => {
+  const request_id = req.params.request_id;
+  const condition = 'WHERE request_id=$1';
+  try {
+    const deletedRequest = await db.delete(constant.DB_TABLES.REQUESTS, condition, [request_id]);
+    if (deletedRequest) {
+      res.status(constant.HTTP_STATUS.OK).json({message: "Request deleted successfully"});
+    } else {
+      res.status(constant.HTTP_STATUS.NOT_FOUND).json({message: "Request Not Found"});
+    }
+  } catch (error) {
+    res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR);
+  }
+}
+
 module.exports = {
   createRequest,
   getRequestById,
-  updateRequestStatus
+  updateRequestStatus,
+  deleteRequest
 };

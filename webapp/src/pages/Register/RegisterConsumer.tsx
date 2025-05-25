@@ -1,8 +1,15 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Box, Typography, Paper, Button, TextField, Divider } from "@mui/material";
 import SvgIcon from "@mui/material/SvgIcon";
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
+import { auth } from "../../../src/firebase.ts";
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
+// ...existing imports...
+import { useDispatch } from "react-redux";
+import { setUser } from "../../store/userSlice";
 
 function GoogleFavicon(props: any) {
   return (
@@ -24,19 +31,130 @@ export default function RegisterConsumer() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [registerError, setRegisterError] = useState<string | null>(null);
+  const [registerLoading, setRegisterLoading] = useState(false);
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
 
-  // Google OAuth handler
-  const handleGoogleSignIn = () => {
-    const clientId = "YOUR_GOOGLE_CLIENT_ID"; // Replace with your Google OAuth Client ID
-    const redirectUri = window.location.origin + "/oauth2/callback";
-    const scope = "email profile openid";
-    const url =
-      `https://accounts.google.com/o/oauth2/v2/auth?` +
-      `client_id=${clientId}` +
-      `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-      `&response_type=token` +
-      `&scope=${encodeURIComponent(scope)}`;
-    window.open(url, "_blank", "width=500,height=600");
+  // Google OAuth handler (Firebase implementation)
+  const handleGoogleSignIn = async () => {
+    setRegisterError(null);
+    setRegisterLoading(true);
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+
+      const isNewUser = (result as any)?._tokenResponse?.isNewUser || false;
+
+      if (isNewUser) {
+        // Only call registerConsumer if user is new
+        await axios.post("http://localhost:5001/api/v1/consumers/registerConsumer", {
+          user_id: user.uid,
+          name: user.displayName || "New User",
+          email: user.email,
+          avatar: user.photoURL || "",
+          phone: user.phoneNumber || "",
+        });
+      }
+
+      // Store user in Redux
+      dispatch(setUser({
+        uid: user.uid,
+        name: user.displayName || user.email || "",
+        avatarUrl: user.photoURL || "",
+        userType: "consumer",
+      }));
+
+      alert("Google sign-in successful! You can now access your dashboard.");
+      navigate("/");
+      
+    } catch (error: any) {
+      if (error.response && error.response.data && error.response.data.error) {
+        setRegisterError(error.response.data.error);
+      } else {
+        setRegisterError(error.message || "Google sign-in failed.");
+      }
+    }
+    setRegisterLoading(false);
+  };
+
+  useEffect(() => {
+    if (auth.currentUser) {
+      // If user is already authenticated, redirect to home
+      navigate("/");
+      dispatch(setUser({
+        uid: auth.currentUser.uid,
+        name: auth.currentUser.displayName || auth.currentUser.email || "",
+        avatarUrl: auth.currentUser.photoURL || "",
+        userType: "consumer",
+      }));
+
+      alert("You are already signed in. Redirecting to your dashboard.");
+    }
+  }, [navigate, dispatch]);
+
+  // Registration handler for Firebase Auth + backend
+  const handleRegister = async () => {
+    setRegisterError(null);
+    setRegisterLoading(true);
+    try {
+
+      if (!email || !password) {
+        setRegisterError("Email and password are required.");
+        setRegisterLoading(false);
+        return;
+      }
+
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      await axios.post("http://localhost:5001/api/v1/consumers/registerConsumer", {
+        user_id: user.uid,
+        name: email || "New User",
+        email: user.email,
+      });
+
+      alert("Registration successful! You can now sign in.");
+      setMode('signin');
+
+    } catch (error: any) {
+      if (error.code === "auth/email-already-in-use") {
+        setRegisterError("Email already registered.");
+      } else if (error.response && error.response.data && error.response.data.error) {
+        setRegisterError(error.response.data.error);
+      } else {
+        setRegisterError(error.message || "Registration failed.");
+      }
+    }
+    setRegisterLoading(false);
+  };
+
+  // Login handler for Firebase Auth
+  const handleLogin = async () => {
+    setRegisterError(null);
+    setRegisterLoading(true);
+    try {
+      await signInWithEmailAndPassword(auth, email || username, password);
+      alert(`Login successful as ${auth.currentUser?.email}`);
+      console.log("User logged in:", auth.currentUser?.photoURL, auth.currentUser?.displayName, auth.currentUser?.email);
+      dispatch(setUser({
+      uid: auth.currentUser?.uid || "",
+      name:  auth.currentUser?.displayName || auth.currentUser?.email || "",
+      avatarUrl: auth.currentUser?.photoURL || "",
+      userType: "consumer", 
+      }));
+      
+      navigate("/");
+      
+    } catch (error: any) {
+      if (error.code === "auth/user-not-found" || error.code === "auth/wrong-password") {
+        setRegisterError("Invalid email or password.");
+      } else {
+        setRegisterError(error.message || "Login failed.");
+      }
+    }
+    setRegisterLoading(false);
   };
 
   return (
@@ -48,8 +166,7 @@ export default function RegisterConsumer() {
           </Typography>
           <Typography variant="body2" color="text.secondary" mb={2}>
             {mode === 'register' ? (
-              <>
-              </>
+              <></>
             ) : (
               <>
                 New to Handy?{' '}
@@ -109,9 +226,9 @@ export default function RegisterConsumer() {
             <Box width="100%" maxWidth={340}>
               <TextField
                 fullWidth
-                label="Email or Username"
-                value={username}
-                onChange={e => setUsername(e.target.value)}
+                label="Email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
                 sx={{ mb: 2, background: '#fff', borderRadius: 1,
                   '& .MuiInputBase-input': theme => ({
                     color: theme.palette.mode === 'dark' ? '#1976d2' : '#23272f',
@@ -148,9 +265,14 @@ export default function RegisterConsumer() {
                   Forgot password?
                 </Button>
               </Box>
+              {registerError && (
+                <Typography color="error" variant="body2" mb={1}>{registerError}</Typography>
+              )}
               <Button
                 variant="contained"
                 fullWidth
+                onClick={handleLogin}
+                disabled={registerLoading}
                 sx={{
                   background: '#111',
                   color: '#fff',
@@ -162,7 +284,7 @@ export default function RegisterConsumer() {
                   '&:hover': { background: '#222' },
                 }}
               >
-                Sign in
+                {registerLoading ? "Signing in..." : "Sign in"}
               </Button>
               <Button
                 variant="text"
@@ -186,6 +308,8 @@ export default function RegisterConsumer() {
               <TextField
                 fullWidth
                 label="Email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
                 sx={{ mb: 2, background: '#fff', borderRadius: 1,
                   '& .MuiInputBase-input': theme => ({
                     color: theme.palette.mode === 'dark' ? '#1976d2' : '#23272f',
@@ -197,6 +321,8 @@ export default function RegisterConsumer() {
                 fullWidth
                 label="Password"
                 type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={e => setPassword(e.target.value)}
                 sx={{ mb: 2, background: '#fff', borderRadius: 1,
                   '& .MuiInputBase-input': theme => ({
                     color: theme.palette.mode === 'dark' ? '#1976d2' : '#23272f',
@@ -215,9 +341,14 @@ export default function RegisterConsumer() {
                   ),
                 }}
               />
+              {registerError && (
+                <Typography color="error" variant="body2" mb={1}>{registerError}</Typography>
+              )}
               <Button
                 variant="contained"
                 fullWidth
+                onClick={handleRegister}
+                disabled={registerLoading}
                 sx={{
                   background: '#111',
                   color: '#fff',
@@ -229,7 +360,7 @@ export default function RegisterConsumer() {
                   '&:hover': { background: '#222' },
                 }}
               >
-                Sign up
+                {registerLoading ? "Signing up..." : "Sign up"}
               </Button>
               <Button
                 variant="text"

@@ -74,7 +74,46 @@ const updateConsumer = async (req, res) => {
   }
 }
 
+const softDeleteConsumer = async (req, res) => {
+  const consumer_id = req.params.consumer_id;
+  try {
+    const updatedUser = await db.update(
+      constant.DB_TABLES.USERS,
+      { is_deleted: true, deleted_at: new Date().toISOString() },
+      'WHERE user_id = $1',
+      [consumer_id]//same as user_id
+    );
+    if (updatedUser) {
+      res.status(constant.HTTP_STATUS.OK).json({ message: "Consumer soft deleted successfully" });
+    } else {
+      res.status(constant.HTTP_STATUS.NOT_FOUND).json({ message: "User Not Found" });
+    }
+  } catch (err) {
+    res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
+  }
+};
+
+const hardDeleteConsumer = async (req, res) => {
+  const consumer_id = req.params.consumer_id;
+  try {
+    const deletedUser = await db.delete(
+      constant.DB_TABLES.USERS,
+      'WHERE user_id = $1',
+      [consumer_id]//same as user_id
+    );
+    if (deletedUser) {
+      res.status(constant.HTTP_STATUS.OK).json({ message: "Consumer hard deleted successfully" });
+    } else {
+      res.status(constant.HTTP_STATUS.NOT_FOUND).json({ message: "User Not Found" });
+    }
+  } catch (err) {
+    res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
+  }
+};
+
 module.exports = {
   registerConsumer,
-  updateConsumer
+  updateConsumer,
+  softDeleteConsumer,
+  hardDeleteConsumer
 };
