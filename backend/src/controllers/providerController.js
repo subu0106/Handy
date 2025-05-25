@@ -330,10 +330,42 @@ const hardDeleteProvider = async (req, res) => {
   }
 };
 
+const updateProviderRatingAndCount = async (req, res)=> {
+  const provider_id = req.params.provider_id;
+  const providedRating = req.query.rating;
+  const condition = 'WHERE user_id=$1';
+
+  try{
+    const provider = await db.getOne(table=constant.DB_TABLES.PROVIDERS, conditions=condition, params=[provider_id]);
+    if (!provider) {
+      res.status(constant.HTTP_STATUS.NOT_FOUND).json({message: "User Not Found"});
+    } else {
+      const averageRating = provider.average_rating;
+      const reviewCount = provider.review_count;
+      const newTotalRating = averageRating * reviewCount + providedRating;
+      const newReviewCount = reviewCount + 1;
+      const newAverageRating = newTotalRating/newReviewCount;
+      
+      const data = {average_rating:newAverageRating, review_count:newReviewCount};
+      const condition = 'WHERE user_id=$1';
+      const updatedProvider = await db.update(table=constant.DB_TABLES.PROVIDERS, data=data, conditions=condition, params=[provider_id]);
+
+      if (updatedProvider) {
+        res.status(constant.HTTP_STATUS.OK).json(updatedProvider);
+      } else{
+        res.status(constant.HTTP_STATUS.NOT_FOUND).json({message:"Provider Not Found"});
+      }
+    }
+  } catch(err){
+    res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR);
+  }
+}
+
 module.exports = {
   registerProvider,
   updateProvider,
   updateAvailabilityProvider,
+  updateProviderRatingAndCount,
   updateProviderServices,
   softDeleteProvider,
   hardDeleteProvider,

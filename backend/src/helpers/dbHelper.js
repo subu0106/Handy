@@ -5,6 +5,10 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
+pool.on('connect', ()=>{
+  console.log("Database Connected Successfully via Pool.");
+});
+
 // Generic query executor
 const query = async (text, params) => {
   const client = await pool.connect();
