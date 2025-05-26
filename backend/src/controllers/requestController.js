@@ -63,7 +63,7 @@ const updateRequestStatus = async (req, res) => {
   return res.status(constant.HTTP_STATUS.BAD_REQUEST).json({message:"Invalid Request Status Provided"});
 }
 
-const getAllActiveRequests = async (req, res) => {
+const getAllActiveRequestsForProvider = async (req, res) => {
   const provider_id = req.params.provider_id;
   try {
     const provider = await db.getOne(constant.DB_TABLES.PROVIDERS, "WHERE user_id=$1", [provider_id]);
@@ -77,6 +77,24 @@ const getAllActiveRequests = async (req, res) => {
 
     const activeRequests = await db.getAll(table=constant.DB_TABLES.REQUESTS, conditions=request_consdition, 
       params=[constant.REQUESTS_STATUS.PENDING, serviceList]);
+
+    if (!activeRequests || activeRequests.length === 0) {
+      return res.status(constant.HTTP_STATUS.NOT_FOUND).json({message:"No Active Requests Found"});
+    }
+    return res.status(constant.HTTP_STATUS.OK).json(activeRequests);
+
+  } catch (err) {
+    return res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR);
+  }
+}
+
+const getAllActiveRequestsForConsumer = async (req, res) => {
+  const consumer_id = req.params.consumer_id;
+  try {
+    const request_condition = 'WHERE user_id=$1 AND status=$2';
+
+    const activeRequests = await db.getAll(table=constant.DB_TABLES.REQUESTS, conditions=request_condition, 
+      params=[consumer_id, constant.REQUESTS_STATUS.PENDING]);
 
     if (!activeRequests || activeRequests.length === 0) {
       return res.status(constant.HTTP_STATUS.NOT_FOUND).json({message:"No Active Requests Found"});
@@ -106,6 +124,7 @@ module.exports = {
   createRequest,
   getRequestById,
   updateRequestStatus,
-  getAllActiveRequests,
+  getAllActiveRequestsForProvider,
+  getAllActiveRequestsForConsumer,
   deleteRequest
 };
