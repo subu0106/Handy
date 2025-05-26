@@ -19,14 +19,12 @@ const createRequest = async (req, res) => {
       return res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR).json({message: "Failed to create request"});
     }
 
-    res.status(constant.HTTP_STATUS.CREATED).json(request);
+    return res.status(constant.HTTP_STATUS.CREATED).json(request);
 
   } catch (err) {
-    res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR);
-    throw err;
+    return res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR);
   }
 };
-
 
 const getRequestById = async (req, res) => {
   try {
@@ -35,13 +33,11 @@ const getRequestById = async (req, res) => {
     const request = await db.getOne(constant.DB_TABLES.REQUESTS, condition, [request_id]);
 
     if (!request){
-      res.status(constant.HTTP_STATUS.NOT_FOUND).json({message: "Request not found"});
-    } else {
-      res.status(constant.HTTP_STATUS.OK).json(request);
+      return res.status(constant.HTTP_STATUS.NOT_FOUND).json({message: "Request not found"});
     }
+    return res.status(constant.HTTP_STATUS.OK).json(request);
   } catch(err){
-    res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR);
-    throw err;
+    return res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR);
   }
 }
 
@@ -56,30 +52,39 @@ const updateRequestStatus = async (req, res) => {
       const updateData = {"status": newStatus};
       const updatedRequest = await db.update(table=constant.DB_TABLES.REQUESTS, data=updateData, conditions=condition, params=[request_id]);
       if (updatedRequest){
-        res.status(constant.HTTP_STATUS.OK).json(updatedRequest);
-      } else {
-        res.status(constant.HTTP_STATUS.NOT_FOUND).json({message:"Request Not Found"});
+         return res.status(constant.HTTP_STATUS.OK).json(updatedRequest);
       }
+      return res.status(constant.HTTP_STATUS.NOT_FOUND).json({message:"Request Not Found"});
 
     } catch (error) {
-      res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR);
+      return res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR);
     }
-  } else {
-    res.status(constant.HTTP_STATUS.BAD_REQUEST).json({message:"Invalid Request Status Provided"});
   }
+  return res.status(constant.HTTP_STATUS.BAD_REQUEST).json({message:"Invalid Request Status Provided"});
 }
 
 const getAllActiveRequests = async (req, res) => {
+  const provider_id = req.params.provider_id;
   try {
-    const condition = 'WHERE status=$1';
-    const activeRequests = await db.getAll(table=constant.DB_TABLES.REQUESTS, conditions=condition, params=[constant.REQUESTS_STATUS.PENDING]);
-    if (activeRequests) {
-      res.status(constant.HTTP_STATUS.OK).json(activeRequests);
-    } else {
-      res.status(constant.HTTP_STATUS.NOT_FOUND).json({message:"No Active Requests Found"});
+    const provider = await db.getOne(constant.DB_TABLES.PROVIDERS, "WHERE user_id=$1", [provider_id]);
+
+    if (!provider) {
+      return res.status(constant.HTTP_STATUS.NOT_FOUND).json({message: "Provider not found"});
     }
+
+    const serviceList = provider.services_array;
+    const request_consdition = 'WHERE status=$1 AND service_id=ANY($2)';
+
+    const activeRequests = await db.getAll(table=constant.DB_TABLES.REQUESTS, conditions=request_consdition, 
+      params=[constant.REQUESTS_STATUS.PENDING, serviceList]);
+
+    if (!activeRequests || activeRequests.length === 0) {
+      return res.status(constant.HTTP_STATUS.NOT_FOUND).json({message:"No Active Requests Found"});
+    }
+    return res.status(constant.HTTP_STATUS.OK).json(activeRequests);
+
   } catch (err) {
-    res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR);
+    return res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR);
   }
 }
 
@@ -89,12 +94,11 @@ const deleteRequest = async (req, res) => {
   try {
     const deletedRequest = await db.remove(constant.DB_TABLES.REQUESTS, condition, [request_id]);
     if (deletedRequest) {
-      res.status(constant.HTTP_STATUS.OK).json({message: "Request deleted successfully"});
-    } else {
-      res.status(constant.HTTP_STATUS.NOT_FOUND).json({message: "Request Not Found"});
+      return res.status(constant.HTTP_STATUS.OK).json({message: "Request deleted successfully"});
     }
+    return res.status(constant.HTTP_STATUS.NOT_FOUND).json({message: "Request Not Found"});
   } catch (error) {
-    res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR);
+    return res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR);
   }
 }
 
