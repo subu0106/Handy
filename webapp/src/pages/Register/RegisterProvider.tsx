@@ -6,7 +6,7 @@ import {
 import SvgIcon from "@mui/material/SvgIcon";
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
-import { auth } from "../../../src/firebase.ts";
+import { auth,messaging,getToken } from "../../../src/firebase.ts";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -18,6 +18,7 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { setUser } from "../../store/userSlice";
 import { useTheme } from "@mui/material/styles";
+import apiService from "@utils/apiService.tsx";
 
 // Service definitions (order matters for ID mapping)
 const SERVICES = [
@@ -45,6 +46,24 @@ function GoogleFavicon(props: any) {
     </SvgIcon>
   );
 }
+
+const VAPID_KEY = import.meta.env.VITE_FIREBASE_VAPID_KEY;
+const getFcmToken = async () => {
+  console.log("Getting FCM token...");
+  try {
+    if (!messaging) {
+      console.error("Firebase messaging is not initialized");
+      return null;
+    }
+    const token = await getToken(messaging, { vapidKey: VAPID_KEY });
+    console.log("FCM token received:", token);
+    return token;
+  } catch (err) {
+    console.error("Unable to get FCM token", err);
+    return null;
+  }
+};
+
 
 export default function RegisterProvider() {
   const [mode, setMode] = useState<'register' | 'signin'>('register');
@@ -154,6 +173,7 @@ export default function RegisterProvider() {
   const handleExtraFieldsSubmit = async (avatarUrl: string, userEmail: string) => {
   setRegisterError(null);
   setRegisterLoading(true);
+  const fcm_token = await getFcmToken();
   try {
     const user = auth.currentUser;
     if (!user) {
@@ -174,24 +194,12 @@ export default function RegisterProvider() {
       average_rating: 0,
       review_count: 0,
       bio,
+      fcm_token: fcm_token || "",
     };
 
     console.log("Submitting provider registration:", payload);
 
-    await axios.post("http://localhost:5001/api/v1/providers/registerProvider", {
-      user_id: user.uid,
-      name: name || user.displayName || "",
-      email: userEmail,
-      user_type: "provider",
-      phone,
-      location,
-      avatar: avatarUrl || "",
-      services_array: servicesArray,
-      availability: "available",
-      average_rating: 0,
-      review_count: 0,
-      bio,
-    });
+    await apiService.post("/providers/registerProvider", payload);
 
     alert("Registration successful! You can now access your dashboard.");
 
@@ -200,6 +208,8 @@ export default function RegisterProvider() {
       name: name || user.displayName || user.email || "",
       avatarUrl: avatarUrl || "",
       userType: "provider",
+      fcm_token: fcm_token || "",
+      location: location || "",
     }));
 
     alert("Registration successful! You can now access your dashboard.");
@@ -225,6 +235,12 @@ export default function RegisterProvider() {
       const user = result.user;
       const isNewUser = (result as any)?._tokenResponse?.isNewUser || false;
 
+      const fcm_token = await getFcmToken();
+
+      const updatedProvider = await apiService.put(`/providers/updateProvider/${user.uid}`, {
+        fcm_token: fcm_token || "",
+      });
+      console.log("Updated provider response:", updatedProvider);
       if (isNewUser) {
         // Show extra fields form for new users, pass avatar and email from Google
         setPendingGoogleUser({
@@ -239,6 +255,8 @@ export default function RegisterProvider() {
           name: user.displayName || user.email || "",
           avatarUrl: user.photoURL || "",
           userType: "provider",
+          fcm_token: fcm_token || "",
+          location: "",
         }));
         alert("Google sign-in successful! You can now access your dashboard.");
         navigate("/");
@@ -266,13 +284,17 @@ export default function RegisterProvider() {
       }
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
-      // After Firebase registration, show extra fields form, pass avatar and email from Firebase
+      // Show extra fields form, pass avatar and email from Firebase
       setPendingEmailUser({
         avatarUrl: user.photoURL || "",
         email: user.email || "",
       });
-      setRegisterLoading(false);
       setShowExtraFields(true);
+      setRegisterLoading(false);
+
+      // DO NOT dispatch setUser or navigate yet!
+      // Wait for the user to fill out extra fields and submit
+      alert("Registration successful! Please complete your profile.");
     } catch (error: any) {
       if (error.code === "auth/email-already-in-use") {
         setRegisterError("Email already registered.");
@@ -287,16 +309,28 @@ export default function RegisterProvider() {
 
   // Login handler for Firebase Auth
   const handleLogin = async () => {
+    console.log("Logging in with email:", email || username);
     setRegisterError(null);
     setRegisterLoading(true);
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email || username, password);
       const user = userCredential.user;
+
+      console.log("sign in response : ", userCredential);
+      const fcm_token = await getFcmToken();
+      console.log("fcm token : ", fcm_token);
+
+      const updatedProvider = await apiService.put(`/providers/updateProvider/${user.uid}`, {
+        fcm_token: fcm_token || "",
+      });
+      console.log("Updated provider response:", updatedProvider);
       dispatch(setUser({
         uid: user.uid,
         name: user.displayName || user.email || "",
         avatarUrl: user.photoURL || "",
         userType: "provider",
+        fcm_token: fcm_token || "",
+        location: "",
       }));
       alert(`Login successful as ${user.email}`);
       navigate("/");
@@ -329,123 +363,143 @@ export default function RegisterProvider() {
               (pendingGoogleUser || pendingEmailUser)?.email || ""
             )
           ) : mode === 'register' ? (
-            <Box width="100%" maxWidth={isMobile ? 1 : 400}>
-              <TextField
-                fullWidth
-                label="Email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                sx={{ mb: 2 }}
-              />
-              <TextField
-                fullWidth
-                label="Password"
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                sx={{ mb: 2 }}
-                InputProps={{
-                  endAdornment: (
-                    <Button
-                      onClick={() => setShowPassword((show) => !show)}
-                      sx={{ minWidth: 0, p: 0, color: '#888' }}
-                      tabIndex={-1}
-                    >
-                      {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
-                    </Button>
-                  ),
-                }}
-              />
-              {registerError && (
-                <Typography color="error" variant="body2" mb={1}>{registerError}</Typography>
-              )}
-              <Button
-                variant="contained"
-                fullWidth
-                onClick={handleRegister}
-                disabled={registerLoading}
-                sx={{
-                  background: '#111',
-                  color: '#fff',
-                  fontWeight: 700,
-                  fontSize: '1.1rem',
-                  borderRadius: 2,
-                  py: 1.2,
-                  boxShadow: 'none',
-                  '&:hover': { background: '#222' },
-                }}
-              >
-                {registerLoading ? "Signing up..." : "Sign up"}
-              </Button>
-              <Button
-                variant="text"
-                fullWidth
-                startIcon={<GoogleFavicon />}
-                onClick={handleGoogleSignIn}
-                sx={{ mt: 1, color: '#4285F4', fontWeight: 600, textTransform: 'none' }}
-              >
-                Continue with Google
-              </Button>
-            </Box>
+            <>
+              <Box width="100%" maxWidth={isMobile ? 1 : 400}>
+                <TextField
+                  fullWidth
+                  label="Email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  sx={{ mb: 2 }}
+                />
+                <TextField
+                  fullWidth
+                  label="Password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  sx={{ mb: 2 }}
+                  InputProps={{
+                    endAdornment: (
+                      <Button
+                        onClick={() => setShowPassword((show) => !show)}
+                        sx={{ minWidth: 0, p: 0, color: '#888' }}
+                        tabIndex={-1}
+                      >
+                        {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+                      </Button>
+                    ),
+                  }}
+                />
+                {registerError && (
+                  <Typography color="error" variant="body2" mb={1}>{registerError}</Typography>
+                )}
+                <Button
+                  variant="contained"
+                  fullWidth
+                  onClick={handleRegister}
+                  disabled={registerLoading}
+                  sx={{
+                    background: '#111',
+                    color: '#fff',
+                    fontWeight: 700,
+                    fontSize: '1.1rem',
+                    borderRadius: 2,
+                    py: 1.2,
+                    boxShadow: 'none',
+                    '&:hover': { background: '#222' },
+                  }}
+                >
+                  {registerLoading ? "Signing up..." : "Sign up"}
+                </Button>
+                <Button
+                  variant="text"
+                  fullWidth
+                  onClick={() => setMode('signin')}
+                  sx={{ mt: 1, color: '#1976d2', fontWeight: 600, textTransform: 'none' }}
+                >
+                  Already have an account? Sign in
+                </Button>
+                <Button
+                  variant="text"
+                  fullWidth
+                  startIcon={<GoogleFavicon />}
+                  onClick={handleGoogleSignIn}
+                  sx={{ mt: 1, color: '#4285F4', fontWeight: 600, textTransform: 'none' }}
+                >
+                  Continue with Google
+                </Button>
+              </Box>
+            </>
           ) : (
-            <Box width="100%" maxWidth={isMobile ? 1 : 400}>
-              <TextField
-                fullWidth
-                label="Email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                sx={{ mb: 2 }}
-              />
-              <TextField
-                fullWidth
-                label="Password"
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                sx={{ mb: 2 }}
-                InputProps={{
-                  endAdornment: (
-                    <Button
-                      onClick={() => setShowPassword((show) => !show)}
-                      sx={{ minWidth: 0, p: 0, color: '#888' }}
-                      tabIndex={-1}
-                    >
-                      {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
-                    </Button>
-                  ),
-                }}
-              />
-              {registerError && (
-                <Typography color="error" variant="body2" mb={1}>{registerError}</Typography>
-              )}
-              <Button
-                variant="contained"
-                fullWidth
-                onClick={handleLogin}
-                disabled={registerLoading}
-                sx={{
-                  background: '#111',
-                  color: '#fff',
-                  fontWeight: 700,
-                  fontSize: '1.1rem',
-                  borderRadius: 2,
-                  py: 1.2,
-                  boxShadow: 'none',
-                  '&:hover': { background: '#222' },
-                }}
-              >
-                {registerLoading ? "Signing in..." : "Sign in"}
-              </Button>
-              <Button
-                variant="text"
-                fullWidth
-                startIcon={<GoogleFavicon />}
-                onClick={handleGoogleSignIn}
-                sx={{ mt: 1, color: '#4285F4', fontWeight: 600, textTransform: 'none' }}
-              >
-                Continue with Google
-              </Button>
-            </Box>
+            <>
+              <Box width="100%" maxWidth={isMobile ? 1 : 400}>
+                <TextField
+                  fullWidth
+                  label="Email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  sx={{ mb: 2 }}
+                />
+                <TextField
+                  fullWidth
+                  label="Password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  sx={{ mb: 2 }}
+                  InputProps={{
+                    endAdornment: (
+                      <Button
+                        onClick={() => setShowPassword((show) => !show)}
+                        sx={{ minWidth: 0, p: 0, color: '#888' }}
+                        tabIndex={-1}
+                      >
+                        {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+                      </Button>
+                    ),
+                  }}
+                />
+                {registerError && (
+                  <Typography color="error" variant="body2" mb={1}>{registerError}</Typography>
+                )}
+                <Button
+                  variant="contained"
+                  fullWidth
+                  onClick={handleLogin}
+                  disabled={registerLoading}
+                  sx={{
+                    background: '#111',
+                    color: '#fff',
+                    fontWeight: 700,
+                    fontSize: '1.1rem',
+                    borderRadius: 2,
+                    py: 1.2,
+                    boxShadow: 'none',
+                    '&:hover': { background: '#222' },
+                  }}
+                >
+                  {registerLoading ? "Signing in..." : "Sign in"}
+                </Button>
+                <Button
+                  variant="text"
+                  fullWidth
+                  onClick={() => setMode('register')}
+                  sx={{ mt: 1, color: '#1976d2', fontWeight: 600, textTransform: 'none' }}
+                >
+                  Don't have an account? Sign up
+                </Button>
+                <Button
+                  variant="text"
+                  fullWidth
+                  startIcon={<GoogleFavicon />}
+                  onClick={handleGoogleSignIn}
+                  sx={{ mt: 1, color: '#4285F4', fontWeight: 600, textTransform: 'none' }}
+                >
+                  Continue with Google
+                </Button>
+              </Box>
+            </>
           )}
         </Box>
       </Paper>

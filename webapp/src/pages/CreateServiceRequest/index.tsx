@@ -1,20 +1,21 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Box, Paper, Typography, Button, MenuItem, TextField } from "@mui/material";
-import { useAppDispatch } from "@store/hooks";
+import { useAppDispatch, useAppSelector } from "@store/hooks";
 import apiService from "@utils/apiService";
+import constant from "../../constants"
 
 const SERVICE_TYPES = [
-  { value: "electricity", label: "Electricity" },
-  { value: "plumbing", label: "Plumbing" },
-  { value: "carpentry", label: "Carpentry" },
-  { value: "cleaning", label: "Cleaning" },
-  { value: "gardening", label: "Gardening" },
-  { value: "painting", label: "Painting" },
-  { value: "moving", label: "Moving" },
-  { value: "locksmith", label: "Locksmith" },
-  { value: "pest_control", label: "Pest Control" },
-  { value: "hvac", label: "HVAC" },
+  { value: "electricity", label: "Electricity",id: 1 },
+  { value: "plumbing", label: "Plumbing", id: 2 },
+  { value: "carpentry", label: "Carpentry", id: 3 },
+  { value: "cleaning", label: "Cleaning" , id: 4 },
+  { value: "gardening", label: "Gardening", id: 5 },
+  { value: "painting", label: "Painting", id: 6 },
+  { value: "moving", label: "Moving", id: 7 },
+  { value: "locksmith", label: "Locksmith", id: 8 },
+  { value: "pest_control", label: "Pest Control", id: 9 },
+  { value: "hvac", label: "HVAC", id: 10 },
 ];
 
 const CreateServiceRequest: React.FC = () => {
@@ -25,17 +26,29 @@ const CreateServiceRequest: React.FC = () => {
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const user = useAppSelector((state) => state.user);
+  const [budget, setBudget] = useState<number | null>(null);
+  const [timeframe , setTimeframe] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
+    const data = {
+      user_id : user.uid,
+      service_id : SERVICE_TYPES.find((type) => type.value === serviceType)?.id,
+      title,
+      description,
+      location: user.location, //need to add this to user data interface.
+      budget,
+      timeframe,
+      status: constant.REQUESTS_STATUS.PENDING,
+      created_at: new Date().toISOString(),
+    }
+
+    console.log("Creating service request with data:", data);
     try {
-      await apiService.post("/requests/createRequest", {
-        service_type: serviceType,
-        title,
-        description,
-      });
+      await apiService.post("/requests/createRequest", data);
       navigate("/");
     } catch (err: any) {
       setError("Failed to create service request");
@@ -84,11 +97,31 @@ const CreateServiceRequest: React.FC = () => {
             multiline
             minRows={3}
           />
+          <TextField
+            label="Budget"
+            type="number"
+            value={budget || ""}
+            onChange={(e) => setBudget(Number(e.target.value))}
+            fullWidth
+            required
+            margin="normal"
+          />
+          <TextField
+            label="Timeframe"
+            value={timeframe}
+            onChange={(e) => setTimeframe(e.target.value)}
+            fullWidth
+            required
+            margin="normal"
+            placeholder="e.g., 1 week, 2 days"
+          />
+
           {error && (
             <Typography color="error" variant="body2">
               {error}
             </Typography>
           )}
+
           <Box mt={2} display="flex" justifyContent="flex-end">
             <Button type="submit" variant="contained" color="primary" disabled={loading}>
               {loading ? "Creating..." : "Create"}

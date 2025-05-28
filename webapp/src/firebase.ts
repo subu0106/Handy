@@ -3,15 +3,16 @@ import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
+import { getMessaging, getToken, onMessage, type Messaging } from 'firebase/messaging';
 
 // Your Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyAMDZjWXXctT2k6YULKMsJGnWNhi-jcfds",
-  authDomain: "handy-81456.firebaseapp.com",
-  projectId: "handy-81456",
-  storageBucket: "handy-81456.firebasestorage.app",
-  messagingSenderId: "202418796029",
-  appId: "1:202418796029:web:1617893c98fc46dbfd9594"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
 // Initialize Firebase
@@ -21,4 +22,13 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
-export { app, auth, db, storage };
+
+// Initialize Messaging (for FCM)
+let messaging : Messaging;
+try {
+  messaging = getMessaging(app);
+} catch (e) {
+  messaging = {} as Messaging; 
+}
+
+export { app, auth, db, storage, messaging, getToken, onMessage };

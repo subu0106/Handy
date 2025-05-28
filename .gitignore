@@ -1,1 +1,3 @@
 *.DS_Store
+backend/src/serviceAccountKey.json
+webapp/.env
