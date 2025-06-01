@@ -122,7 +122,13 @@ const Home: React.FC = () => {
                       style={{ fontSize: 22 }}
                     />
                     <Typography style={{ fontWeight: selectedRequestId === req.id ? 600 : 400 }}>
-                      {req.title || req.description || `Request #${req.id}`}
+                      {req.title}
+                    </Typography>
+                    <Typography variant="caption" color="textSecondary" style={{ marginLeft: "auto" }}>
+                      {"on "+ new Date(req.created_at).toLocaleDateString() + " at " + new Date(req.created_at).toLocaleTimeString()}
+                    </Typography>
+                    <Typography variant="caption" color="textSecondary">
+                      {req.status.charAt(0).toUpperCase() + req.status.slice(1)}
                     </Typography>
                   </div>
                 ))}

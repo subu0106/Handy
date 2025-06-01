@@ -20,7 +20,7 @@ const initialState: ServiceRequestsState = {
 export const fetchServiceRequests = createAsyncThunk(
   'serviceRequests/fetchServiceRequests',
   async () => {
-    const response = await apiService.get('/requests');
+    const response = await apiService.get('/requests/getActiveRequests');
     return response.data;
   }
 );
