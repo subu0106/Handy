@@ -27,6 +27,7 @@ const CreateServiceRequest: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const user = useAppSelector((state) => state.user);
+  const [location, setLocation] = useState("");
   const [budget, setBudget] = useState<number | null>(null);
   const [timeframe , setTimeframe] = useState("");
 
@@ -39,7 +40,7 @@ const CreateServiceRequest: React.FC = () => {
       service_id : SERVICE_TYPES.find((type) => type.value === serviceType)?.id,
       title,
       description,
-      location: user.location, //need to add this to user data interface.
+      location: user.location || location, //need to add this to user data interface.
       budget,
       timeframe,
       status: constant.REQUESTS_STATUS.PENDING,
@@ -97,6 +98,17 @@ const CreateServiceRequest: React.FC = () => {
             multiline
             minRows={3}
           />
+
+          <TextField
+            label="Location"
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+            fullWidth
+            required
+            margin="normal"
+            placeholder="e.g., No 123, sample location"
+          />
+
           <TextField
             label="Budget"
             type="number"
