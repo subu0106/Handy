@@ -122,6 +122,20 @@ const getAllActiveRequestsForConsumer = async (req, res) => {
   }
 }
 
+const getAllActiveRequests = async (req, res) => {
+  try {
+    const condition = 'WHERE status=$1';
+    const activeRequests = await db.getAll(table=constant.DB_TABLES.REQUESTS, conditions=condition, params=[constant.REQUESTS_STATUS.PENDING]);
+    if (activeRequests) {
+      res.status(constant.HTTP_STATUS.OK).json(activeRequests);
+    } else {
+      res.status(constant.HTTP_STATUS.NOT_FOUND).json({message:"No Active Requests Found"});
+    }
+  } catch (err) {
+    res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR);
+  }
+}
+
 const deleteRequest = async (req, res) => {
   const request_id = req.params.request_id;
   const condition = 'WHERE request_id=$1';
@@ -140,6 +154,7 @@ module.exports = {
   createRequest,
   getRequestById,
   updateRequestStatus,
+  getAllActiveRequests,
   getAllActiveRequestsForProvider,
   getAllActiveRequestsForConsumer,
   deleteRequest
