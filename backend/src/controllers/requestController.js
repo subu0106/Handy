@@ -20,8 +20,6 @@ const createRequest = async (req, res) => {
       return res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR).json({message: "Failed to create request"});
     }
 
-    return res.status(constant.HTTP_STATUS.CREATED).json(request);
-
     const payload = {
       title: `New Request Received : ${data.title || `from ${data.user_id}`}`,
       body: `New request with budget ${data.budget}`,
@@ -36,6 +34,7 @@ const createRequest = async (req, res) => {
     
     broadcastToAllProviders(payload);
     console.log("Broadcast sent to all providers");
+    return res.status(constant.HTTP_STATUS.CREATED).json(request);
 
   } catch (err) {
     return res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR);
