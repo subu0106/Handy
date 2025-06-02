@@ -1,8 +1,10 @@
 const express = require('express');
-const { createPairedJob, getPairedJobs } = require('../controllers/pairedJobsController');
 const router = express.Router();
 
-router.route("/").get(getPairedJobs);
-router.route("/createPairedJob").post(createPairedJob);
+const { createPairedJob, getPairedJobs } = require('../controllers/pairedJobsController');
+const {authenticateToken} = require('../middlewares/authenticate');
+
+router.route("/").get(authenticateToken, getPairedJobs);
+router.route("/createPairedJob").post(authenticateToken, createPairedJob);
 
 module.exports = {router};
