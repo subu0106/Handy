@@ -4,14 +4,12 @@ const db = require('../helpers/dbHelper');
 const getUserInformationbyId = async (user_id) => {
     const condition = 'WHERE (user_id = $1)';
     try {
-        // const user = await db.getOne(constant.DB_TABLES.USERS, condition, [user_id]);
         const user = await db.getOne(table=constant.DB_TABLES.USERS, conditions=condition, params=[user_id]);
         if (!user){
             return null;
         }else{
             // check user_type and return response accordingly.
             if (user.user_type && user.user_type === constant.USER_TYPES.PROVIDER){
-                // const provider = await db.getOne(constant.DB_TABLES.PROVIDERS, 'WHERE (user_id = $1)', [user_id]);
                 const providerDetails = await db.getOne(table=constant.DB_TABLES.PROVIDERS, conditions='WHERE (user_id = $1)', params=[user_id]);
                 
 

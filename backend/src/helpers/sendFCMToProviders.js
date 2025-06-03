@@ -1,9 +1,5 @@
-const admin = require("firebase-admin");
 const db = require("./dbHelper")
-
-admin.initializeApp({
-  credential: admin.credential.cert(require("../serviceAccountKey.json")),
-});
+const admin = require("./firebaseAdmin");
 
 async function sendFcmToProvider(fcmToken, payload) {
   try {
