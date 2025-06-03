@@ -2,29 +2,12 @@ import { useState, useMemo, useCallback, useEffect } from "react";
 import { ThemeProvider, createTheme, CssBaseline, Snackbar, Alert } from "@mui/material";
 import { RouterProvider } from "react-router-dom";
 import { createAppRouter } from "@routes/index";
-import { messaging, onMessage } from "../src/firebase";
 import { fetchServiceRequests } from "./store/serviceRequestsSlice";
-import { useAppDispatch } from "@store/hooks";
+import { useAppDispatch, useAppSelector } from "@store/hooks";
+import { io } from "socket.io-client";
 
 const THEME_KEY = "handy_theme_mode";
-
-function useFCMListener(showToast: (msg: string, severity?: "info" | "success" | "warning" | "error") => void) {
-  const dispatch = useAppDispatch();
-
-  useEffect(() => {
-    if (!messaging) return;
-    onMessage(messaging, (payload) => {
-      let message = "";
-      if (payload?.notification?.title && payload?.notification?.body) {
-        message = `${payload.notification.title}`;
-      } else if (payload?.data) {
-        message = "New service request received: " + JSON.stringify(payload.data);
-      }
-      if (message) showToast(message, "info");
-      dispatch(fetchServiceRequests());
-    });
-  }, [dispatch, showToast]);
-}
+const socket = io("http://localhost:5001", { autoConnect: false }); // Don't connect immediately
 
 const getStoredTheme = () => {
   if (typeof window !== "undefined") {
@@ -44,12 +27,12 @@ const App = () => {
     msg: "",
     severity: "info",
   });
+  const dispatch = useAppDispatch();
+  const user = useAppSelector((state) => state.user); // adjust selector if needed
 
   const showToast = useCallback((msg: string, severity: "info" | "success" | "warning" | "error" = "info") => {
     setToast({ open: true, msg, severity });
   }, []);
-
-  useFCMListener(showToast);
 
   useEffect(() => {
     if (!getStoredTheme()) {
@@ -129,6 +112,31 @@ const App = () => {
     () => createAppRouter({ themeMode, onToggleTheme: handleToggleTheme }),
     [themeMode, handleToggleTheme]
   );
+
+  useEffect(() => {
+    console.log("user",user);
+    if (user?.userType === "provider") {
+      socket.connect();
+
+      socket.on("connect", () => {
+        console.log("Connected to WebSocket server");
+      });
+
+      socket.on("new_request", (data) => {
+        setToast({ open: true, msg: `New request: ${data.title} (Budget: ${data.budget})`, severity: "info" });
+        dispatch(fetchServiceRequests());
+      });
+
+      return () => {
+        socket.off("new_request");
+        socket.disconnect();
+      };
+    }
+    // If not provider, ensure socket is disconnected
+    return () => {
+      socket.disconnect();
+    };
+  }, [user?.userType, dispatch]);
 
   return (
     <ThemeProvider theme={theme}>

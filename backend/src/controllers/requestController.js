@@ -1,6 +1,5 @@
 const constant = require("../helpers/constants");
 const db = require("../helpers/dbHelper");
-const { broadcastToAllProviders } = require("../helpers/sendFCMToProviders");
 
 
 const createRequest = async (req, res) => {
@@ -20,20 +19,14 @@ const createRequest = async (req, res) => {
       return res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR).json({message: "Failed to create request"});
     }
 
-    const payload = {
-      title: `New Request Received : ${data.title || `from ${data.user_id}`}`,
-      body: `New request with budget ${data.budget}`,
-      data: {
-        requestId: String(request.request_id),
-        serviceId: String(data.service_id),
-        title: data.title || "",
-        description: data.description || "",
-        budget:String(data.budget)
-      }
-    };
-    
-    broadcastToAllProviders(payload);
-    console.log("Broadcast sent to all providers");
+    // Emit event to all clients
+    const io = req.app.get("io");
+    io.emit("new_request", {
+      title: data.title,
+      budget: data.budget,
+      request: request
+    });
+
     return res.status(constant.HTTP_STATUS.CREATED).json(request);
 
   } catch (err) {
