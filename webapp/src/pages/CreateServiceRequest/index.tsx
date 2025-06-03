@@ -50,7 +50,7 @@ const CreateServiceRequest: React.FC = () => {
     console.log("Creating service request with data:", data);
     try {
       await apiService.post("/requests/createRequest", data);
-      navigate("/");
+      navigate("/dashboard");
     } catch (err: any) {
       setError("Failed to create service request");
     } finally {

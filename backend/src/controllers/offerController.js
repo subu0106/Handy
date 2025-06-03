@@ -75,9 +75,106 @@ const deleteOffer = async (req, res) => {
   }
 };
 
+const getOffersByRequestId = async (req, res) => {
+  try {
+    const { requestId } = req.query;
+    
+    if (!requestId) {
+      return res.status(constant.HTTP_STATUS.BAD_REQUEST).json({
+        message: "requestId is required"
+      });
+    }
+
+    const condition = "WHERE request_id = $1";
+    const offers = await db.getAll(constant.DB_TABLES.OFFERS, condition, [requestId]);
+    
+    if (!offers || offers.length === 0) {
+      return res.status(constant.HTTP_STATUS.OK).json([]); // Return empty array instead of 404
+    }
+    
+    res.status(constant.HTTP_STATUS.OK).json(offers);
+  } catch (err) {
+    console.error('Error fetching offers:', err);
+    res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      message: "Internal server error"
+    });
+  }
+};
+
+const getOffersByProviderId = async (req, res) => {
+  try {
+    const { provider_id } = req.params;
+    
+    if (!provider_id) {
+      return res.status(constant.HTTP_STATUS.BAD_REQUEST).json({
+        message: "provider_id is required"
+      });
+    }
+
+    // Get offers by provider
+    const condition = "WHERE provider_id = $1 ORDER BY created_at DESC";
+    const offers = await db.getAll(constant.DB_TABLES.OFFERS, condition, [provider_id]);
+    
+    // Enrich offers with request details
+    const enrichedOffers = await Promise.all(
+      offers.map(async (offer) => {
+        try {
+          const request = await db.getOne(
+            constant.DB_TABLES.REQUESTS, 
+            "WHERE request_id = $1", 
+            [offer.request_id]
+          );
+          return {
+            ...offer,
+            request_title: request?.title,
+            request_description: request?.description,
+            customer_budget: request?.budget,
+            request_location: request?.location
+          };
+        } catch (error) {
+          return offer;
+        }
+      })
+    );
+    
+    res.status(constant.HTTP_STATUS.OK).json(enrichedOffers || []);
+  } catch (err) {
+    console.error('Error fetching provider offers:', err);
+    res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      message: "Internal server error"
+    });
+  }
+};
+
+const getOfferByProviderAndRequest = async (req, res) => {
+  try {
+    const { provider_id, request_id } = req.params;
+    
+    const condition = "WHERE provider_id = $1 AND request_id = $2";
+    const offer = await db.getOne(constant.DB_TABLES.OFFERS, condition, [provider_id, request_id]);
+    
+    if (!offer) {
+      return res.status(constant.HTTP_STATUS.NOT_FOUND).json({
+        message: "Offer not found"
+      });
+    }
+    
+    res.status(constant.HTTP_STATUS.OK).json(offer);
+  } catch (err) {
+    console.error('Error fetching offer:', err);
+    res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      message: "Internal server error"
+    });
+  }
+};
+
+// Update the module.exports
 module.exports = {
-    createOffers,
-    getOfferById,
-    updateOfferStatus,
-    deleteOffer
-    };
+  createOffers,
+  getOfferById,
+  updateOfferStatus,
+  deleteOffer,
+  getOffersByRequestId,
+  getOffersByProviderId, // Add this
+  getOfferByProviderAndRequest // Add this
+};

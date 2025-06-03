@@ -193,7 +193,7 @@ export default function RegisterProvider() {
     }));
 
     alert("Registration successful! You can now access your dashboard.");
-    navigate("/");
+    navigate("/dashboard");
   } catch (error: any) {
     if (error.response && error.response.data && error.response.data.error) {
       setRegisterError(error.response.data.error);
@@ -233,7 +233,7 @@ export default function RegisterProvider() {
           location: "",
         }));
         alert("Google sign-in successful! You can now access your dashboard.");
-        navigate("/");
+        navigate("/dashboard");
       }
     } catch (error: any) {
       if (error.response && error.response.data && error.response.data.error) {
@@ -299,7 +299,7 @@ export default function RegisterProvider() {
         location: "",
       }));
       alert(`Login successful as ${user.email}`);
-      navigate("/");
+      navigate("/dashboard");
     } catch (error: any) {
       if (error.code === "auth/user-not-found" || error.code === "auth/wrong-password") {
         setRegisterError("Invalid email or password.");
