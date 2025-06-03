@@ -44,7 +44,7 @@ const ConsumerHome: React.FC = () => {
   const handleStartChat = async (providerId: string, providerName: string) => {
     try {
       const chatId = await createOrGetChat(user.uid!, providerId, user.name, providerName);
-      navigate(`/chats/${chatId}`);
+      navigate(`/dashboard/chats/${chatId}`);
     } catch (error) {
       console.error('Error starting chat:', error);
     }
@@ -83,7 +83,7 @@ const ConsumerHome: React.FC = () => {
               variant="outlined"
               size="small"
               startIcon={<ChatIcon />}
-              onClick={() => navigate("/chats")}
+              onClick={() => navigate("/dashboard/chats")}
               sx={{ ml: 'auto' }}
             >
               Messages

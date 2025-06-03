@@ -57,7 +57,7 @@ const ChatList: React.FC = () => {
   });
 
   const handleChatClick = (chatId: string) => {
-    navigate(`/chats/${chatId}`);
+    navigate(`/dashboard/chats/${chatId}`);
   };
 
   return (

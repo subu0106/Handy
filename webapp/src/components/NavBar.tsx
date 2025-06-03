@@ -76,7 +76,7 @@ const NavBar: React.FC<NavBarProps> = ({ userName, avatarUrl, themeMode, onToggl
   };
 
   const handleProfilePage = () => {
-    navigate("/profile");
+    navigate("/dashboard/profile");
     handleProfileClose();
   };
 
@@ -104,16 +104,16 @@ const NavBar: React.FC<NavBarProps> = ({ userName, avatarUrl, themeMode, onToggl
         
         {/* Navigation Links */}
         <Box sx={{ display: "flex", alignItems: "center", gap: 1, ml: 2 }}>
-          <IconButton color="inherit" onClick={() => navigate("/providers")} title="Providers">
+          <IconButton color="inherit" onClick={() => navigate("/dashboard/providers")} title="Providers">
             <GroupIcon />
           </IconButton>
-          <IconButton color="inherit" onClick={() => navigate("/jobs")} title="My Jobs">
+          <IconButton color="inherit" onClick={() => navigate("/dashboard/jobs")} title="My Jobs">
             <WorkIcon />
           </IconButton>
-          <IconButton color="inherit" onClick={() => navigate("/offers")} title="Offers">
+          <IconButton color="inherit" onClick={() => navigate("/dashboard/offers")} title="Offers">
             <LocalOfferIcon />
           </IconButton>
-          <IconButton color="inherit" onClick={() => navigate("/register")} title="Register">
+          <IconButton color="inherit" onClick={() => navigate("/dashboard/register")} title="Register">
             <PersonAddIcon />
           </IconButton>
         </Box>
@@ -126,7 +126,7 @@ const NavBar: React.FC<NavBarProps> = ({ userName, avatarUrl, themeMode, onToggl
         </IconButton>
         
         {/* Messages */}
-        <IconButton color="inherit" sx={{ ml: 1 }} onClick={() => navigate("/chats")}>
+        <IconButton color="inherit" sx={{ ml: 1 }} onClick={() => navigate("/dashboard/chats")}>
           <Badge badgeContent={unreadCount} color="error">
             <MailIcon />
           </Badge>

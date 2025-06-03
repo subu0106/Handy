@@ -28,7 +28,7 @@ export default function Profile() {
           auth.signOut().then(() => {
             console.log("User logged out");
             dispatch(logout());
-            navigate("/register/consumer"); // Redirect to home page after logout
+            navigate("/dashboard/register/consumer"); // Redirect to home page after logout
           }
           ).catch((error) => {
             console.error("Logout error:", error);

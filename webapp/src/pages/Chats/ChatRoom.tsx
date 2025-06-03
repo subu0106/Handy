@@ -87,7 +87,7 @@ const ChatRoom: React.FC = () => {
     <Box sx={{ height: 'calc(100vh - 64px)', display: 'flex', flexDirection: 'column' }}>
       <AppBar position="static" color="default" elevation={1}>
         <Toolbar>
-          <IconButton edge="start" onClick={() => navigate('/chats')} sx={{ mr: 2 }}>
+          <IconButton edge="start" onClick={() => navigate('/dashboard/chats')} sx={{ mr: 2 }}>
             <ArrowBackIcon />
           </IconButton>
           <Avatar sx={{ mr: 2 }}>{otherUserName.charAt(0)}</Avatar>
