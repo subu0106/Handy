@@ -5,11 +5,11 @@ import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import { auth } from "../../../src/firebase.ts";
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
 // ...existing imports...
 import { useDispatch } from "react-redux";
 import { setUser } from "../../store/userSlice";
+import apiService from "@utils/apiService.tsx";
 
 function GoogleFavicon(props: any) {
   return (
@@ -49,7 +49,7 @@ export default function RegisterConsumer() {
 
       if (isNewUser) {
         // Only call registerConsumer if user is new
-        await axios.post("http://localhost:5001/api/v1/consumers/registerConsumer", {
+        await apiService.post("/consumers/registerConsumer", {
           user_id: user.uid,
           name: user.displayName || "New User",
           email: user.email,
@@ -109,7 +109,7 @@ export default function RegisterConsumer() {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      await axios.post("http://localhost:5001/api/v1/consumers/registerConsumer", {
+      await apiService.post("/consumers/registerConsumer", {
         user_id: user.uid,
         name: email || "New User",
         email: user.email,
