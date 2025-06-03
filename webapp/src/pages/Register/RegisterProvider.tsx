@@ -6,14 +6,13 @@ import {
 import SvgIcon from "@mui/material/SvgIcon";
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
-import { auth,messaging,getToken } from "../../../src/firebase.ts";
+import { auth } from "../../../src/firebase.ts";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   GoogleAuthProvider,
   signInWithPopup
 } from "firebase/auth";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { setUser } from "../../store/userSlice";
@@ -46,24 +45,6 @@ function GoogleFavicon(props: any) {
     </SvgIcon>
   );
 }
-
-const VAPID_KEY = import.meta.env.VITE_FIREBASE_VAPID_KEY;
-const getFcmToken = async () => {
-  console.log("Getting FCM token...");
-  try {
-    if (!messaging) {
-      console.error("Firebase messaging is not initialized");
-      return null;
-    }
-    const token = await getToken(messaging, { vapidKey: VAPID_KEY });
-    console.log("FCM token received:", token);
-    return token;
-  } catch (err) {
-    console.error("Unable to get FCM token", err);
-    return null;
-  }
-};
-
 
 export default function RegisterProvider() {
   const [mode, setMode] = useState<'register' | 'signin'>('register');
@@ -173,7 +154,6 @@ export default function RegisterProvider() {
   const handleExtraFieldsSubmit = async (avatarUrl: string, userEmail: string) => {
   setRegisterError(null);
   setRegisterLoading(true);
-  const fcm_token = await getFcmToken();
   try {
     const user = auth.currentUser;
     if (!user) {
@@ -194,7 +174,7 @@ export default function RegisterProvider() {
       average_rating: 0,
       review_count: 0,
       bio,
-      fcm_token: fcm_token || "",
+      fcm_token: "",
     };
 
     console.log("Submitting provider registration:", payload);
@@ -208,7 +188,7 @@ export default function RegisterProvider() {
       name: name || user.displayName || user.email || "",
       avatarUrl: avatarUrl || "",
       userType: "provider",
-      fcm_token: fcm_token || "",
+      fcm_token: "",
       location: location || "",
     }));
 
@@ -235,12 +215,6 @@ export default function RegisterProvider() {
       const user = result.user;
       const isNewUser = (result as any)?._tokenResponse?.isNewUser || false;
 
-      const fcm_token = await getFcmToken();
-
-      const updatedProvider = await apiService.put(`/providers/updateProvider/${user.uid}`, {
-        fcm_token: fcm_token || "",
-      });
-      console.log("Updated provider response:", updatedProvider);
       if (isNewUser) {
         // Show extra fields form for new users, pass avatar and email from Google
         setPendingGoogleUser({
@@ -255,7 +229,7 @@ export default function RegisterProvider() {
           name: user.displayName || user.email || "",
           avatarUrl: user.photoURL || "",
           userType: "provider",
-          fcm_token: fcm_token || "",
+          fcm_token: "",
           location: "",
         }));
         alert("Google sign-in successful! You can now access your dashboard.");
@@ -316,20 +290,12 @@ export default function RegisterProvider() {
       const userCredential = await signInWithEmailAndPassword(auth, email || username, password);
       const user = userCredential.user;
 
-      console.log("sign in response : ", userCredential);
-      const fcm_token = await getFcmToken();
-      console.log("fcm token : ", fcm_token);
-
-      const updatedProvider = await apiService.put(`/providers/updateProvider/${user.uid}`, {
-        fcm_token: fcm_token || "",
-      });
-      console.log("Updated provider response:", updatedProvider);
       dispatch(setUser({
         uid: user.uid,
         name: user.displayName || user.email || "",
         avatarUrl: user.photoURL || "",
         userType: "provider",
-        fcm_token: fcm_token || "",
+        fcm_token: "",
         location: "",
       }));
       alert(`Login successful as ${user.email}`);

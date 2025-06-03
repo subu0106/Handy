@@ -3,7 +3,6 @@ import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
-import { getMessaging, getToken, onMessage, type Messaging } from 'firebase/messaging';
 
 // Your Firebase configuration
 const firebaseConfig = {
@@ -23,12 +22,6 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
-// Initialize Messaging (for FCM)
-let messaging : Messaging;
-try {
-  messaging = getMessaging(app);
-} catch (e) {
-  messaging = {} as Messaging; 
-}
 
-export { app, auth, db, storage, messaging, getToken, onMessage };
+
+export { app, auth, db, storage };
