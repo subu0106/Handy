@@ -171,7 +171,37 @@ const ConsumerHome: React.FC = () => {
                     </div>
                   );
                 })}
+                <button
+                  onClick={() => navigate("/dashboard/create-service-request")} // Add /dashboard prefix
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    background: theme.palette.primary.main,
+                    color: theme.palette.primary.contrastText,
+                    border: "none",
+                    borderRadius: 8,
+                    padding: "10px 22px",
+                    fontSize: "1.1rem",
+                    fontWeight: 600,
+                    boxShadow: `0 2px 8px ${theme.palette.primary.main}22`,
+                    cursor: "pointer",
+                    transition: "background 0.2s, box-shadow 0.2s, transform 0.1s",
+                  }}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.background = theme.palette.primary.dark;
+                    e.currentTarget.style.transform = "scale(1.04)";
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.background = theme.palette.primary.main;
+                    e.currentTarget.style.transform = "scale(1)";
+                  }}
+                >
+                  <AddCircleOutlineIcon style={{ fontSize: 24 }} />
+                  Create Service Request
+                </button>
               </div>
+              
             )}
           </div>
         </div>
