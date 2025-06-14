@@ -197,6 +197,18 @@ const App = () => {
           });
         }
 
+        const pairedJobsTopic = `paired_jobs_${user.uid}`;
+        socket.off(pairedJobsTopic);
+
+        socket.on(pairedJobsTopic, (jobData) => {
+          console.log("Accepted Offer job notification:", jobData);
+          showToast(
+            jobData.message,
+            "success"
+          );
+          dispatch(fetchServiceRequestsBasedOnService(user.uid));
+        });
+
         // Cleanup provider listeners
         return () => {
           if (Array.isArray(providerServices)) {
@@ -204,6 +216,7 @@ const App = () => {
               socket.off(`new_request_${service}`);
             });
           }
+          socket.off(pairedJobsTopic);
           socket.disconnect();
         };
       }

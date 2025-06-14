@@ -5,7 +5,7 @@ const {
   createOffers, 
   getOfferById, 
   updateOfferStatus,
-  updateOfferBudget, // Add this import
+  updateOfferBudget,
   deleteOffer, 
   getOffersByRequestId,
   getOffersByProviderId,
