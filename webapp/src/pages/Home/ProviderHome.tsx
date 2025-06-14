@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { Typography, useTheme, Button, Chip, Dialog, DialogTitle, DialogContent, DialogActions } from "@mui/material";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { fetchServiceRequests } from "../../store/serviceRequestsSlice";
+import { fetchServiceRequestsBasedOnService } from "../../store/serviceRequestsSlice";
 import { fetchProviderOffers, fetchOfferByProviderAndRequest, deleteProviderOffer, clearExistingOffers } from "../../store/providerOffersSlice";
 import type { RootState } from "../../store/store";
 import AssignmentIcon from "@mui/icons-material/Assignment";
@@ -30,7 +30,9 @@ const ProviderHome: React.FC = () => {
     [...myOffers].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()) : [];
 
   useEffect(() => {
-    dispatch(fetchServiceRequests());
+    if (user.uid) {
+      dispatch(fetchServiceRequestsBasedOnService(user.uid));
+    }
     if (user.uid) {
       dispatch(fetchProviderOffers(user.uid));
     }

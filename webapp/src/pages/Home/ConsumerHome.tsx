@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { Typography, useTheme, Button } from "@mui/material";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { fetchServiceRequests, setSelectedRequestId } from "../../store/serviceRequestsSlice";
+import { fetchServiceRequestsForConsumer, setSelectedRequestId } from "../../store/serviceRequestsSlice";
 import { fetchOffers } from "../../store/offersSlice";
 import type { RootState } from "../../store/store";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
@@ -31,8 +31,10 @@ const ConsumerHome: React.FC = () => {
     [...offers].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()) : [];
 
   useEffect(() => {
-    dispatch(fetchServiceRequests());
-  }, [dispatch]);
+      if (user.uid) {
+        dispatch(fetchServiceRequestsForConsumer(user.uid));
+      }
+    }, [dispatch, user.uid]);
 
   useEffect(() => {
     if (selectedRequestId) {

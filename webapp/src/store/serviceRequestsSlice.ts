@@ -25,6 +25,25 @@ export const fetchServiceRequests = createAsyncThunk(
   }
 );
 
+export const fetchServiceRequestsForConsumer = createAsyncThunk(
+  'serviceRequests/fetchServiceRequestsForConsumer',
+  async (consumerId: string) => {
+    // Accept consumerId as an argument to the thunk
+    const response = await apiService.get(`/requests/getActiveRequestsForConsumer/${consumerId}`);
+    return response.data;
+  }
+);
+
+export const fetchServiceRequestsBasedOnService = createAsyncThunk(
+  'serviceRequests/fetchServiceRequestsBasedOnService',
+  async (providerId: string) => {
+    // Accept providerId as an argument to the thunk
+    const response = await apiService.get(`/requests/getActiveRequestsForProvider/${providerId}`);
+    return response.data;
+  }
+);
+
+
 const serviceRequestsSlice = createSlice({
   name: 'serviceRequests',
   initialState,
@@ -35,14 +54,25 @@ const serviceRequestsSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(fetchServiceRequests.pending, (state) => {
+      .addCase(fetchServiceRequestsForConsumer.pending, (state) => {
         state.status = 'loading';
       })
-      .addCase(fetchServiceRequests.fulfilled, (state, action) => {
+      .addCase(fetchServiceRequestsForConsumer.fulfilled, (state, action) => {
         state.status = 'succeeded';
         state.items = action.payload;
       })
-      .addCase(fetchServiceRequests.rejected, (state, action) => {
+      .addCase(fetchServiceRequestsForConsumer.rejected, (state, action) => {
+        state.status = 'failed';
+        state.error = action.error.message ?? 'Failed to fetch Service Requests!';
+      })
+      .addCase(fetchServiceRequestsBasedOnService.pending, (state) => {
+        state.status = 'loading';
+      })
+      .addCase(fetchServiceRequestsBasedOnService.fulfilled, (state, action) => {
+        state.status = 'succeeded';
+        state.items = action.payload;
+      })
+      .addCase(fetchServiceRequestsBasedOnService.rejected, (state, action) => {
         state.status = 'failed';
         state.error = action.error.message ?? 'Failed to fetch Service Requests!';
       });

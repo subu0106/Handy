@@ -19,9 +19,15 @@ const createRequest = async (req, res) => {
       return res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR).json({message: "Failed to create request"});
     }
 
+    const serviceId = data.service_id
+    const service = await db.getOne(constant.DB_TABLES.SERVICES, "WHERE service_id = $1", [serviceId]);
+    if (!service) {
+      return res.status(constant.HTTP_STATUS.BAD_REQUEST).json({message: "Invalid service_id provided"});
+    }
+    const serviceName = service.name;
     // Emit event to all clients
     const io = req.app.get("io");
-    io.emit("new_request", {
+    io.emit(`new_request_${serviceName}`, {
       title: data.title,
       budget: data.budget,
       request: request
