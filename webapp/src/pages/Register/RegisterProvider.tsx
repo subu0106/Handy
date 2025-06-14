@@ -215,6 +215,7 @@ export default function RegisterProvider() {
       const user = result.user;
       const isNewUser = (result as any)?._tokenResponse?.isNewUser || false;
 
+
       if (isNewUser) {
         // Show extra fields form for new users, pass avatar and email from Google
         setPendingGoogleUser({
@@ -224,6 +225,10 @@ export default function RegisterProvider() {
         setShowExtraFields(true);
       } else {
         // Existing user: just login and redirect
+        const userInstanceCallResponse = await apiService.get(`users/user_info/${user.uid}`);
+        const userInstanceData = userInstanceCallResponse.data
+        const servicesArray = userInstanceData.services_array;
+
         dispatch(setUser({
           uid: user.uid,
           name: user.displayName || user.email || "",
@@ -231,6 +236,7 @@ export default function RegisterProvider() {
           userType: "provider",
           fcm_token: "",
           location: "",
+          services_array: servicesArray,
         }));
         alert("Google sign-in successful! You can now access your dashboard.");
         navigate("/dashboard");
@@ -289,7 +295,11 @@ export default function RegisterProvider() {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email || username, password);
       const user = userCredential.user;
-
+      
+      const userInstanceCallResponse = await apiService.get(`users/user_info/${user.uid}`);
+      const userInstanceData = userInstanceCallResponse.data
+      const servicesArray = userInstanceData.services_array;
+    
       dispatch(setUser({
         uid: user.uid,
         name: user.displayName || user.email || "",
@@ -297,6 +307,7 @@ export default function RegisterProvider() {
         userType: "provider",
         fcm_token: "",
         location: "",
+        services_array: servicesArray,
       }));
       alert(`Login successful as ${user.email}`);
       navigate("/dashboard");

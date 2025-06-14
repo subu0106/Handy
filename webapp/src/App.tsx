@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback, useEffect } from "react";
 import { ThemeProvider, createTheme, CssBaseline, Snackbar, Alert } from "@mui/material";
 import { RouterProvider } from "react-router-dom";
 import { createAppRouter } from "@routes/index";
-import { fetchServiceRequests } from "./store/serviceRequestsSlice";
+import { fetchServiceRequests, fetchServiceRequestsBasedOnService } from "./store/serviceRequestsSlice";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { io } from "socket.io-client";
 
@@ -114,21 +114,41 @@ const App = () => {
   );
 
   useEffect(() => {
-    console.log("user",user);
+    console.log("user from App.tsx",user);
+    
     if (user?.userType === "provider") {
       socket.connect();
 
       socket.on("connect", () => {
         console.log("Connected to WebSocket server");
       });
+      
+      const providerServices = user.services_array;
 
-      socket.on("new_request", (data) => {
-        setToast({ open: true, msg: `New request: ${data.title} (Budget: ${data.budget})`, severity: "info" });
-        dispatch(fetchServiceRequests());
-      });
+      if (Array.isArray(providerServices)) {
+        providerServices.forEach((service: string) => {
+          // Remove any previous listeners to avoid duplicates
+          socket.off(`new_request_${service}`);
+          socket.on(`new_request_${service}`, (data) => {
+        setToast({
+          open: true,
+          msg: `New request: ${data.title} (Budget: ${data.budget})`,
+          severity: "info",
+        });
+        if (user?.uid) {
+          dispatch(fetchServiceRequestsBasedOnService(user.uid));
+        }
+          });
+        });
+      }
 
+      // Cleanup listeners
       return () => {
-        socket.off("new_request");
+        if (Array.isArray(providerServices)) {
+          providerServices.forEach((service: string) => {
+        socket.off(`new_request_${service}`);
+          });
+        }
         socket.disconnect();
       };
     }
