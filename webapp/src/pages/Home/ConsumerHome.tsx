@@ -74,7 +74,7 @@ const ConsumerHome: React.FC = () => {
             flexDirection: "column",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: 24, paddingBottom: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: 24, paddingBottom: 12 }}>
             <AssignmentIcon color="primary" style={{ fontSize: 28 }} />
             <Typography variant="h6" gutterBottom style={{ margin: 0 }}>
               My Service Requests ({safeRequests.length})
@@ -91,41 +91,54 @@ const ConsumerHome: React.FC = () => {
               Messages
             </Button>
           </div>
-          <div style={{ padding: 24, paddingTop: 12, flex: 1 }}>
+
+          {/* Create Service Request Button - Moved to Top */}
+          <div style={{ padding: "0 24px 12px 24px" }}>
+            <button
+              onClick={() => navigate("/dashboard/create-service-request")}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 8,
+                width: "100%",
+                background: theme.palette.primary.main,
+                color: theme.palette.primary.contrastText,
+                border: "none",
+                borderRadius: 8,
+                padding: "12px 22px",
+                fontSize: "1rem",
+                fontWeight: 600,
+                boxShadow: `0 2px 8px ${theme.palette.primary.main}22`,
+                cursor: "pointer",
+                transition: "background 0.2s, box-shadow 0.2s, transform 0.1s",
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.background = theme.palette.primary.dark;
+                e.currentTarget.style.transform = "scale(1.02)";
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.background = theme.palette.primary.main;
+                e.currentTarget.style.transform = "scale(1)";
+              }}
+            >
+              <AddCircleOutlineIcon style={{ fontSize: 20 }} />
+              Create Service Request
+            </button>
+          </div>
+
+          <div style={{ padding: "0 24px 24px 24px", flex: 1 }}>
             {requestsStatus === "loading" ? (
               <div>Loading...</div>
             ) : safeRequests.length === 0 ? (
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
-                <div>No service requests found.</div>
-                <button
-                  onClick={() => navigate("/dashboard/create-service-request")} // Add /dashboard prefix
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8,
-                    background: theme.palette.primary.main,
-                    color: theme.palette.primary.contrastText,
-                    border: "none",
-                    borderRadius: 8,
-                    padding: "10px 22px",
-                    fontSize: "1.1rem",
-                    fontWeight: 600,
-                    boxShadow: `0 2px 8px ${theme.palette.primary.main}22`,
-                    cursor: "pointer",
-                    transition: "background 0.2s, box-shadow 0.2s, transform 0.1s",
-                  }}
-                  onMouseOver={(e) => {
-                    e.currentTarget.style.background = theme.palette.primary.dark;
-                    e.currentTarget.style.transform = "scale(1.04)";
-                  }}
-                  onMouseOut={(e) => {
-                    e.currentTarget.style.background = theme.palette.primary.main;
-                    e.currentTarget.style.transform = "scale(1)";
-                  }}
-                >
-                  <AddCircleOutlineIcon style={{ fontSize: 24 }} />
-                  Create Service Request
-                </button>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, marginTop: 20 }}>
+                <AssignmentIcon color="disabled" style={{ fontSize: 48 }} />
+                <Typography variant="body1" color="textSecondary" textAlign="center">
+                  No service requests found.
+                </Typography>
+                <Typography variant="body2" color="textSecondary" textAlign="center">
+                  Click the "Create Service Request" button above to get started.
+                </Typography>
               </div>
             ) : (
               <div>
@@ -137,73 +150,79 @@ const ConsumerHome: React.FC = () => {
                     <div
                       key={requestId}
                       style={{
-                        padding: 8,
+                        padding: 12,
                         marginBottom: 8,
                         cursor: "pointer",
                         background: isSelected ? "#e3f2fd" : undefined,
-                        borderRadius: 6,
+                        borderRadius: 8,
+                        border: isSelected ? `2px solid ${theme.palette.primary.main}` : "1px solid #e0e0e0",
                         display: "flex",
-                        alignItems: "center",
+                        flexDirection: "column",
                         gap: 8,
-                        transition: "background 0.2s, box-shadow 0.2s",
+                        transition: "background 0.2s, box-shadow 0.2s, border-color 0.2s",
                       }}
                       onClick={() => handleRequestClick(requestId)}
                       onMouseOver={(e) => {
-                        e.currentTarget.style.background = isSelected ? "#e3f2fd" : "#f5f5f5";
+                        if (!isSelected) {
+                          e.currentTarget.style.background = "#f5f5f5";
+                        }
                         e.currentTarget.style.boxShadow = "0 2px 8px rgba(25, 118, 210, 0.08)";
                       }}
                       onMouseOut={(e) => {
-                        e.currentTarget.style.background = isSelected ? "#e3f2fd" : "";
+                        if (!isSelected) {
+                          e.currentTarget.style.background = "";
+                        }
                         e.currentTarget.style.boxShadow = "none";
                       }}
                     >
-                      <AssignmentIcon
-                        color={isSelected ? "primary" : "disabled"}
-                        style={{ fontSize: 22 }}
-                      />
-                      <Typography style={{ fontWeight: isSelected ? 600 : 400 }}>
-                        {req.title}
-                      </Typography>
-                      <Typography variant="caption" color="textSecondary" style={{ marginLeft: "auto" }}>
-                        {"on "+ new Date(req.created_at).toLocaleDateString() + " at " + new Date(req.created_at).toLocaleTimeString()}
-                      </Typography>
-                      <Typography variant="caption" color="textSecondary">
-                        {req.status.charAt(0).toUpperCase() + req.status.slice(1)}
-                      </Typography>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <AssignmentIcon
+                          color={isSelected ? "primary" : "action"}
+                          style={{ fontSize: 22 }}
+                        />
+                        <Typography 
+                          variant="h6" 
+                          style={{ 
+                            fontWeight: isSelected ? 600 : 500,
+                            color: isSelected ? theme.palette.primary.main : undefined
+                          }}
+                        >
+                          {req.title}
+                        </Typography>
+                      </div>
+                      
+                      {req.description && (
+                        <Typography variant="body2" color="textSecondary" style={{ marginLeft: 30 }}>
+                          {req.description}
+                        </Typography>
+                      )}
+                      
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginLeft: 30 }}>
+                        <Typography variant="caption" color="textSecondary">
+                          Budget: ${req.budget} • {req.timeframe}
+                        </Typography>
+                        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                          <Typography variant="caption" color="textSecondary">
+                            {new Date(req.created_at).toLocaleDateString()}
+                          </Typography>
+                          <Typography 
+                            variant="caption" 
+                            style={{ 
+                              color: req.status === 'pending' ? theme.palette.warning.main : 
+                                     req.status === 'assigned' ? theme.palette.success.main : 
+                                     theme.palette.text.secondary,
+                              fontWeight: 500,
+                              textTransform: 'capitalize'
+                            }}
+                          >
+                            {req.status}
+                          </Typography>
+                        </div>
+                      </div>
                     </div>
                   );
                 })}
-                <button
-                  onClick={() => navigate("/dashboard/create-service-request")} // Add /dashboard prefix
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8,
-                    background: theme.palette.primary.main,
-                    color: theme.palette.primary.contrastText,
-                    border: "none",
-                    borderRadius: 8,
-                    padding: "10px 22px",
-                    fontSize: "1.1rem",
-                    fontWeight: 600,
-                    boxShadow: `0 2px 8px ${theme.palette.primary.main}22`,
-                    cursor: "pointer",
-                    transition: "background 0.2s, box-shadow 0.2s, transform 0.1s",
-                  }}
-                  onMouseOver={(e) => {
-                    e.currentTarget.style.background = theme.palette.primary.dark;
-                    e.currentTarget.style.transform = "scale(1.04)";
-                  }}
-                  onMouseOut={(e) => {
-                    e.currentTarget.style.background = theme.palette.primary.main;
-                    e.currentTarget.style.transform = "scale(1)";
-                  }}
-                >
-                  <AddCircleOutlineIcon style={{ fontSize: 24 }} />
-                  Create Service Request
-                </button>
               </div>
-              
             )}
           </div>
         </div>
@@ -234,16 +253,24 @@ const ConsumerHome: React.FC = () => {
               offersStatus === "loading" ? (
                 <div>Loading offers...</div>
               ) : safeOffers.length === 0 ? (
-                <div>No offers found for this request.</div>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, marginTop: 20 }}>
+                  <LocalOfferIcon color="disabled" style={{ fontSize: 48 }} />
+                  <Typography variant="body1" color="textSecondary" textAlign="center">
+                    No offers found for this request.
+                  </Typography>
+                  <Typography variant="body2" color="textSecondary" textAlign="center">
+                    Providers will submit offers which will appear here.
+                  </Typography>
+                </div>
               ) : (
                 <div>
                   {safeOffers.map((offer: any) => (
                     <div
                       key={offer.offer_id || offer.id}
                       style={{
-                        padding: 12,
-                        marginBottom: 8,
-                        borderRadius: 6,
+                        padding: 16,
+                        marginBottom: 12,
+                        borderRadius: 8,
                         border: "1px solid #e0e0e0",
                         display: "flex",
                         flexDirection: "column",
@@ -260,13 +287,19 @@ const ConsumerHome: React.FC = () => {
                       }}
                     >
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <LocalOfferIcon color="action" style={{ fontSize: 22 }} />
-                        <Typography>{offer.title || offer.description || `Offer #${offer.offer_id || offer.id}`}</Typography>
+                        <LocalOfferIcon color="primary" style={{ fontSize: 22 }} />
+                        <Typography variant="h6" style={{ fontWeight: 600 }}>
+                          Offer #{offer.offer_id || offer.id}
+                        </Typography>
                       </div>
                       
-                      {offer.budget && (
+                      <Typography variant="body1" style={{ fontWeight: 500 }}>
+                        Budget: ${offer.budget}
+                      </Typography>
+                      
+                      {offer.timeframe && (
                         <Typography variant="body2" color="textSecondary">
-                          Budget: ${offer.budget}
+                          Timeframe: {offer.timeframe}
                         </Typography>
                       )}
                       
@@ -277,18 +310,18 @@ const ConsumerHome: React.FC = () => {
                       )}
                       
                       <Typography variant="caption" color="textSecondary">
-                        {new Date(offer.created_at).toLocaleDateString()} at {new Date(offer.created_at).toLocaleTimeString()}
+                        Received on {new Date(offer.created_at).toLocaleDateString()} at {new Date(offer.created_at).toLocaleTimeString()}
                       </Typography>
                       
                       <Button
-                        variant="outlined"
+                        variant="contained"
                         size="small"
                         startIcon={<ChatIcon />}
                         onClick={(e) => {
                           e.stopPropagation();
                           handleStartChat(offer.provider_id, offer.provider_name || 'Provider');
                         }}
-                        sx={{ alignSelf: 'flex-start' }}
+                        sx={{ alignSelf: 'flex-start', mt: 1 }}
                       >
                         Message Provider
                       </Button>
@@ -297,7 +330,15 @@ const ConsumerHome: React.FC = () => {
                 </div>
               )
             ) : (
-              <div>Please select a service request to view offers.</div>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, marginTop: 40 }}>
+                <LocalOfferIcon color="disabled" style={{ fontSize: 48 }} />
+                <Typography variant="body1" color="textSecondary" textAlign="center">
+                  Select a service request to view offers
+                </Typography>
+                <Typography variant="body2" color="textSecondary" textAlign="center">
+                  Click on any request from the left panel to see received offers.
+                </Typography>
+              </div>
             )}
           </div>
         </div>

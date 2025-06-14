@@ -3,6 +3,7 @@ import { ThemeProvider, createTheme, CssBaseline, Snackbar, Alert } from "@mui/m
 import { RouterProvider } from "react-router-dom";
 import { createAppRouter } from "@routes/index";
 import { fetchServiceRequests, fetchServiceRequestsBasedOnService } from "./store/serviceRequestsSlice";
+import { fetchOffers } from "./store/offersSlice";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "./firebase";
@@ -11,7 +12,7 @@ import apiService from "./utils/apiService";
 import { io } from "socket.io-client";
 
 const THEME_KEY = "handy_theme_mode";
-const socket = io("http://localhost:5000", { autoConnect: false }); // Updated to port 5000
+const socket = io("http://localhost:5000", { autoConnect: false });
 
 const getStoredTheme = () => {
   if (typeof window !== "undefined") {
@@ -34,6 +35,7 @@ const App = () => {
   });
   const dispatch = useAppDispatch();
   const user = useAppSelector((state) => state.user);
+  const serviceRequests = useAppSelector((state) => state.serviceRequests) as any;
 
   const showToast = useCallback((msg: string, severity: "info" | "success" | "warning" | "error" = "info") => {
     setToast({ open: true, msg, severity });
@@ -56,7 +58,7 @@ const App = () => {
                 text: { primary: "#f3f6fa", secondary: "#b0b8c1" },
               }
             : {
-                primary: { main: "#1976d2" },
+                primary: { main: "#1565c0" },
                 secondary: { main: "#1565c0" },
                 background: { default: "#f4f6fa", paper: "#fff" },
                 text: { primary: "#23272f", secondary: "#5c6b7a" },
@@ -111,19 +113,17 @@ const App = () => {
           console.log('Firebase user detected:', firebaseUser.email);
           
           try {
-            // Try to get user data from backend
             const response = await apiService.get(`/users/user_info/${firebaseUser.uid}`);
             const userData = response.data;
 
             console.log('Backend user data:', userData);
 
-            // Restore user state in Redux with backend data
             dispatch(
               setUser({
                 uid: firebaseUser.uid,
                 name: firebaseUser.displayName || firebaseUser.email || userData.name || "User",
                 avatarUrl: firebaseUser.photoURL || userData.avatar || "",
-                userType: userData.user_type || "consumer", // Use backend user_type
+                userType: userData.user_type || "consumer",
                 fcm_token: userData.fcm_token || "",
                 location: userData.location || "",
                 services_array: userData.services_array || [],
@@ -133,15 +133,11 @@ const App = () => {
             console.log("User authentication restored with backend data");
           } catch (backendError) {
             console.warn("Backend call failed, signing out user:", backendError);
-            
-            // Instead of falling back to consumer, sign out the user
             await auth.signOut();
             dispatch(logout());
-            
             showToast('Session expired. Please sign in again.', 'warning');
           }
         } else {
-          // User is signed out
           console.log("No Firebase user, signing out");
           dispatch(logout());
         }
@@ -171,51 +167,88 @@ const App = () => {
     localStorage.setItem(THEME_KEY, themeMode);
   }, [themeMode]);
 
-  // WebSocket handling for providers
+  // WebSocket handling for both providers and consumers
   useEffect(() => {
-    console.log("user from App.tsx",user);
+    console.log("user from App.tsx", user);
     
-    if (user?.userType === "provider") {
+    if (user?.isAuthenticated && user?.uid) {
       socket.connect();
 
       socket.on("connect", () => {
         console.log("Connected to WebSocket server");
       });
-      
-      const providerServices = user.services_array;
 
-      if (Array.isArray(providerServices)) {
-        providerServices.forEach((service: string) => {
-          // Remove any previous listeners to avoid duplicates
-          socket.off(`new_request_${service}`);
-          socket.on(`new_request_${service}`, (data) => {
-            setToast({
-              open: true,
-              msg: `New request: ${data.title} (Budget: ${data.budget})`,
-              severity: "info",
-            });
-            if (user?.uid) {
-              dispatch(fetchServiceRequestsBasedOnService(user.uid));
-            }
-          });
-        });
-      }
+      // Provider-specific listeners (existing code)
+      if (user.userType === "provider") {
+        const providerServices = user.services_array;
 
-      // Cleanup listeners
-      return () => {
         if (Array.isArray(providerServices)) {
           providerServices.forEach((service: string) => {
             socket.off(`new_request_${service}`);
+            socket.on(`new_request_${service}`, (data) => {
+              showToast(
+                `New request: ${data.title} (Budget: $${data.budget})`,
+                "info"
+              );
+              if (user?.uid) {
+                dispatch(fetchServiceRequestsBasedOnService(user.uid));
+              }
+            });
           });
         }
+
+        // Cleanup provider listeners
+        return () => {
+          if (Array.isArray(providerServices)) {
+            providerServices.forEach((service: string) => {
+              socket.off(`new_request_${service}`);
+            });
+          }
+          socket.disconnect();
+        };
+      }
+
+      // Consumer-specific listeners (new code)
+      if (user.userType === "consumer") {
+        const offerTopic = `new_offer_${user.uid}`;
+        
+        // Remove any existing listeners
+        socket.off(offerTopic);
+        
+        // Listen for new offers
+        socket.on(offerTopic, (offerData) => {
+          console.log("Received new offer notification:", offerData);
+          
+          showToast(
+            `New offer: $${offerData.budget} for "${offerData.request_title}" from ${offerData.provider_name}`,
+            "success"
+          );
+
+          // Refresh offers for the specific request if it's currently selected
+          const { selectedRequestId } = serviceRequests;
+          if (selectedRequestId && selectedRequestId.toString() === offerData.request_id.toString()) {
+            console.log("Refreshing offers for selected request:", selectedRequestId);
+            dispatch(fetchOffers(selectedRequestId.toString()));
+          }
+        });
+
+        // Cleanup consumer listeners
+        return () => {
+          socket.off(offerTopic);
+          socket.disconnect();
+        };
+      }
+
+      // General cleanup if not provider or consumer
+      return () => {
         socket.disconnect();
       };
     }
-    // If not provider, ensure socket is disconnected
+
     return () => {
       socket.disconnect();
     };
-  }, [user?.userType, user?.services_array, dispatch, showToast]);
+  }, [user?.userType, user?.services_array, user?.uid, user?.isAuthenticated, dispatch, showToast, serviceRequests?.selectedRequestId]);
 
   if (authLoading) {
     return (
@@ -245,7 +278,7 @@ const App = () => {
       <RouterProvider router={router} />
       <Snackbar
         open={toast.open}
-        autoHideDuration={5000}
+        autoHideDuration={8000} // Increased duration for offer notifications
         onClose={() => setToast((t) => ({ ...t, open: false }))}
         anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
