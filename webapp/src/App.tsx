@@ -211,9 +211,11 @@ const App = () => {
       // Consumer-specific listeners (new code)
       if (user.userType === "consumer") {
         const offerTopic = `new_offer_${user.uid}`;
+        const deleteOfferTopic = `delete_offer_${user.uid}`;
         
         // Remove any existing listeners
         socket.off(offerTopic);
+        socket.off(deleteOfferTopic);
         
         // Listen for new offers
         socket.on(offerTopic, (offerData) => {
@@ -232,9 +234,25 @@ const App = () => {
           }
         });
 
+        // Listen for deleted offers
+        socket.on(deleteOfferTopic, (offerData) => {
+          console.log("Received deleted offer notification:", offerData);
+          showToast(
+            `Offer deleted for "${offerData.request_title}" from ${offerData.provider_name}`,
+            "warning"
+          );
+          // Refresh offers for the specific request if it's currently selected
+          const { selectedRequestId } = serviceRequests;
+          if (selectedRequestId && selectedRequestId.toString() === offerData.request_id.toString()) {
+            console.log("Refreshing offers for selected request after deletion:", selectedRequestId);
+            dispatch(fetchOffers(selectedRequestId.toString()));
+          }
+        });
+
         // Cleanup consumer listeners
         return () => {
           socket.off(offerTopic);
+          socket.off(deleteOfferTopic);
           socket.disconnect();
         };
       }

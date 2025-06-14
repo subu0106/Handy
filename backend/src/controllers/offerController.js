@@ -99,19 +99,80 @@ const updateOfferStatus = async (req, res) => {
 
 const deleteOffer = async (req, res) => {
   const offer_id = req.params.offer_id;
+
   try {
+    // First, get the offer details to get request_id and provider_id
+    const offer = await db.getOne(
+      constant.DB_TABLES.OFFERS,
+      'WHERE offer_id = $1',
+      [offer_id]
+    );
+
+    if (!offer) {
+      return res.status(constant.HTTP_STATUS.NOT_FOUND).json({ 
+        message: "Offer Not Found" 
+      });
+    }
+
+    // Now get the request details to find the consumer and emit notification
+    const request = await db.getOne(
+      constant.DB_TABLES.REQUESTS,
+      "WHERE request_id = $1",
+      [offer.request_id]
+    );
+
+    if (request) {
+      // Get provider details for the notification
+      const provider = await db.getOne(
+        constant.DB_TABLES.USERS,
+        "WHERE user_id = $1",
+        [offer.provider_id]
+      );
+
+      // Get io instance from app
+      const io = req.app.get("io");
+      
+      // Emit to specific consumer
+      const notificationData = {
+        offer_id: offer.offer_id,
+        request_id: offer.request_id,
+        request_title: request.title,
+        provider_id: offer.provider_id,
+        provider_name: provider?.name || "Provider",
+        budget: offer.budget,
+        timeframe: offer.timeframe,
+        created_at: offer.created_at,
+        message: `Offer deleted for "${request.title}" from ${provider?.name || "Provider"} - $${offer.budget}`
+      };
+
+      console.log(`Emitting deletion of offer to consumer: delete_offer_${request.user_id}`, notificationData);
+      
+      // Emit to the consumer who created the request
+      io.emit(`delete_offer_${request.user_id}`, notificationData);
+    }
+
+    // Delete the offer
     const deletedOffer = await db.remove(
       constant.DB_TABLES.OFFERS,
       'WHERE offer_id = $1',
       [offer_id]
     );
+    
     if (deletedOffer) {
-      res.status(constant.HTTP_STATUS.OK).json({ message: "Offer deleted successfully" });
+      res.status(constant.HTTP_STATUS.OK).json({ 
+        message: "Offer deleted successfully" 
+      });
     } else {
-      res.status(constant.HTTP_STATUS.NOT_FOUND).json({ message: "Offer Not Found" });
+      res.status(constant.HTTP_STATUS.NOT_FOUND).json({ 
+        message: "Offer Not Found" 
+      });
     }
   } catch (err) {
-    res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
+    console.error("Error deleting offer:", err);
+    res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ 
+      error: "Internal server error",
+      details: err.message 
+    });
   }
 };
 
