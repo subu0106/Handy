@@ -267,10 +267,100 @@ const getOfferByProviderAndRequest = async (req, res) => {
   }
 };
 
+const updateOfferBudget = async (req, res) => {
+  const offer_id = req.params.offer_id;
+  const { budget } = req.body;
+
+  try {
+    // Validate input
+    if (!budget || budget <= 0) {
+      return res.status(constant.HTTP_STATUS.BAD_REQUEST).json({
+        message: "Valid budget amount is required"
+      });
+    }
+
+    // First check if offer exists and is pending
+    const offer = await db.getOne(
+      constant.DB_TABLES.OFFERS,
+      'WHERE offer_id = $1',
+      [offer_id]
+    );
+
+    if (!offer) {
+      return res.status(constant.HTTP_STATUS.NOT_FOUND).json({
+        message: "Offer not found"
+      });
+    }
+
+    if (offer.status !== constant.OFFERS_STATUS.PENDING) {
+      return res.status(constant.HTTP_STATUS.BAD_REQUEST).json({
+        message: "Only pending offers can be updated"
+      });
+    }
+
+    // Update the offer budget
+    const updateData = { budget: budget };
+    const condition = 'WHERE offer_id = $1';
+    const updatedOffer = await db.update(
+      constant.DB_TABLES.OFFERS,
+      updateData,
+      condition,
+      [offer_id]
+    );
+
+    if (updatedOffer) {
+      // Get request and provider details for notification
+      const request = await db.getOne(
+        constant.DB_TABLES.REQUESTS,
+        "WHERE request_id = $1",
+        [offer.request_id]
+      );
+
+      if (request) {
+        const provider = await db.getOne(
+          constant.DB_TABLES.USERS,
+          "WHERE user_id = $1",
+          [offer.provider_id]
+        );
+
+        // Get io instance and emit budget update notification
+        const io = req.app.get("io");
+        const notificationData = {
+          offer_id: offer.offer_id,
+          request_id: offer.request_id,
+          request_title: request.title,
+          provider_id: offer.provider_id,
+          provider_name: provider?.name || "Provider",
+          old_budget: offer.budget,
+          new_budget: budget,
+          timeframe: offer.timeframe,
+          message: `Offer budget updated for "${request.title}" - New price: $${budget} (was $${offer.budget})`
+        };
+
+        console.log(`Emitting offer budget update to consumer: update_offer_${request.user_id}`, notificationData);
+        io.emit(`update_offer_${request.user_id}`, notificationData);
+      }
+
+      res.status(constant.HTTP_STATUS.OK).json(updatedOffer);
+    } else {
+      res.status(constant.HTTP_STATUS.NOT_FOUND).json({
+        message: "Offer not found"
+      });
+    }
+  } catch (err) {
+    console.error("Error updating offer budget:", err);
+    res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      error: "Internal server error",
+      details: err.message
+    });
+  }
+};
+
 module.exports = {
   createOffers,
   getOfferById,
   updateOfferStatus,
+  updateOfferBudget,
   deleteOffer,
   getOffersByRequestId,
   getOffersByProviderId,

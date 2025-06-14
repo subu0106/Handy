@@ -212,10 +212,12 @@ const App = () => {
       if (user.userType === "consumer") {
         const offerTopic = `new_offer_${user.uid}`;
         const deleteOfferTopic = `delete_offer_${user.uid}`;
+        const updateOfferTopic = `update_offer_${user.uid}`;
         
         // Remove any existing listeners
         socket.off(offerTopic);
         socket.off(deleteOfferTopic);
+        socket.off(updateOfferTopic);
         
         // Listen for new offers
         socket.on(offerTopic, (offerData) => {
@@ -249,10 +251,26 @@ const App = () => {
           }
         });
 
+        socket.on(updateOfferTopic, (offerData) => {  
+          console.log("Received updated offer notification:", offerData);
+          showToast(
+            `Offer budget updated: from $${offerData.old_budget} to $${offerData.new_budget} for "${offerData.request_title}" from ${offerData.provider_name}`,
+            "info"
+          );
+          // Refresh offers for the specific request if it's currently selected
+          const { selectedRequestId } = serviceRequests;
+          if (selectedRequestId && selectedRequestId.toString() === offerData.request_id.toString()) {
+            console.log("Refreshing offers for selected request after update:", selectedRequestId);
+            dispatch(fetchOffers(selectedRequestId.toString()));
+          }
+        }
+        );
+
         // Cleanup consumer listeners
         return () => {
           socket.off(offerTopic);
           socket.off(deleteOfferTopic);
+          socket.off(updateOfferTopic);
           socket.disconnect();
         };
       }

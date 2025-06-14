@@ -31,6 +31,14 @@ export const deleteProviderOffer = createAsyncThunk(
   }
 );
 
+export const updateOfferBudget = createAsyncThunk(
+  'providerOffers/updateOfferBudget',
+  async ({ offerId, budget }: { offerId: string; budget: number }) => {
+    const response = await apiService.put(`/offers/updateBudget/${offerId}`, { budget });
+    return response.data;
+  }
+);
+
 const providerOffersSlice = createSlice({
   name: 'providerOffers',
   initialState,
@@ -61,6 +69,13 @@ const providerOffersSlice = createSlice({
       .addCase(deleteProviderOffer.fulfilled, (state, action) => {
         const deletedOfferId = action.payload;
         state.items = state.items.filter(offer => offer.offer_id !== deletedOfferId);
+      })
+      .addCase(updateOfferBudget.fulfilled, (state, action) => {
+        const updatedOffer = action.payload;
+        const index = state.items.findIndex(offer => offer.offer_id === updatedOffer.offer_id);
+        if (index !== -1) {
+          state.items[index] = { ...state.items[index], ...updatedOffer };
+        }
       });
   },
 });
