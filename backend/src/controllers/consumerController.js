@@ -14,7 +14,7 @@ const registerConsumer = async (req, res) => {
       location,
       avatar,
       created_at,
-      penalty_point,
+      platform_tokens,
       is_deleted,
       deleted_at
     } = req.body;
@@ -41,7 +41,7 @@ const registerConsumer = async (req, res) => {
         location,
         avatar,
         created_at: defaultCreatedAt, 
-        penalty_point: penalty_point === undefined ? defaultPenaltyPoint : penalty_point,
+        platform_tokens: platform_tokens === undefined ? defaultPenaltyPoint : platform_tokens,
         is_deleted: is_deleted === undefined ? defaultIsDeleted : is_deleted,     
         deleted_at
       }

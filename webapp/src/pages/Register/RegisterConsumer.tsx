@@ -82,7 +82,7 @@ export default function RegisterConsumer() {
   useEffect(() => {
     if (auth.currentUser) {
       // If user is already authenticated, redirect to home
-      navigate("/");
+      navigate("/dashboard");
       dispatch(setUser({
         uid: auth.currentUser.uid,
         name: auth.currentUser.displayName || auth.currentUser.email || "",
@@ -145,7 +145,7 @@ export default function RegisterConsumer() {
       userType: "consumer", 
       }));
       
-      navigate("/");
+      navigate("/dashboard");
       
     } catch (error: any) {
       if (error.code === "auth/user-not-found" || error.code === "auth/wrong-password") {

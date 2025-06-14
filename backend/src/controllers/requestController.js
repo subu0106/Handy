@@ -37,17 +37,23 @@ const createRequest = async (req, res) => {
 const getRequestById = async (req, res) => {
   try {
     const request_id = req.params.request_id;
-    const condition = "WHERE (request_id = $1)";
+    const condition = "WHERE request_id = $1";
     const request = await db.getOne(constant.DB_TABLES.REQUESTS, condition, [request_id]);
-
-    if (!request){
-      return res.status(constant.HTTP_STATUS.NOT_FOUND).json({message: "Request not found"});
+    
+    if (!request) {
+      return res.status(constant.HTTP_STATUS.NOT_FOUND).json({
+        message: "Request not found"
+      });
     }
-    return res.status(constant.HTTP_STATUS.OK).json(request);
-  } catch(err){
-    return res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR);
+    
+    res.status(constant.HTTP_STATUS.OK).json(request);
+  } catch (err) {
+    console.error('Error fetching request:', err);
+    res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      message: "Internal server error"
+    });
   }
-}
+};
 
 const updateRequestStatus = async (req, res) => {
   const request_id = req.params.request_id;
