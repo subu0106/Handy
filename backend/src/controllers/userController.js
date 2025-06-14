@@ -29,11 +29,15 @@ const getUserInformationbyId = async (user_id) => {
                 // prepare provider object
                 const provider = {
                     ...user,
-                    ... providerDetails
+                    ...providerDetails,
+                    user_type: constant.USER_TYPES.PROVIDER 
                 };
                 return provider;
             } else if (user.user_type && user.user_type === constant.USER_TYPES.CONSUMER){
-                return user;
+                return {
+                    ...user,
+                    user_type: constant.USER_TYPES.CONSUMER
+                };
             } else {
                 return null;
             }

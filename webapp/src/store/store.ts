@@ -2,14 +2,14 @@ import { configureStore } from '@reduxjs/toolkit';
 import userReducer from './userSlice';
 import serviceRequestsReducer from './serviceRequestsSlice';
 import offersReducer from './offersSlice';
-import providerOffersReducer from './providerOffersSlice'; // Add this
+import providerOffersReducer from './providerOffersSlice';
 
 export const store = configureStore({
   reducer: {
     user: userReducer,
     serviceRequests: serviceRequestsReducer,
     offers: offersReducer,
-    providerOffers: providerOffersReducer, // Add this
+    providerOffers: providerOffersReducer,
   },
 });
 

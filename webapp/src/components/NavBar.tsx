@@ -66,8 +66,6 @@ const NavBar: React.FC<NavBarProps> = ({ userName, avatarUrl, themeMode, onToggl
   const handleLogout = async () => {
     try {
       await auth.signOut();
-      dispatch(logout());
-      navigate("/"); // This will go to your WelcomePage
       console.log("User logged out successfully");
     } catch (error) {
       console.error("Logout error:", error);

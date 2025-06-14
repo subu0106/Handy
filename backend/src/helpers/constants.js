@@ -18,9 +18,8 @@ const constant = {
         REQUESTS: "requests",
     },
     USER_TYPES: {
-        CONSUMER: "consumer",
         PROVIDER: "provider",
-        ADMIN: "admin"
+        CONSUMER: "consumer"
     },
     REQUESTS_STATUS: {
         PENDING: "pending",

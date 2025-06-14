@@ -8,9 +8,50 @@ const createOffers = async (req, res) => {
     data.created_at = new Date();
 
     const offer = await db.create(constant.DB_TABLES.OFFERS, data);
+    
+    // Get the request details to find the consumer and emit notification
+    const request = await db.getOne(
+      constant.DB_TABLES.REQUESTS,
+      "WHERE request_id = $1",
+      [data.request_id]
+    );
+
+    if (request) {
+      // Get provider details for the notification
+      const provider = await db.getOne(
+        constant.DB_TABLES.USERS,
+        "WHERE user_id = $1",
+        [data.provider_id]
+      );
+
+      // Get io instance from app
+      const io = req.app.get("io");
+      
+      // Emit to specific consumer
+      const notificationData = {
+        offer_id: offer.offer_id,
+        request_id: data.request_id,
+        request_title: request.title,
+        provider_id: data.provider_id,
+        provider_name: provider?.name || "Provider",
+        budget: data.budget,
+        timeframe: data.timeframe,
+        created_at: offer.created_at,
+        message: `New offer received for "${request.title}" - $${data.budget}`
+      };
+
+      console.log(`Emitting new offer to consumer: new_offer_${request.user_id}`, notificationData);
+      
+      // Emit to the consumer who created the request
+      io.emit(`new_offer_${request.user_id}`, notificationData);
+    }
+    
     res.status(constant.HTTP_STATUS.CREATED).json(offer);
   } catch (err) {
-    res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR);
+    console.error("Error creating offer:", err);
+    res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      message: "Internal server error"
+    });
     throw err;
   }
 };
@@ -18,10 +59,9 @@ const createOffers = async (req, res) => {
 const getOfferById = async (req, res) => {
   try {
     const offer_id = req.params.offer_id;
-    // console.log(offer_id);
     const condition = "WHERE (offer_id = $1)";
-    const offer = await db.getOne('public.offers', condition, [offer_id]);
-    // const offer = await db.getOne(constant.DB_TABLES.OFFERS, condition, [offer_id]);
+    const offer = await db.getOne(constant.DB_TABLES.OFFERS, condition, [offer_id]);
+    
     if (!offer){
       res.status(constant.HTTP_STATUS.NOT_FOUND).json({message: "Offer not found"});
     } else {
@@ -34,7 +74,7 @@ const getOfferById = async (req, res) => {
 }
 
 const updateOfferStatus = async (req, res) => {
-  const offer_id=req.params.offer_id;
+  const offer_id = req.params.offer_id;
   const newStatus = req.body.status
   const validOfferStatusArray = [constant.OFFERS_STATUS.ACCEPTED, constant.OFFERS_STATUS.PENDING, constant.OFFERS_STATUS.REJECTED];
   const condition = 'WHERE offer_id=$1';
@@ -59,19 +99,80 @@ const updateOfferStatus = async (req, res) => {
 
 const deleteOffer = async (req, res) => {
   const offer_id = req.params.offer_id;
+
   try {
+    // First, get the offer details to get request_id and provider_id
+    const offer = await db.getOne(
+      constant.DB_TABLES.OFFERS,
+      'WHERE offer_id = $1',
+      [offer_id]
+    );
+
+    if (!offer) {
+      return res.status(constant.HTTP_STATUS.NOT_FOUND).json({ 
+        message: "Offer Not Found" 
+      });
+    }
+
+    // Now get the request details to find the consumer and emit notification
+    const request = await db.getOne(
+      constant.DB_TABLES.REQUESTS,
+      "WHERE request_id = $1",
+      [offer.request_id]
+    );
+
+    if (request) {
+      // Get provider details for the notification
+      const provider = await db.getOne(
+        constant.DB_TABLES.USERS,
+        "WHERE user_id = $1",
+        [offer.provider_id]
+      );
+
+      // Get io instance from app
+      const io = req.app.get("io");
+      
+      // Emit to specific consumer
+      const notificationData = {
+        offer_id: offer.offer_id,
+        request_id: offer.request_id,
+        request_title: request.title,
+        provider_id: offer.provider_id,
+        provider_name: provider?.name || "Provider",
+        budget: offer.budget,
+        timeframe: offer.timeframe,
+        created_at: offer.created_at,
+        message: `Offer deleted for "${request.title}" from ${provider?.name || "Provider"} - $${offer.budget}`
+      };
+
+      console.log(`Emitting deletion of offer to consumer: delete_offer_${request.user_id}`, notificationData);
+      
+      // Emit to the consumer who created the request
+      io.emit(`delete_offer_${request.user_id}`, notificationData);
+    }
+
+    // Delete the offer
     const deletedOffer = await db.remove(
       constant.DB_TABLES.OFFERS,
       'WHERE offer_id = $1',
       [offer_id]
     );
+    
     if (deletedOffer) {
-      res.status(constant.HTTP_STATUS.OK).json({ message: "Offer deleted successfully" });
+      res.status(constant.HTTP_STATUS.OK).json({ 
+        message: "Offer deleted successfully" 
+      });
     } else {
-      res.status(constant.HTTP_STATUS.NOT_FOUND).json({ message: "Offer Not Found" });
+      res.status(constant.HTTP_STATUS.NOT_FOUND).json({ 
+        message: "Offer Not Found" 
+      });
     }
   } catch (err) {
-    res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
+    console.error("Error deleting offer:", err);
+    res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ 
+      error: "Internal server error",
+      details: err.message 
+    });
   }
 };
 
@@ -89,7 +190,7 @@ const getOffersByRequestId = async (req, res) => {
     const offers = await db.getAll(constant.DB_TABLES.OFFERS, condition, [requestId]);
     
     if (!offers || offers.length === 0) {
-      return res.status(constant.HTTP_STATUS.OK).json([]); // Return empty array instead of 404
+      return res.status(constant.HTTP_STATUS.OK).json([]);
     }
     
     res.status(constant.HTTP_STATUS.OK).json(offers);
@@ -111,11 +212,9 @@ const getOffersByProviderId = async (req, res) => {
       });
     }
 
-    // Get offers by provider
     const condition = "WHERE provider_id = $1 ORDER BY created_at DESC";
     const offers = await db.getAll(constant.DB_TABLES.OFFERS, condition, [provider_id]);
     
-    // Enrich offers with request details
     const enrichedOffers = await Promise.all(
       offers.map(async (offer) => {
         try {
@@ -168,13 +267,12 @@ const getOfferByProviderAndRequest = async (req, res) => {
   }
 };
 
-// Update the module.exports
 module.exports = {
   createOffers,
   getOfferById,
   updateOfferStatus,
   deleteOffer,
   getOffersByRequestId,
-  getOffersByProviderId, // Add this
-  getOfferByProviderAndRequest // Add this
+  getOffersByProviderId,
+  getOfferByProviderAndRequest
 };
