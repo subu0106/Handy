@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node index.js",
-    "dev": "nodemon index.js"
+    "dev": "nodemon index.js",
+    "health": "curl http://localhost:5000/api/v1/health"
   },
   "author": "",
   "license": "ISC",

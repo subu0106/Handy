@@ -4,7 +4,7 @@ const cors = require('cors');
 const http = require('http');
 const { Server } = require('socket.io');
 
-const port = process.env.PORT || 5000;
+const port = process.env.PORT || 5000; // Changed to 5000 to match your frontend
 
 const consumerRoutes = require("./src/routes/consumerRoutes");
 const offerRoutes = require("./src/routes/offerRoutes");
@@ -17,22 +17,34 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "*",
+    origin: ["http://localhost:5173", "http://localhost:3000"], // Add both ports
     methods: ["GET", "POST", "PUT", "DELETE"],
-    allowedHeaders: ["Content-Type", "Authorization"]
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true
   }
 });
 
 // Make io accessible in controllers
 app.set("io", io);
 
+// More specific CORS configuration
 app.use(cors({
-  origin: '*',
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  origin: ["http://localhost:5173", "http://localhost:3000"],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
 }));
 
+// Handle preflight requests
+// app.options('*', cors());
+
 app.use(express.json());
+
+// Add a test route to verify server is running
+app.get('/api/v1/health', (req, res) => {
+  res.status(200).json({ message: 'Server is running!' });
+});
+
 app.use("/api/v1/consumers", consumerRoutes.router);
 app.use("/api/v1/offers", offerRoutes.router);
 app.use("/api/v1/requests", requestRoutes.router);
@@ -49,4 +61,5 @@ io.on("connection", (socket) => {
 
 server.listen(port, () => {
   console.log(`Server is running on port ${port}`);
+  console.log(`Test the server at: http://localhost:${port}/api/v1/health`);
 });

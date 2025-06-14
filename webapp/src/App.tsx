@@ -4,10 +4,14 @@ import { RouterProvider } from "react-router-dom";
 import { createAppRouter } from "@routes/index";
 import { fetchServiceRequests, fetchServiceRequestsBasedOnService } from "./store/serviceRequestsSlice";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "./firebase";
+import { setUser, logout } from "./store/userSlice";
+import apiService from "./utils/apiService";
 import { io } from "socket.io-client";
 
 const THEME_KEY = "handy_theme_mode";
-const socket = io("http://localhost:5001", { autoConnect: false }); // Don't connect immediately
+const socket = io("http://localhost:5000", { autoConnect: false }); // Updated to port 5000
 
 const getStoredTheme = () => {
   if (typeof window !== "undefined") {
@@ -22,32 +26,18 @@ const getSystemTheme = () =>
 
 const App = () => {
   const [themeMode, setThemeMode] = useState<"light" | "dark">(() => getStoredTheme() || getSystemTheme());
+  const [authLoading, setAuthLoading] = useState(true);
   const [toast, setToast] = useState<{ open: boolean; msg: string; severity: "info" | "success" | "warning" | "error" }>({
     open: false,
     msg: "",
     severity: "info",
   });
   const dispatch = useAppDispatch();
-  const user = useAppSelector((state) => state.user); // adjust selector if needed
+  const user = useAppSelector((state) => state.user);
 
   const showToast = useCallback((msg: string, severity: "info" | "success" | "warning" | "error" = "info") => {
     setToast({ open: true, msg, severity });
   }, []);
-
-  useEffect(() => {
-    if (!getStoredTheme()) {
-      const media = window.matchMedia("(prefers-color-scheme: dark)");
-      const listener = (e: MediaQueryListEvent) => {
-        setThemeMode(e.matches ? "dark" : "light");
-      };
-      media.addEventListener("change", listener);
-      return () => media.removeEventListener("change", listener);
-    }
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem(THEME_KEY, themeMode);
-  }, [themeMode]);
 
   const handleToggleTheme = useCallback(() => {
     setThemeMode((prev) => (prev === "dark" ? "light" : "dark"));
@@ -113,6 +103,75 @@ const App = () => {
     [themeMode, handleToggleTheme]
   );
 
+  // Authentication persistence handling
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      try {
+        if (firebaseUser) {
+          console.log('Firebase user detected:', firebaseUser.email);
+          
+          try {
+            // Try to get user data from backend
+            const response = await apiService.get(`/users/user_info/${firebaseUser.uid}`);
+            const userData = response.data;
+
+            console.log('Backend user data:', userData);
+
+            // Restore user state in Redux with backend data
+            dispatch(
+              setUser({
+                uid: firebaseUser.uid,
+                name: firebaseUser.displayName || firebaseUser.email || userData.name || "User",
+                avatarUrl: firebaseUser.photoURL || userData.avatar || "",
+                userType: userData.user_type || "consumer", // Use backend user_type
+                fcm_token: userData.fcm_token || "",
+                location: userData.location || "",
+                services_array: userData.services_array || [],
+              })
+            );
+
+            console.log("User authentication restored with backend data");
+          } catch (backendError) {
+            console.warn("Backend call failed, signing out user:", backendError);
+            
+            // Instead of falling back to consumer, sign out the user
+            await auth.signOut();
+            dispatch(logout());
+            
+            showToast('Session expired. Please sign in again.', 'warning');
+          }
+        } else {
+          // User is signed out
+          console.log("No Firebase user, signing out");
+          dispatch(logout());
+        }
+      } catch (error) {
+        console.error("Error in auth state change:", error);
+        dispatch(logout());
+      } finally {
+        setAuthLoading(false);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [dispatch, showToast]);
+
+  useEffect(() => {
+    if (!getStoredTheme()) {
+      const media = window.matchMedia("(prefers-color-scheme: dark)");
+      const listener = (e: MediaQueryListEvent) => {
+        setThemeMode(e.matches ? "dark" : "light");
+      };
+      media.addEventListener("change", listener);
+      return () => media.removeEventListener("change", listener);
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem(THEME_KEY, themeMode);
+  }, [themeMode]);
+
+  // WebSocket handling for providers
   useEffect(() => {
     console.log("user from App.tsx",user);
     
@@ -130,14 +189,14 @@ const App = () => {
           // Remove any previous listeners to avoid duplicates
           socket.off(`new_request_${service}`);
           socket.on(`new_request_${service}`, (data) => {
-        setToast({
-          open: true,
-          msg: `New request: ${data.title} (Budget: ${data.budget})`,
-          severity: "info",
-        });
-        if (user?.uid) {
-          dispatch(fetchServiceRequestsBasedOnService(user.uid));
-        }
+            setToast({
+              open: true,
+              msg: `New request: ${data.title} (Budget: ${data.budget})`,
+              severity: "info",
+            });
+            if (user?.uid) {
+              dispatch(fetchServiceRequestsBasedOnService(user.uid));
+            }
           });
         });
       }
@@ -146,7 +205,7 @@ const App = () => {
       return () => {
         if (Array.isArray(providerServices)) {
           providerServices.forEach((service: string) => {
-        socket.off(`new_request_${service}`);
+            socket.off(`new_request_${service}`);
           });
         }
         socket.disconnect();
@@ -156,7 +215,29 @@ const App = () => {
     return () => {
       socket.disconnect();
     };
-  }, [user?.userType, dispatch]);
+  }, [user?.userType, user?.services_array, dispatch, showToast]);
+
+  if (authLoading) {
+    return (
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            height: "100vh",
+            background: theme.palette.background.default,
+          }}
+        >
+          <div style={{ textAlign: "center" }}>
+            <h2 style={{ color: theme.palette.text.primary }}>Loading...</h2>
+            <p style={{ color: theme.palette.text.secondary }}>Checking authentication status</p>
+          </div>
+        </div>
+      </ThemeProvider>
+    );
+  }
 
   return (
     <ThemeProvider theme={theme}>

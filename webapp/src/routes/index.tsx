@@ -1,4 +1,4 @@
-import { createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter, Navigate } from "react-router-dom";
 import MainLayout from "@layouts/MainLayout";
 import Home from "@pages/Home";
 import About from "@pages/About";
@@ -13,24 +13,70 @@ import RegisterProvider from "@pages/Register/RegisterProvider";
 import RegisterConsumer from "@pages/Register/RegisterConsumer";
 import ChatList from "@pages/Chats/ChatList";
 import ChatRoom from "@pages/Chats/ChatRoom";
-import WelcomePage from "@pages/WelcomePage"; // Use your existing WelcomePage
+import Splash from "@pages/WelcomePage";
 import CreateOffer from "@pages/CreateOffer";
+import { useAppSelector } from "@store/hooks";
 
-// Export a function to create the router, allowing injection of props into MainLayout
+// Protected Route Component
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const user = useAppSelector((state) => state.user);
+
+  if (!user.isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
+
+  return <>{children}</>;
+};
+
+// Public Route Component (redirect if authenticated)
+const PublicRoute = ({ children }: { children: React.ReactNode }) => {
+  const user = useAppSelector((state) => state.user);
+
+  if (user.isAuthenticated) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return <>{children}</>;
+};
+
 export const createAppRouter = (mainLayoutProps: any) =>
   createBrowserRouter([
     {
       path: "/",
-      element: <WelcomePage />, // Use your existing welcome page as splash
+      element: (
+        <PublicRoute>
+          <Splash />
+        </PublicRoute>
+      ),
+    },
+    {
+      path: "/register/provider",
+      element: (
+        <PublicRoute>
+          <RegisterProvider />
+        </PublicRoute>
+      ),
+    },
+    {
+      path: "/register/consumer",
+      element: (
+        <PublicRoute>
+          <RegisterConsumer />
+        </PublicRoute>
+      ),
     },
     {
       path: "/dashboard",
-      element: <MainLayout {...mainLayoutProps} />, // Main app with navbar
+      element: (
+        <ProtectedRoute>
+          <MainLayout {...mainLayoutProps} />
+        </ProtectedRoute>
+      ),
       children: [
         { path: "", element: <Home /> },
         { path: "about", element: <About /> },
         { path: "create-service-request", element: <CreateServiceRequest /> },
-        { path: "create-offer/:requestId", element: <CreateOffer /> }, // Add this line
+        { path: "create-offer/:requestId", element: <CreateOffer /> },
         { path: "profile", element: <Profile /> },
         { path: "providers", element: <Providers /> },
         { path: "jobs", element: <Jobs /> },
@@ -44,14 +90,6 @@ export const createAppRouter = (mainLayoutProps: any) =>
           element: <ChatRoom />,
         },
       ],
-    },
-    {
-      path: "/register/provider",
-      element: <RegisterProvider />,
-    },
-    {
-      path: "/register/consumer",
-      element: <RegisterConsumer />,
     },
     {
       path: "*",

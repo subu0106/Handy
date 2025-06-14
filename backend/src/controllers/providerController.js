@@ -23,7 +23,7 @@ const registerProvider = async (req, res) => {
     } = req.body;
 
     // Set default values
-    const defaultUserType = constant.USER_TYPES.CONSUMER;
+    const defaultUserType = constant.USER_TYPES.PROVIDER;
     const defaultPenaltyPoint = 0;
     const defaultIsDeleted = false;
     const defaultCreatedAt = created_at || new Date().toISOString();

@@ -1,8 +1,8 @@
 import React, { useEffect } from "react";
-import { Typography, useTheme, Button, Chip, Dialog, DialogTitle, DialogContent, DialogActions } from "@mui/material";
+import { Typography, useTheme, Button, Chip } from "@mui/material";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { fetchServiceRequestsBasedOnService } from "../../store/serviceRequestsSlice";
-import { fetchProviderOffers, fetchOfferByProviderAndRequest, deleteProviderOffer, clearExistingOffers } from "../../store/providerOffersSlice";
+import { fetchProviderOffers, deleteProviderOffer, addOffer } from "../../store/providerOffersSlice";
 import type { RootState } from "../../store/store";
 import AssignmentIcon from "@mui/icons-material/Assignment";
 import ChatIcon from "@mui/icons-material/Chat";
@@ -19,7 +19,7 @@ const ProviderHome: React.FC = () => {
   const providerOffers = useAppSelector((state: RootState) => state.providerOffers) as any;
   const user = useAppSelector((state: RootState) => state.user);
   const { items: requests = [], status: requestsStatus = "" } = serviceRequests;
-  const { items: myOffers = [], existingOffersByRequest = {} } = providerOffers;
+  const { items: myOffers = [] } = providerOffers;
 
   // Show all pending requests for providers
   const safeRequests = Array.isArray(requests) ? 
@@ -29,35 +29,19 @@ const ProviderHome: React.FC = () => {
   const safeOffers = Array.isArray(myOffers) ? 
     [...myOffers].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()) : [];
 
+  // Single useEffect to fetch both requests and offers
   useEffect(() => {
     if (user.uid) {
       dispatch(fetchServiceRequestsBasedOnService(user.uid));
-    }
-    if (user.uid) {
       dispatch(fetchProviderOffers(user.uid));
     }
   }, [dispatch, user.uid]);
-
-  useEffect(() => {
-    // Check existing offers for all visible requests
-    if (user.uid && safeRequests.length > 0) {
-      dispatch(clearExistingOffers());
-      safeRequests.forEach((req: any) => {
-        const requestId = req.request_id || req.id;
-        dispatch(fetchOfferByProviderAndRequest({ 
-          providerId: user.uid!, 
-          requestId: requestId.toString() 
-        }));
-      });
-    }
-  }, [dispatch, user.uid, safeRequests.length]);
 
   const handleCreateOffer = (requestId: string) => {
     navigate(`/dashboard/create-offer/${requestId}`);
   };
 
   const handleViewOffer = (offer: any) => {
-    // You can implement a view offer modal or navigate to a detailed view
     alert(`Offer Details:\nBudget: $${offer.budget}\nTimeframe: ${offer.timeframe}\nStatus: ${offer.status}`);
   };
 
@@ -65,8 +49,7 @@ const ProviderHome: React.FC = () => {
     if (window.confirm('Are you sure you want to delete this offer?')) {
       try {
         await dispatch(deleteProviderOffer(offerId));
-        // Refresh the offers list
-        dispatch(fetchProviderOffers(user.uid!));
+        // No need to refetch, Redux will update the state automatically
       } catch (error) {
         console.error('Error deleting offer:', error);
         alert('Failed to delete offer');
@@ -74,9 +57,11 @@ const ProviderHome: React.FC = () => {
     }
   };
 
+  // Optimized function to check if provider has an offer for a specific request
   const getExistingOffer = (requestId: string) => {
-    return existingOffersByRequest[requestId];
-    console.log('Existing offers:', myOffers);
+    return myOffers.find((offer: any) => 
+      (offer.request_id || offer.id).toString() === requestId.toString()
+    );
   };
 
   return (
@@ -212,6 +197,13 @@ const ProviderHome: React.FC = () => {
                             Create Offer
                           </Button>
                         )}
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          onClick={() => navigate(`/dashboard/requests/${requestId}`)}
+                        >
+                          View Details
+                        </Button>
                       </div>
                     </div>
                   );
