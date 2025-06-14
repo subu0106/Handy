@@ -7,6 +7,7 @@ export default defineConfig({
   plugins: [react(),tailwindcss()],
   resolve: {
     alias: {
+      '@root': '/src',
       '@assets': '/src/assets',
       '@components': '/src/components',
       '@layouts': '/src/layouts',
