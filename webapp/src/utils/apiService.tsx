@@ -1,3 +1,7 @@
+/**
+ * Axios API service instance with authentication and global error handling.
+ * Automatically attaches Firebase auth token to requests and handles network/auth errors.
+ */
 import axios from "axios";
 import { auth } from "@config/firebase";
 
@@ -11,7 +15,7 @@ const apiService = axios.create({
   timeout: 10000, // 10 second timeout
 });
 
-// Add auth token to all requests
+// Attach auth token to all requests
 apiService.interceptors.request.use(
   async (config) => {
     try {
@@ -28,7 +32,7 @@ apiService.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Handle auth and network errors globally
+// Global response error handling
 apiService.interceptors.response.use(
   (response) => response,
   async (error) => {

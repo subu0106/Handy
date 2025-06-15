@@ -17,32 +17,29 @@ import CreateServiceRequest from "@pages/CreateServiceRequest";
 import RegisterProvider from "@pages/Register/RegisterProvider";
 import RegisterConsumer from "@pages/Register/RegisterConsumer";
 
-// Protected Route Component
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const user = useAppSelector((state) => state.user);
-
-  if (!user.isAuthenticated) {
-    return <Navigate to="/" replace />;
-  }
-
-  return <>{children}</>;
-};
-
-// Public Route Component (redirect if authenticated)
-const PublicRoute = ({ children }: { children: React.ReactNode }) => {
-  const user = useAppSelector((state) => state.user);
-
-  if (user.isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
-  }
-
-  return <>{children}</>;
-};
-
 /**
  * App router configuration for all public and protected routes.
  * Uses route guards to redirect based on authentication state.
  */
+
+// Route guard for protected routes
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const user = useAppSelector((state) => state.user);
+  if (!user.isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
+  return <>{children}</>;
+};
+
+// Route guard for public routes (redirects if authenticated)
+const PublicRoute = ({ children }: { children: React.ReactNode }) => {
+  const user = useAppSelector((state) => state.user);
+  if (user.isAuthenticated) {
+    return <Navigate to="/dashboard" replace />;
+  }
+  return <>{children}</>;
+};
+
 export const createAppRouter = (mainLayoutProps: any) =>
   createBrowserRouter([
     {

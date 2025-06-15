@@ -8,8 +8,8 @@ import { setUser, logout } from "@store/userSlice";
 import { fetchOffers } from "@store/offersSlice";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { useState, useMemo, useCallback, useEffect } from "react";
-import { ThemeProvider, createTheme, CssBaseline, Snackbar, Alert } from "@mui/material";
-import { fetchServiceRequests, fetchServiceRequestsBasedOnService } from "@store/serviceRequestsSlice";
+import { fetchServiceRequestsBasedOnService } from "@store/serviceRequestsSlice";
+import { ThemeProvider, createTheme, CssBaseline, Snackbar, Alert, CircularProgress } from "@mui/material";
 
 /**
  * Theme and WebSocket constants
@@ -34,6 +34,7 @@ const getSystemTheme = (): "light" | "dark" =>
 
 /**
  * Main App Component
+ * Handles theme, authentication, WebSocket events, and global notifications.
  */
 const App = () => {
   // State
@@ -51,12 +52,9 @@ const App = () => {
   const serviceRequests = useAppSelector((state) => state.serviceRequests) as any;
 
   // Toast helper
-  const showToast = useCallback(
-    (msg: string, severity: "info" | "success" | "warning" | "error" = "info") => {
-      setToast({ open: true, msg, severity });
-    },
-    []
-  );
+  const showToast = useCallback((msg: string, severity: "info" | "success" | "warning" | "error" = "info") => {
+    setToast({ open: true, msg, severity });
+  }, []);
 
   // Theme toggle handler
   const handleToggleTheme = useCallback(() => {
@@ -125,9 +123,7 @@ const App = () => {
     [themeMode, handleToggleTheme]
   );
 
-  /**
-   * Authentication state listener
-   */
+  // Authentication state listener
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       try {
@@ -163,9 +159,7 @@ const App = () => {
     return () => unsubscribe();
   }, [dispatch, showToast]);
 
-  /**
-   * Listen for system theme changes if no theme is stored
-   */
+  // Listen for system theme changes if no theme is stored
   useEffect(() => {
     if (!getStoredTheme()) {
       const media = window.matchMedia("(prefers-color-scheme: dark)");
@@ -177,16 +171,12 @@ const App = () => {
     }
   }, []);
 
-  /**
-   * Persist theme mode in localStorage
-   */
+  // Persist theme mode in localStorage
   useEffect(() => {
     localStorage.setItem(THEME_KEY, themeMode);
   }, [themeMode]);
 
-  /**
-   * WebSocket event handling for providers and consumers
-   */
+  // WebSocket event handling for providers and consumers
   useEffect(() => {
     if (user?.isAuthenticated && user?.uid) {
       socket.connect();
@@ -206,17 +196,14 @@ const App = () => {
             });
           });
         }
-
         const pairedJobsTopic = `paired_jobs_${user.uid}`;
         socket.off(pairedJobsTopic);
-
         socket.on(pairedJobsTopic, (jobData) => {
           console.log("Accepted Offer job notification:", jobData);
-          showToast(
-            jobData.message,
-            "success"
-          );
-          dispatch(fetchServiceRequestsBasedOnService(user.uid));
+          showToast(jobData.message, "success");
+          if (user?.uid) {
+            dispatch(fetchServiceRequestsBasedOnService(user.uid));
+          }
         });
         return () => {
           if (Array.isArray(providerServices)) {
@@ -246,17 +233,13 @@ const App = () => {
           }
         });
         socket.on(deleteOfferTopic, (offerData) => {
-          showToast(
-            `Offer deleted for "${offerData.request_title}" from ${offerData.provider_name}`,
-            "warning"
-          );
+          showToast(`Offer deleted for "${offerData.request_title}" from ${offerData.provider_name}`, "warning");
           const { selectedRequestId } = serviceRequests;
           if (selectedRequestId && selectedRequestId.toString() === offerData.request_id.toString()) {
             dispatch(fetchOffers(selectedRequestId.toString()));
           }
         });
-
-        socket.on(updateOfferTopic, (offerData) => {  
+        socket.on(updateOfferTopic, (offerData) => {
           console.log("Received updated offer notification:", offerData);
           showToast(
             `Offer budget updated: from $${offerData.old_budget} to $${offerData.new_budget} for "${offerData.request_title}" from ${offerData.provider_name}`,
@@ -268,8 +251,7 @@ const App = () => {
             console.log("Refreshing offers for selected request after update:", selectedRequestId);
             dispatch(fetchOffers(selectedRequestId.toString()));
           }
-        }
-        );
+        });
         return () => {
           socket.off(offerTopic);
           socket.off(deleteOfferTopic);
@@ -309,8 +291,8 @@ const App = () => {
           }}
         >
           <div style={{ textAlign: "center" }}>
-            <h2 style={{ color: theme.palette.text.primary }}>Loading...</h2>
-            <p style={{ color: theme.palette.text.secondary }}>Checking authentication status</p>
+            <h2 style={{ fontSize: "1rem", color: theme.palette.text.secondary, marginBottom: 12 }}>Loading...</h2>
+            <CircularProgress size={36} thickness={4} />
           </div>
         </div>
       </ThemeProvider>
