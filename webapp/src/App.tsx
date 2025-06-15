@@ -69,17 +69,17 @@ const App = () => {
           mode: themeMode,
           ...(themeMode === "dark"
             ? {
-                primary: { main: "#1976d2" },
-                secondary: { main: "#90caf9" },
-                background: { default: "#23272f", paper: "#2c313a" },
-                text: { primary: "#f3f6fa", secondary: "#b0b8c1" },
-              }
+              primary: { main: "#1976d2" },
+              secondary: { main: "#90caf9" },
+              background: { default: "#23272f", paper: "#2c313a" },
+              text: { primary: "#f3f6fa", secondary: "#b0b8c1" },
+            }
             : {
-                primary: { main: "#1565c0" },
-                secondary: { main: "#1565c0" },
-                background: { default: "#f4f6fa", paper: "#fff" },
-                text: { primary: "#23272f", secondary: "#5c6b7a" },
-              }),
+              primary: { main: "#1565c0" },
+              secondary: { main: "#1565c0" },
+              background: { default: "#f4f6fa", paper: "#fff" },
+              text: { primary: "#23272f", secondary: "#5c6b7a" },
+            }),
         },
         shape: { borderRadius: 12 },
         typography: {
@@ -130,20 +130,19 @@ const App = () => {
         if (firebaseUser) {
 
           const isInRegistration = window.location.pathname.includes('/register');
-          
+
           try {
             const token = await firebaseUser.getIdToken();
             const userInfoResponse = await apiService.get(`/users/user_info/${firebaseUser.uid}`, {
               headers: { Authorization: `Bearer ${token}` }
             });
-            
+
             const userData = userInfoResponse.data;
             dispatch(setUser({
               uid: firebaseUser.uid,
               name: userData.name || firebaseUser.displayName || firebaseUser.email || "",
               avatarUrl: userData.avatar || firebaseUser.photoURL || "",
               userType: userData.user_type || "",
-              fcm_token: userData.fcm_token || "",
               location: userData.location || "",
               services_array: userData.services_array || [],
             }));

@@ -110,7 +110,6 @@ const updateProvider = async (req, res) => {
     'average_rating',
     'review_count',
     'bio',
-    'fcm_token'
   ];
   userUpdatable.forEach((field) => {
     if (req.body[field] !== undefined) userFields[field] = req.body[field];
