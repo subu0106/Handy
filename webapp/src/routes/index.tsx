@@ -1,14 +1,11 @@
 import MainLayout from "@layouts/MainLayout";
 import { useAppSelector } from "@store/hooks";
 import { createBrowserRouter, Navigate } from "react-router-dom";
-import Jobs from "@pages/Jobs";
 import Home from "@pages/Home";
-import About from "@pages/About";
 import Offers from "@pages/Offers";
 import NotFound from "@pages/NotFound";
 import Register from "@pages/Register";
 import Splash from "@pages/WelcomePage";
-import Providers from "@pages/Providers";
 import ChatList from "@pages/Chats/ChatList";
 import ChatRoom from "@pages/Chats/ChatRoom";
 import CreateOffer from "@pages/CreateOffer";
@@ -74,12 +71,9 @@ export const createAppRouter = (mainLayoutProps: any) =>
       ),
       children: [
         { path: "", element: <Home /> },
-        { path: "jobs", element: <Jobs /> },
-        { path: "about", element: <About /> },
         { path: "offers", element: <Offers /> },
         { path: "chats", element: <ChatList /> },
         { path: "register", element: <Register /> },
-        { path: "providers", element: <Providers /> },
         { path: "chats/:chatId", element: <ChatRoom /> },
         { path: "register/provider", element: <RegisterProvider /> },
         { path: "register/consumer", element: <RegisterConsumer /> },
