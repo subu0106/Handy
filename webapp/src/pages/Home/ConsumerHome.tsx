@@ -1,27 +1,23 @@
-import React, { useEffect, useState } from "react";
-import { 
-  Typography, 
-  useTheme, 
+import {
+  Box,
+  Chip,
   Button,
   Dialog,
+  useTheme,
+  Typography,
   DialogTitle,
   DialogContent,
   DialogActions,
-  Chip,
-  Box
 } from "@mui/material";
-import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { fetchServiceRequestsForConsumer, setSelectedRequestId } from "../../store/serviceRequestsSlice";
-import { fetchOffers } from "../../store/offersSlice";
-import type { RootState } from "../../store/store";
-import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
-import AssignmentIcon from "@mui/icons-material/Assignment";
-import LocalOfferIcon from "@mui/icons-material/LocalOffer";
-import ChatIcon from "@mui/icons-material/Chat";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import apiService from "@utils/apiService";
+import type { RootState } from "@store/store";
 import { useNavigate } from "react-router-dom";
-import { createOrGetChat } from "../../utils/chatUtils";
-import apiService from "../../utils/apiService";
+import { fetchOffers } from "@store/offersSlice";
+import { createOrGetChat } from "@utils/chatUtils";
+import React, { useEffect, useState } from "react";
+import { useAppDispatch, useAppSelector } from "@store/hooks";
+import { AddCircleOutline, Assignment, LocalOffer, Chat, CheckCircle } from "@mui/icons-material";
+import { fetchServiceRequestsForConsumer, setSelectedRequestId } from "@store/serviceRequestsSlice";
 
 const ConsumerHome: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -38,14 +34,14 @@ const ConsumerHome: React.FC = () => {
   const [selectedOffer, setSelectedOffer] = useState<any>(null);
   const [acceptingOffer, setAcceptingOffer] = useState(false);
 
-   const [toast, setToast] = useState<{ 
-    open: boolean; 
-    message: string; 
-    severity: "success" | "error" | "warning" | "info" 
+  const [toast, setToast] = useState<{
+    open: boolean;
+    message: string;
+    severity: "success" | "error" | "warning" | "info";
   }>({
     open: false,
     message: "",
-    severity: "info"
+    severity: "info",
   });
 
   // Show toast function
@@ -54,13 +50,16 @@ const ConsumerHome: React.FC = () => {
   };
 
   // Filter requests by current user (consumer)
-  const safeRequests = Array.isArray(requests) ? 
-    requests.filter(req => req.user_id === user.uid)
-           .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()) : [];
+  const safeRequests = Array.isArray(requests)
+    ? requests
+        .filter((req) => req.user_id === user.uid)
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    : [];
 
   // Sort offers by latest first
-  const safeOffers = Array.isArray(offers) ? 
-    [...offers].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()) : [];
+  const safeOffers = Array.isArray(offers)
+    ? [...offers].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    : [];
 
   useEffect(() => {
     if (user.uid) {
@@ -80,7 +79,7 @@ const ConsumerHome: React.FC = () => {
       const chatId = await createOrGetChat(user.uid!, providerId, user.name, providerName);
       navigate(`/dashboard/chats/${chatId}`);
     } catch (error) {
-      console.error('Error starting chat:', error);
+      console.error("Error starting chat:", error);
     }
   };
 
@@ -102,34 +101,36 @@ const ConsumerHome: React.FC = () => {
     try {
       // Accept the offer
       await apiService.put(`/offers/updateStatus/${selectedOffer.offer_id}`, {
-        status: 'accepted'
+        status: "accepted",
       });
 
       // Create paired job
-      await apiService.post('/pairedJobs/create', {
+      await apiService.post("/pairedJobs/create", {
         consumer_id: user.uid,
         provider_id: selectedOffer.provider_id,
         request_id: selectedRequestId,
         offer_id: selectedOffer.offer_id,
         budget: selectedOffer.budget,
-        timeframe: selectedOffer.timeframe
+        timeframe: selectedOffer.timeframe,
       });
 
       // Update request status to assigned
       await apiService.put(`/requests/updateStatus/${selectedRequestId}`, {
-        status: 'assigned'
+        status: "assigned",
       });
 
-      showToast("Offer accepted successfully!", "success");      
+      showToast("Offer accepted successfully!", "success");
 
       // Refresh data
-      dispatch(fetchServiceRequestsForConsumer(user.uid));
-      dispatch(fetchOffers(selectedRequestId));
-      
+      if (user.uid) {
+        dispatch(fetchServiceRequestsForConsumer(user.uid));
+        dispatch(fetchOffers(selectedRequestId));
+      }
+
       setConfirmDialogOpen(false);
       setSelectedOffer(null);
     } catch (error) {
-      console.error('Error accepting offer:', error);
+      console.error("Error accepting offer:", error);
       showToast("Failed to accept offer. Please try again.", "error");
     } finally {
       setAcceptingOffer(false);
@@ -137,17 +138,24 @@ const ConsumerHome: React.FC = () => {
   };
 
   // Get the selected request details
-  const selectedRequest = safeRequests.find(req => 
-    (req.request_id || req.id).toString() === selectedRequestId?.toString()
+  const selectedRequest = safeRequests.find(
+    (req) => (req.request_id || req.id).toString() === selectedRequestId?.toString()
   );
 
   // Check if request is already assigned
-  const isRequestAssigned = selectedRequest?.status === 'assigned';
+  const isRequestAssigned = selectedRequest?.status === "assigned";
 
   return (
     <>
       <div
-        style={{ width: "100vw", height: "calc(100vh - 64px)", display: "flex", position: "absolute", top: 64, left: 0 }}
+        style={{
+          width: "100vw",
+          height: "calc(100vh - 64px)",
+          display: "flex",
+          position: "absolute",
+          top: 64,
+          left: 0,
+        }}
       >
         {/* Left: My Service Requests */}
         <div style={{ width: "50%", height: "100%", overflow: "auto", display: "flex", alignItems: "stretch" }}>
@@ -164,18 +172,18 @@ const ConsumerHome: React.FC = () => {
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: 8, padding: 24, paddingBottom: 12 }}>
-              <AssignmentIcon color="primary" style={{ fontSize: 28 }} />
+              <Assignment color="primary" style={{ fontSize: 28 }} />
               <Typography variant="h6" gutterBottom style={{ margin: 0 }}>
                 My Service Requests ({safeRequests.length})
               </Typography>
-              
+
               {/* Chat Button */}
               <Button
                 variant="outlined"
                 size="small"
-                startIcon={<ChatIcon />}
+                startIcon={<Chat />}
                 onClick={() => navigate("/dashboard/chats")}
-                sx={{ ml: 'auto' }}
+                sx={{ ml: "auto" }}
               >
                 Messages
               </Button>
@@ -211,7 +219,7 @@ const ConsumerHome: React.FC = () => {
                   e.currentTarget.style.transform = "scale(1)";
                 }}
               >
-                <AddCircleOutlineIcon style={{ fontSize: 20 }} />
+                <AddCircleOutline style={{ fontSize: 20 }} />
                 Create Service Request
               </button>
             </div>
@@ -221,7 +229,7 @@ const ConsumerHome: React.FC = () => {
                 <div>Loading...</div>
               ) : safeRequests.length === 0 ? (
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, marginTop: 20 }}>
-                  <AssignmentIcon color="disabled" style={{ fontSize: 48 }} />
+                  <Assignment color="disabled" style={{ fontSize: 48 }} />
                   <Typography variant="body1" color="textSecondary" textAlign="center">
                     No service requests found.
                   </Typography>
@@ -234,7 +242,7 @@ const ConsumerHome: React.FC = () => {
                   {safeRequests.map((req: any) => {
                     const requestId = req.request_id || req.id;
                     const isSelected = selectedRequestId === requestId;
-                    
+
                     return (
                       <div
                         key={requestId}
@@ -265,36 +273,35 @@ const ConsumerHome: React.FC = () => {
                         }}
                       >
                         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                          <AssignmentIcon
-                            color={isSelected ? "primary" : "action"}
-                            style={{ fontSize: 22 }}
-                          />
-                          <Typography 
-                            variant="h6" 
-                            style={{ 
+                          <Assignment color={isSelected ? "primary" : "action"} style={{ fontSize: 22 }} />
+                          <Typography
+                            variant="h6"
+                            style={{
                               fontWeight: isSelected ? 600 : 500,
-                              color: isSelected ? theme.palette.primary.main : undefined
+                              color: isSelected ? theme.palette.primary.main : undefined,
                             }}
                           >
                             {req.title}
                           </Typography>
-                          {req.status === 'assigned' && (
-                            <Chip 
-                              label="Assigned" 
-                              color="success" 
-                              size="small" 
-                              variant="filled"
-                            />
+                          {req.status === "assigned" && (
+                            <Chip label="Assigned" color="success" size="small" variant="filled" />
                           )}
                         </div>
-                        
+
                         {req.description && (
                           <Typography variant="body2" color="textSecondary" style={{ marginLeft: 30 }}>
                             {req.description.length > 60 ? `${req.description.substring(0, 60)}...` : req.description}
                           </Typography>
                         )}
-                        
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginLeft: 30 }}>
+
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            marginLeft: 30,
+                          }}
+                        >
                           <Typography variant="caption" color="textSecondary">
                             Budget: ${req.budget} • {req.timeframe}
                           </Typography>
@@ -302,14 +309,17 @@ const ConsumerHome: React.FC = () => {
                             <Typography variant="caption" color="textSecondary">
                               {new Date(req.created_at).toLocaleDateString()}
                             </Typography>
-                            <Typography 
-                              variant="caption" 
-                              style={{ 
-                                color: req.status === 'pending' ? theme.palette.warning.main : 
-                                       req.status === 'assigned' ? theme.palette.success.main : 
-                                       theme.palette.text.secondary,
+                            <Typography
+                              variant="caption"
+                              style={{
+                                color:
+                                  req.status === "pending"
+                                    ? theme.palette.warning.main
+                                    : req.status === "assigned"
+                                    ? theme.palette.success.main
+                                    : theme.palette.text.secondary,
                                 fontWeight: 500,
-                                textTransform: 'capitalize'
+                                textTransform: "capitalize",
                               }}
                             >
                               {req.status}
@@ -324,7 +334,7 @@ const ConsumerHome: React.FC = () => {
             </div>
           </div>
         </div>
-        
+
         {/* Right: Offers for Selected Request */}
         <div style={{ width: "50%", height: "100%", overflow: "auto", display: "flex", alignItems: "stretch" }}>
           <div
@@ -340,7 +350,7 @@ const ConsumerHome: React.FC = () => {
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: 8, padding: 24, paddingBottom: 0 }}>
-              <LocalOfferIcon color="primary" style={{ fontSize: 28 }} />
+              <LocalOffer color="primary" style={{ fontSize: 28 }} />
               <Typography variant="h6" gutterBottom style={{ margin: 0 }}>
                 {selectedRequestId ? `Offers (${safeOffers.length})` : "Select a Service Request"}
               </Typography>
@@ -350,8 +360,10 @@ const ConsumerHome: React.FC = () => {
                 offersStatus === "loading" ? (
                   <div>Loading offers...</div>
                 ) : safeOffers.length === 0 ? (
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, marginTop: 20 }}>
-                    <LocalOfferIcon color="disabled" style={{ fontSize: 48 }} />
+                  <div
+                    style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, marginTop: 20 }}
+                  >
+                    <LocalOffer color="disabled" style={{ fontSize: 48 }} />
                     <Typography variant="body1" color="textSecondary" textAlign="center">
                       No offers found for this request.
                     </Typography>
@@ -368,21 +380,21 @@ const ConsumerHome: React.FC = () => {
                           padding: 16,
                           marginBottom: 12,
                           borderRadius: 8,
-                          border: offer.status === 'accepted' ? "2px solid #4caf50" : "1px solid #e0e0e0",
+                          border: offer.status === "accepted" ? "2px solid #4caf50" : "1px solid #e0e0e0",
                           display: "flex",
                           flexDirection: "column",
                           gap: 8,
                           transition: "background 0.2s, box-shadow 0.2s",
-                          backgroundColor: offer.status === 'accepted' ? "#f1f8e9" : undefined,
+                          backgroundColor: offer.status === "accepted" ? "#f1f8e9" : undefined,
                         }}
                         onMouseOver={(e) => {
-                          if (offer.status !== 'accepted') {
+                          if (offer.status !== "accepted") {
                             e.currentTarget.style.background = "#f5f5f5";
                           }
                           e.currentTarget.style.boxShadow = "0 2px 8px rgba(25, 118, 210, 0.08)";
                         }}
                         onMouseOut={(e) => {
-                          if (offer.status !== 'accepted') {
+                          if (offer.status !== "accepted") {
                             e.currentTarget.style.background = "";
                           }
                           e.currentTarget.style.boxShadow = "none";
@@ -390,57 +402,58 @@ const ConsumerHome: React.FC = () => {
                       >
                         <div style={{ display: "flex", alignItems: "center", gap: 8, justifyContent: "space-between" }}>
                           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                            <LocalOfferIcon color="primary" style={{ fontSize: 22 }} />
+                            <LocalOffer color="primary" style={{ fontSize: 22 }} />
                             <Typography variant="h6" style={{ fontWeight: 600 }}>
                               ${offer.budget}
                             </Typography>
                           </div>
-                          {offer.status === 'accepted' && (
-                            <Chip 
-                              label="Accepted" 
-                              color="success" 
-                              size="small" 
+                          {offer.status === "accepted" && (
+                            <Chip
+                              label="Accepted"
+                              color="success"
+                              size="small"
                               variant="filled"
-                              icon={<CheckCircleIcon />}
+                              icon={<CheckCircle />}
                             />
                           )}
                         </div>
-                        
+
                         {offer.timeframe && (
                           <Typography variant="body2" color="textSecondary">
                             Timeframe: {offer.timeframe}
                           </Typography>
                         )}
-                        
+
                         {offer.provider_name && (
                           <Typography variant="body2" color="textSecondary">
                             Provider: {offer.provider_name}
                           </Typography>
                         )}
-                        
+
                         <Typography variant="caption" color="textSecondary">
-                          Received on {new Date(offer.created_at).toLocaleDateString()} at {new Date(offer.created_at).toLocaleTimeString()}
+                          Received on {new Date(offer.created_at).toLocaleDateString()} at{" "}
+                          {new Date(offer.created_at).toLocaleTimeString()}
                         </Typography>
-                        
+
                         <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
                           <Button
                             variant="outlined"
                             size="small"
-                            startIcon={<ChatIcon />}
+                            startIcon={<Chat />}
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleStartChat(offer.provider_id, offer.provider_name || 'Provider');
+                              handleStartChat(offer.provider_id, offer.provider_name || "Provider");
                             }}
                           >
                             Message
                           </Button>
-                          
-                          {offer.status !== 'accepted' && !isRequestAssigned && (
+
+                          {offer.status !== "accepted" && !isRequestAssigned && (
                             <Button
                               variant="contained"
                               size="small"
                               color="success"
-                              startIcon={<CheckCircleIcon />}
+                              startIcon={<CheckCircle />}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleAcceptOffer(offer);
@@ -456,7 +469,7 @@ const ConsumerHome: React.FC = () => {
                 )
               ) : (
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, marginTop: 40 }}>
-                  <LocalOfferIcon color="disabled" style={{ fontSize: 48 }} />
+                  <LocalOffer color="disabled" style={{ fontSize: 48 }} />
                   <Typography variant="body1" color="textSecondary" textAlign="center">
                     Select a service request to view offers
                   </Typography>
@@ -471,26 +484,21 @@ const ConsumerHome: React.FC = () => {
       </div>
 
       {/* Offer Confirmation Dialog */}
-      <Dialog
-        open={confirmDialogOpen}
-        onClose={() => setConfirmDialogOpen(false)}
-        maxWidth="sm"
-        fullWidth
-      >
+      <Dialog open={confirmDialogOpen} onClose={() => setConfirmDialogOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle>
           <Box display="flex" alignItems="center" gap={1}>
-            <CheckCircleIcon color="success" />
+            <CheckCircle color="success" />
             <Typography variant="h6">Confirm Offer Acceptance</Typography>
           </Box>
         </DialogTitle>
-        
+
         <DialogContent>
           {selectedOffer && (
             <Box>
               <Typography variant="body1" gutterBottom>
                 Are you sure you want to accept this offer?
               </Typography>
-              
+
               <Box mt={2} p={2} sx={{ backgroundColor: "grey.100", borderRadius: 1 }}>
                 <Typography variant="body2" color="textSecondary" gutterBottom>
                   <strong>Offer Details:</strong>
@@ -502,33 +510,30 @@ const ConsumerHome: React.FC = () => {
                   <strong>Timeframe:</strong> {selectedOffer.timeframe}
                 </Typography>
                 <Typography variant="body1">
-                  <strong>Provider:</strong> {selectedOffer.provider_name || 'Provider'}
+                  <strong>Provider:</strong> {selectedOffer.provider_name || "Provider"}
                 </Typography>
               </Box>
-              
+
               <Box mt={2}>
                 <Typography variant="body2" color="textSecondary">
-                  By accepting this offer, a job will be created and this request will be marked as assigned. 
-                  You'll be able to communicate with the provider through the chat system.
+                  By accepting this offer, a job will be created and this request will be marked as assigned. You'll be
+                  able to communicate with the provider through the chat system.
                 </Typography>
               </Box>
             </Box>
           )}
         </DialogContent>
-        
+
         <DialogActions>
-          <Button 
-            onClick={() => setConfirmDialogOpen(false)}
-            disabled={acceptingOffer}
-          >
+          <Button onClick={() => setConfirmDialogOpen(false)} disabled={acceptingOffer}>
             Cancel
           </Button>
-          <Button 
+          <Button
             onClick={confirmAcceptOffer}
             variant="contained"
             color="success"
             disabled={acceptingOffer}
-            startIcon={<CheckCircleIcon />}
+            startIcon={<CheckCircle />}
           >
             {acceptingOffer ? "Accepting..." : "Accept Offer"}
           </Button>

@@ -5,7 +5,6 @@ import Jobs from "@pages/Jobs";
 import Home from "@pages/Home";
 import About from "@pages/About";
 import Offers from "@pages/Offers";
-import Profile from "@pages/Profile";
 import NotFound from "@pages/NotFound";
 import Register from "@pages/Register";
 import Splash from "@pages/WelcomePage";
@@ -75,18 +74,17 @@ export const createAppRouter = (mainLayoutProps: any) =>
       ),
       children: [
         { path: "", element: <Home /> },
-        { path: "about", element: <About /> },
-        { path: "create-service-request", element: <CreateServiceRequest /> },
-        { path: "create-offer/:requestId", element: <CreateOffer /> },
-        { path: "profile", element: <Profile /> },
-        { path: "providers", element: <Providers /> },
         { path: "jobs", element: <Jobs /> },
-        { path: "register", element: <Register /> },
-        { path: "register/provider", element: <RegisterProvider /> },
-        { path: "register/consumer", element: <RegisterConsumer /> },
+        { path: "about", element: <About /> },
         { path: "offers", element: <Offers /> },
         { path: "chats", element: <ChatList /> },
+        { path: "register", element: <Register /> },
+        { path: "providers", element: <Providers /> },
         { path: "chats/:chatId", element: <ChatRoom /> },
+        { path: "register/provider", element: <RegisterProvider /> },
+        { path: "register/consumer", element: <RegisterConsumer /> },
+        { path: "create-offer/:requestId", element: <CreateOffer /> },
+        { path: "create-service-request", element: <CreateServiceRequest /> },
       ],
     },
     {
