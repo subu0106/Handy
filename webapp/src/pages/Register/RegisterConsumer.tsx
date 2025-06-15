@@ -36,6 +36,21 @@ export default function RegisterConsumer() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
+   const [toast, setToast] = useState<{ 
+    open: boolean; 
+    message: string; 
+    severity: "success" | "error" | "warning" | "info" 
+  }>({
+    open: false,
+    message: "",
+    severity: "info"
+  });
+
+  // Show toast function
+  const showToast = (message: string, severity: "success" | "error" | "warning" | "info" = "info") => {
+    setToast({ open: true, message, severity });
+  };
+
   // Google OAuth handler (Firebase implementation)
   const handleGoogleSignIn = async () => {
     setRegisterError(null);
@@ -66,7 +81,7 @@ export default function RegisterConsumer() {
         userType: "consumer",
       }));
 
-      alert("Google sign-in successful! You can now access your dashboard.");
+      showToast("Google sign-in successful", "success");
       navigate("/");
       
     } catch (error: any) {
@@ -90,7 +105,7 @@ export default function RegisterConsumer() {
         userType: "consumer",
       }));
 
-      alert("You are already signed in. Redirecting to your dashboard.");
+      showToast("Welcome back!", "success");
     }
   }, [navigate, dispatch]);
 
@@ -115,7 +130,7 @@ export default function RegisterConsumer() {
         email: user.email,
       });
 
-      alert("Registration successful! You can now sign in.");
+      showToast("Registration successful", "success");
       setMode('signin');
 
     } catch (error: any) {
@@ -136,8 +151,9 @@ export default function RegisterConsumer() {
     setRegisterLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email || username, password);
-      alert(`Login successful as ${auth.currentUser?.email}`);
-      console.log("User logged in:", auth.currentUser?.photoURL, auth.currentUser?.displayName, auth.currentUser?.email);
+
+      showToast("Login successful", "success");
+
       dispatch(setUser({
       uid: auth.currentUser?.uid || "",
       name:  auth.currentUser?.displayName || auth.currentUser?.email || "",

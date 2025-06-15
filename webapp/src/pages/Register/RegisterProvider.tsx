@@ -69,6 +69,21 @@ export default function RegisterProvider() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
+   const [toast, setToast] = useState<{ 
+    open: boolean; 
+    message: string; 
+    severity: "success" | "error" | "warning" | "info" 
+  }>({
+    open: false,
+    message: "",
+    severity: "info"
+  });
+
+  // Show toast function
+  const showToast = (message: string, severity: "success" | "error" | "warning" | "info" = "info") => {
+    setToast({ open: true, message, severity });
+  };
+
   // Show extra fields after Google or email registration
   const showExtraFieldsForm = (avatarUrl: string, userEmail: string) => (
     <Box width="100%" maxWidth={isMobile ? 1 : 400}>
@@ -181,7 +196,7 @@ export default function RegisterProvider() {
 
     await apiService.post("/providers/registerProvider", payload);
 
-    alert("Registration successful! You can now access your dashboard.");
+    showToast("Registration successful", "success");
 
     dispatch(setUser({
       uid: user.uid,
@@ -192,8 +207,8 @@ export default function RegisterProvider() {
       location: location || "",
     }));
 
-    alert("Registration successful! You can now access your dashboard.");
     navigate("/dashboard");
+
   } catch (error: any) {
     if (error.response && error.response.data && error.response.data.error) {
       setRegisterError(error.response.data.error);
@@ -238,7 +253,7 @@ export default function RegisterProvider() {
           location: "",
           services_array: servicesArray,
         }));
-        alert("Google sign-in successful! You can now access your dashboard.");
+        showToast("Google sign-in successful", "success");
         navigate("/dashboard");
       }
     } catch (error: any) {
@@ -272,9 +287,8 @@ export default function RegisterProvider() {
       setShowExtraFields(true);
       setRegisterLoading(false);
 
-      // DO NOT dispatch setUser or navigate yet!
-      // Wait for the user to fill out extra fields and submit
-      alert("Registration successful! Please complete your profile.");
+      showToast("Please complete your profile", "info");
+
     } catch (error: any) {
       if (error.code === "auth/email-already-in-use") {
         setRegisterError("Email already registered.");
@@ -309,7 +323,7 @@ export default function RegisterProvider() {
         location: "",
         services_array: servicesArray,
       }));
-      alert(`Login successful as ${user.email}`);
+      showToast("Login successful", "success");
       navigate("/dashboard");
     } catch (error: any) {
       if (error.code === "auth/user-not-found" || error.code === "auth/wrong-password") {

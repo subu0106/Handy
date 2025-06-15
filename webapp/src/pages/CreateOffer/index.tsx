@@ -72,7 +72,6 @@ const CreateOffer: React.FC = () => {
     
     try {
       await apiService.post("/offers/createOffers", data);
-      alert("Offer created successfully!");
       navigate("/dashboard");
     } catch (err: any) {
       setError("Failed to create offer");

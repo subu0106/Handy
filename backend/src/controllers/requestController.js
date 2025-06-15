@@ -64,20 +64,28 @@ const getRequestById = async (req, res) => {
 const updateRequestStatus = async (req, res) => {
   const request_id = req.params.request_id;
   const newStatus = req.body.status;
-  const validRequestStatusArray = [constant.REQUESTS_STATUS.PENDING, constant.REQUESTS_STATUS.ASSIGNED, , constant.REQUESTS_STATUS.CLOSED];
+  const validRequestStatusArray = [constant.REQUESTS_STATUS.PENDING, constant.REQUESTS_STATUS.ASSIGNED, constant.REQUESTS_STATUS.CLOSED];
   const condition = 'WHERE request_id=$1';
 
   if (validRequestStatusArray.includes(newStatus)) {
     try {
       const updateData = {"status": newStatus};
-      const updatedRequest = await db.update(table=constant.DB_TABLES.REQUESTS, data=updateData, conditions=condition, params=[request_id]);
+      const updatedRequest = await db.update(
+        constant.DB_TABLES.REQUESTS, 
+        updateData, 
+        condition, 
+        [request_id]
+      );
       if (updatedRequest){
          return res.status(constant.HTTP_STATUS.OK).json(updatedRequest);
       }
       return res.status(constant.HTTP_STATUS.NOT_FOUND).json({message:"Request Not Found"});
 
     } catch (error) {
-      return res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR);
+      console.error("Error updating request status:", error);
+      return res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+        message: "Internal server error"
+      });
     }
   }
   return res.status(constant.HTTP_STATUS.BAD_REQUEST).json({message:"Invalid Request Status Provided"});

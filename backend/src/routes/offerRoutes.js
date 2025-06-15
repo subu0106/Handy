@@ -4,7 +4,8 @@ const router = express.Router();
 const { 
   createOffers, 
   getOfferById, 
-  updateOfferStatus, 
+  updateOfferStatus,
+  updateOfferBudget,
   deleteOffer, 
   getOffersByRequestId,
   getOffersByProviderId,
@@ -19,6 +20,7 @@ router.route("/provider/:provider_id").get(authenticateToken, getOffersByProvide
 router.route("/provider/:provider_id/request/:request_id").get(authenticateToken, getOfferByProviderAndRequest);
 router.route("/:offer_id").get(authenticateToken, getOfferById); // Generic route last
 router.route("/updateStatus/:offer_id").put(authenticateToken, updateOfferStatus);
+router.route("/updateBudget/:offer_id").put(authenticateToken, updateOfferBudget); // Add this new route
 router.route("/deleteOffer/:offer_id").delete(authenticateToken, deleteOffer);
 
 module.exports = {router};

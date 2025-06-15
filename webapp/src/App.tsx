@@ -206,20 +206,35 @@ const App = () => {
             });
           });
         }
+
+        const pairedJobsTopic = `paired_jobs_${user.uid}`;
+        socket.off(pairedJobsTopic);
+
+        socket.on(pairedJobsTopic, (jobData) => {
+          console.log("Accepted Offer job notification:", jobData);
+          showToast(
+            jobData.message,
+            "success"
+          );
+          dispatch(fetchServiceRequestsBasedOnService(user.uid));
+        });
         return () => {
           if (Array.isArray(providerServices)) {
             providerServices.forEach((service: string) => {
               socket.off(`new_request_${service}`);
             });
           }
+          socket.off(pairedJobsTopic);
           socket.disconnect();
         };
       }
       if (user.userType === "consumer") {
         const offerTopic = `new_offer_${user.uid}`;
         const deleteOfferTopic = `delete_offer_${user.uid}`;
+        const updateOfferTopic = `update_offer_${user.uid}`;
         socket.off(offerTopic);
         socket.off(deleteOfferTopic);
+        socket.off(updateOfferTopic);
         socket.on(offerTopic, (offerData) => {
           showToast(
             `New offer: $${offerData.budget} for "${offerData.request_title}" from ${offerData.provider_name}`,
@@ -240,9 +255,25 @@ const App = () => {
             dispatch(fetchOffers(selectedRequestId.toString()));
           }
         });
+
+        socket.on(updateOfferTopic, (offerData) => {  
+          console.log("Received updated offer notification:", offerData);
+          showToast(
+            `Offer budget updated: from $${offerData.old_budget} to $${offerData.new_budget} for "${offerData.request_title}" from ${offerData.provider_name}`,
+            "info"
+          );
+          // Refresh offers for the specific request if it's currently selected
+          const { selectedRequestId } = serviceRequests;
+          if (selectedRequestId && selectedRequestId.toString() === offerData.request_id.toString()) {
+            console.log("Refreshing offers for selected request after update:", selectedRequestId);
+            dispatch(fetchOffers(selectedRequestId.toString()));
+          }
+        }
+        );
         return () => {
           socket.off(offerTopic);
           socket.off(deleteOfferTopic);
+          socket.off(updateOfferTopic);
           socket.disconnect();
         };
       }
