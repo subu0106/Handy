@@ -2,7 +2,6 @@ import MainLayout from "@layouts/MainLayout";
 import { useAppSelector } from "@store/hooks";
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import Home from "@pages/Home";
-import Offers from "@pages/Offers";
 import NotFound from "@pages/NotFound";
 import Register from "@pages/Register";
 import Splash from "@pages/WelcomePage";
@@ -71,7 +70,6 @@ export const createAppRouter = (mainLayoutProps: any) =>
       ),
       children: [
         { path: "", element: <Home /> },
-        { path: "offers", element: <Offers /> },
         { path: "chats", element: <ChatList /> },
         { path: "register", element: <Register /> },
         { path: "chats/:chatId", element: <ChatRoom /> },
