@@ -128,29 +128,43 @@ const App = () => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       try {
         if (firebaseUser) {
+
+          const isInRegistration = window.location.pathname.includes('/register');
+          
           try {
-            const response = await apiService.get(`/users/user_info/${firebaseUser.uid}`);
-            const userData = response.data;
-            dispatch(
-              setUser({
-                uid: firebaseUser.uid,
-                name: firebaseUser.displayName || firebaseUser.email || userData.name || "User",
-                avatarUrl: firebaseUser.photoURL || userData.avatar || "",
-                userType: userData.user_type || "consumer",
-                fcm_token: userData.fcm_token || "",
-                location: userData.location || "",
-                services_array: userData.services_array || [],
-              })
-            );
-          } catch {
-            await auth.signOut();
-            dispatch(logout());
-            showToast("Session expired. Please sign in again.", "warning");
+            const token = await firebaseUser.getIdToken();
+            const userInfoResponse = await apiService.get(`/users/user_info/${firebaseUser.uid}`, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            
+            const userData = userInfoResponse.data;
+            dispatch(setUser({
+              uid: firebaseUser.uid,
+              name: userData.name || firebaseUser.displayName || firebaseUser.email || "",
+              avatarUrl: userData.avatar || firebaseUser.photoURL || "",
+              userType: userData.user_type || "",
+              fcm_token: userData.fcm_token || "",
+              location: userData.location || "",
+              services_array: userData.services_array || [],
+            }));
+          } catch (userFetchError: any) {
+            // If user doesn't exist in backend but we're not in registration, sign out
+            if (!isInRegistration && userFetchError.response?.status === 404) {
+              await auth.signOut();
+              dispatch(logout());
+              showToast("Account not found. Please register first.", "warning");
+            } else if (!isInRegistration) {
+              // Other errors during non-registration
+              await auth.signOut();
+              dispatch(logout());
+              showToast("Session expired. Please sign in again.", "warning");
+            }
           }
         } else {
           dispatch(logout());
         }
-      } catch {
+      } catch (error) {
+        console.error("Auth state change error:", error);
         dispatch(logout());
       } finally {
         setAuthLoading(false);

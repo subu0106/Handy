@@ -18,18 +18,22 @@ const apiService = axios.create({
 // Attach auth token to all requests
 apiService.interceptors.request.use(
   async (config) => {
-    try {
-      const currentUser = auth.currentUser;
-      if (currentUser) {
-        const token = await currentUser.getIdToken();
+    const currentUser = auth.currentUser;
+    if (currentUser) {
+      try {
+        const token = await currentUser.getIdToken(false);
         config.headers.Authorization = `Bearer ${token}`;
+      } catch (error) {
+        console.error("Failed to get auth token:", error);
       }
-    } catch (error) {
-      console.error("Error getting auth token:", error);
+    } else {
+      console.log("No current user for request:", config.url);
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => {
+    return Promise.reject(error);
+  }
 );
 
 // Global response error handling
@@ -40,9 +44,21 @@ apiService.interceptors.response.use(
       console.error("Network error - backend server may be down");
       throw new Error("Backend server is not available. Please try again later.");
     }
+    
     if (error.response?.status === 401) {
-      console.warn("Authentication error, signing out...");
-      await auth.signOut();
+      console.warn("Authentication error detected");
+      
+      // Don't sign out during registration processes
+      const isRegistrationRequest = error.config?.url?.includes('/register') || 
+                                   error.config?.url?.includes('/registerProvider') ||
+                                   error.config?.url?.includes('/registerConsumer');
+      
+      if (!isRegistrationRequest) {
+        console.log("Signing out due to auth error");
+        await auth.signOut();
+      } else {
+        console.log("Auth error during registration - not signing out");
+      }
     }
     return Promise.reject(error);
   }
