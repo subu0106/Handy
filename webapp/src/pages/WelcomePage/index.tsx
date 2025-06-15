@@ -1,14 +1,5 @@
 import React from "react";
-import { 
-  Box, 
-  Card,
-  Grid,
-  Button, 
-  Container,
-  Typography, 
-  CardContent,
-  CardActions
-} from "@mui/material";
+import { Box, Card, Grid, Button, Container, Typography, CardContent, CardActions } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import HomeRepairServiceIcon from "@mui/icons-material/HomeRepairService";
 import { useTheme } from "@mui/material/styles";
@@ -83,25 +74,37 @@ const Splash: React.FC = () => {
             <Typography
               variant="body1"
               color="textSecondary"
-              sx={{ maxWidth: 600, mx: "auto", fontSize: { xs: "0.95rem", sm: "1rem" }, display: { xs: 'none', sm: 'block' } }}
+              sx={{
+                maxWidth: 600,
+                mx: "auto",
+                fontSize: { xs: "0.95rem", sm: "1rem" },
+                display: { xs: "none", sm: "block" },
+              }}
             >
-              Connect with skilled service providers or offer your services to customers in need. Join our community today and make home maintenance simple.
+              Connect with skilled service providers or offer your services to customers in need. Join our community
+              today and make home maintenance simple.
             </Typography>
           </Box>
 
-          <Grid container spacing={{ xs: 2, sm: 4 }} justifyContent="center" alignItems="stretch" sx={{ flexWrap: { xs: 'wrap', sm: 'nowrap' }, minHeight: { xs: 0, sm: 400 } }}>
+          <Grid
+            container
+            spacing={{ xs: 2, sm: 4 }}
+            justifyContent="center"
+            alignItems="stretch"
+            sx={{ flexWrap: { xs: "wrap", sm: "nowrap" }, minHeight: { xs: 0, sm: 400 } }}
+          >
             {/* Consumer Card */}
-            <Grid item xs={12} sm={6} sx={{ display: 'flex', mb: { xs: 1, sm: 0 }, width: '100%', minWidth: 0 }}>
+            <Grid item xs={12} sm={6} sx={{ display: "flex", mb: { xs: 1, sm: 0 }, width: "100%", minWidth: 0 }}>
               <Card
                 sx={{
-                  width: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  transition: 'all 0.3s ease',
-                  cursor: 'pointer',
+                  width: "100%",
+                  display: "flex",
+                  flexDirection: "column",
+                  transition: "all 0.3s ease",
+                  cursor: "pointer",
                   boxShadow: theme.shadows[2],
-                  '&:hover': {
-                    transform: 'translateY(-8px) scale(1.03)',
+                  "&:hover": {
+                    transform: "translateY(-8px) scale(1.03)",
                     boxShadow: theme.shadows[8],
                   },
                   mb: { xs: 1, sm: 0 },
@@ -110,19 +113,25 @@ const Splash: React.FC = () => {
                 tabIndex={0}
                 aria-label="Continue as Consumer"
               >
-                <CardContent sx={{ flex: 1, textAlign: 'center', p: { xs: 1.5, sm: 4 }, pb: { xs: 1, sm: 4 } }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'center', mb: { xs: 1, sm: 2 } }}>
+                <CardContent sx={{ flex: 1, textAlign: "center", p: { xs: 1.5, sm: 4 }, pb: { xs: 1, sm: 4 } }}>
+                  <Box sx={{ display: "flex", justifyContent: "center", mb: { xs: 1, sm: 2 } }}>
                     <img
                       src={ConsumerImg}
                       alt="Consumer"
-                      style={{ width: 100, height: 100, borderRadius: '50%', objectFit: 'cover', boxShadow: theme.shadows[3] }}
+                      style={{
+                        width: 100,
+                        height: 100,
+                        borderRadius: "50%",
+                        objectFit: "cover",
+                        boxShadow: theme.shadows[3],
+                      }}
                     />
                   </Box>
                   <Typography variant="h6" gutterBottom fontWeight={700} sx={{ mb: { xs: 0.5, sm: 1.5 } }}>
                     I need services
                   </Typography>
-                  <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
-                    <Typography textAlign={"left"} variant="body2" color="textSecondary" >
+                  <Box sx={{ display: { xs: "none", sm: "block" } }}>
+                    <Typography textAlign={"left"} variant="body2" color="textSecondary">
                       Looking for reliable professionals to help with home repairs, cleaning, maintenance, and more.
                     </Typography>
                     <Box component="ul" sx={{ textAlign: "left", pl: 2, mt: 2, mb: 0 }}>
@@ -152,7 +161,7 @@ const Splash: React.FC = () => {
                       fontWeight: 600,
                       fontSize: { xs: "1rem", sm: "1.1rem" },
                       minWidth: 0,
-                      whiteSpace: 'nowrap',
+                      whiteSpace: "nowrap",
                     }}
                   >
                     Continue as Consumer
@@ -162,17 +171,17 @@ const Splash: React.FC = () => {
             </Grid>
 
             {/* Provider Card */}
-            <Grid item xs={12} sm={6} sx={{ display: 'flex', mb: { xs: 1, sm: 0 }, width: '100%', minWidth: 0 }}>
+            <Grid item xs={12} sm={6} sx={{ display: "flex", mb: { xs: 1, sm: 0 }, width: "100%", minWidth: 0 }}>
               <Card
                 sx={{
-                  width: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  transition: 'all 0.3s ease',
-                  cursor: 'pointer',
+                  width: "100%",
+                  display: "flex",
+                  flexDirection: "column",
+                  transition: "all 0.3s ease",
+                  cursor: "pointer",
                   boxShadow: theme.shadows[2],
-                  '&:hover': {
-                    transform: 'translateY(-8px) scale(1.03)',
+                  "&:hover": {
+                    transform: "translateY(-8px) scale(1.03)",
                     boxShadow: theme.shadows[8],
                   },
                   mb: { xs: 1, sm: 0 },
@@ -181,20 +190,27 @@ const Splash: React.FC = () => {
                 tabIndex={0}
                 aria-label="Continue as Provider"
               >
-                <CardContent sx={{ flex: 1, textAlign: 'center', p: { xs: 1.5, sm: 4 }, pb: { xs: 1, sm: 4 } }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'center', mb: { xs: 1, sm: 2 } }}>
+                <CardContent sx={{ flex: 1, textAlign: "center", p: { xs: 1.5, sm: 4 }, pb: { xs: 1, sm: 4 } }}>
+                  <Box sx={{ display: "flex", justifyContent: "center", mb: { xs: 1, sm: 2 } }}>
                     <img
                       src={ProviderImg}
                       alt="Provider"
-                      style={{ width: 100, height: 100, borderRadius: '50%', objectFit: 'cover', boxShadow: theme.shadows[3] }}
+                      style={{
+                        width: 100,
+                        height: 100,
+                        borderRadius: "50%",
+                        objectFit: "cover",
+                        boxShadow: theme.shadows[3],
+                      }}
                     />
                   </Box>
                   <Typography variant="h6" gutterBottom fontWeight={700} sx={{ mb: { xs: 0.5, sm: 1.5 } }}>
                     I provide services
                   </Typography>
-                  <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
+                  <Box sx={{ display: { xs: "none", sm: "block" } }}>
                     <Typography textAlign={"left"} variant="body2" color="textSecondary" paragraph>
-                      Professional service provider ready to help customers with their home maintenance and repair needs.
+                      Professional service provider ready to help customers with their home maintenance and repair
+                      needs.
                     </Typography>
                     <Box component="ul" sx={{ textAlign: "left", pl: 2, mt: 2, mb: 0 }}>
                       <Typography component="li" variant="body2" color="textSecondary">
@@ -223,7 +239,7 @@ const Splash: React.FC = () => {
                       fontWeight: 600,
                       fontSize: { xs: "1rem", sm: "1.1rem" },
                       minWidth: 0,
-                      whiteSpace: 'nowrap',
+                      whiteSpace: "nowrap",
                     }}
                   >
                     Continue as Provider
@@ -243,7 +259,7 @@ const Splash: React.FC = () => {
           borderTop: `1px solid ${theme.palette.divider}`,
           textAlign: "center",
           color: theme.palette.text.secondary,
-          fontSize: '0.75rem',
+          fontSize: "0.75rem",
         }}
       >
         © {new Date().getFullYear()} Handy. All rights reserved.
