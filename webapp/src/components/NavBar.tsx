@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Mail, Notifications, WbSunny, NightlightRound, ExitToApp, HomeRepairService } from "@mui/icons-material";
+import { Mail, Notifications, WbSunny, NightlightRound, ExitToApp, HomeRepairService, TokenRounded } from "@mui/icons-material";
 import { AppBar, Toolbar, Typography, Menu, MenuItem, Divider, Box, Badge, Avatar } from "@mui/material";
 import { useTheme, alpha } from "@mui/material/styles";
 import { auth } from "@config/firebase";
@@ -94,6 +94,13 @@ const NavBar: React.FC<NavBarProps> = ({ userName, avatarUrl, onToggleTheme }) =
 
         {/* Button Group */}
         <Box sx={{ display: "flex", alignItems: "center" }}>
+
+          <Box onClick={() => navigate("/dashboard/purchase")} aria-label="purchase tokens" sx={buttonBoxStyle}>
+            <Badge badgeContent={user.platform_tokens} color="primary">
+              <TokenRounded fontSize="small" />
+            </Badge>
+          </Box>
+
           {/* Theme Toggle */}
           <Box onClick={onToggleTheme} aria-label="toggle theme" sx={buttonBoxStyle}>
             {themeMode === "dark" ? <WbSunny fontSize="small" /> : <NightlightRound fontSize="small" />}

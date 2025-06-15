@@ -11,6 +11,7 @@ import CreateOffer from "@pages/CreateOffer";
 import CreateServiceRequest from "@pages/CreateServiceRequest";
 import RegisterProvider from "@pages/Register/RegisterProvider";
 import RegisterConsumer from "@pages/Register/RegisterConsumer";
+import TokenPurchase from "@pages/TokenPurchase";
 
 /**
  * App router configuration for all public and protected routes.
@@ -77,6 +78,7 @@ export const createAppRouter = (mainLayoutProps: any) =>
         { path: "register/consumer", element: <RegisterConsumer /> },
         { path: "create-offer/:requestId", element: <CreateOffer /> },
         { path: "create-service-request", element: <CreateServiceRequest /> },
+        { path: "purchase", element: <TokenPurchase /> },
       ],
     },
     {

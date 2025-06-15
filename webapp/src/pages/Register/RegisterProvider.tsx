@@ -37,10 +37,10 @@ function GoogleFavicon(props: any) {
   return (
     <SvgIcon {...props} viewBox="0 0 48 48" sx={{ width: 24, height: 24 }}>
       <g>
-        <path fill="#4285F4" d="M43.6 20.5h-1.9V20H24v8h11.3c-1.6 4.3-5.7 7.5-10.3 7.5-6.1 0-11-4.9-11-11s4.9-11 11-11c2.6 0 5 .9 6.9 2.4l6.1-6.1C34.2 7.6 29.4 5.5 24 5.5 13.8 5.5 5.5 13.8 5.5 24S13.8 42.5 24 42.5c9.9 0 18-8.1 18-18 0-1.2-.1-2.1-.4-3z"/>
-        <path fill="#34A853" d="M6.3 14.1l6.6 4.8C14.5 16.1 18.8 13 24 13c2.6 0 5 .9 6.9 2.4l6.1-6.1C34.2 7.6 29.4 5.5 24 5.5c-6.6 0-12.2 3.4-15.7 8.6z"/>
-        <path fill="#FBBC05" d="M24 42.5c5.4 0 10.2-1.8 13.9-4.9l-6.4-5.2c-2 1.4-4.5 2.2-7.5 2.2-4.6 0-8.7-3.2-10.3-7.5l-6.6 5.1C8.1 38.6 15.4 42.5 24 42.5z"/>
-        <path fill="#EA4335" d="M43.6 20.5h-1.9V20H24v8h11.3c-0.7 2-2.1 3.7-3.9 4.9l6.4 5.2c-0.6 0.6 6.2-4.5 6.2-13.1 0-1.2-.1-2.1-.4-3z"/>
+        <path fill="#4285F4" d="M43.6 20.5h-1.9V20H24v8h11.3c-1.6 4.3-5.7 7.5-10.3 7.5-6.1 0-11-4.9-11-11s4.9-11 11-11c2.6 0 5 .9 6.9 2.4l6.1-6.1C34.2 7.6 29.4 5.5 24 5.5 13.8 5.5 5.5 13.8 5.5 24S13.8 42.5 24 42.5c9.9 0 18-8.1 18-18 0-1.2-.1-2.1-.4-3z" />
+        <path fill="#34A853" d="M6.3 14.1l6.6 4.8C14.5 16.1 18.8 13 24 13c2.6 0 5 .9 6.9 2.4l6.1-6.1C34.2 7.6 29.4 5.5 24 5.5c-6.6 0-12.2 3.4-15.7 8.6z" />
+        <path fill="#FBBC05" d="M24 42.5c5.4 0 10.2-1.8 13.9-4.9l-6.4-5.2c-2 1.4-4.5 2.2-7.5 2.2-4.6 0-8.7-3.2-10.3-7.5l-6.6 5.1C8.1 38.6 15.4 42.5 24 42.5z" />
+        <path fill="#EA4335" d="M43.6 20.5h-1.9V20H24v8h11.3c-0.7 2-2.1 3.7-3.9 4.9l6.4 5.2c-0.6 0.6 6.2-4.5 6.2-13.1 0-1.2-.1-2.1-.4-3z" />
       </g>
     </SvgIcon>
   );
@@ -75,10 +75,10 @@ export default function RegisterProvider() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
-  const [toast, setToast] = useState<{ 
-    open: boolean; 
-    message: string; 
-    severity: "success" | "error" | "warning" | "info" 
+  const [toast, setToast] = useState<{
+    open: boolean;
+    message: string;
+    severity: "success" | "error" | "warning" | "info"
   }>({
     open: false,
     message: "",
@@ -181,7 +181,7 @@ export default function RegisterProvider() {
   const handleExtraFieldsSubmit = async () => {
     setRegisterError(null);
     setRegisterLoading(true);
-    
+
     try {
       if (!pendingUserData) {
         setRegisterError("No user data found. Please try again.");
@@ -228,7 +228,7 @@ export default function RegisterProvider() {
         average_rating: 0,
         review_count: 0,
         bio: bio || "",
-        fcm_token: "",
+        platform_tokens: 30,
       };
 
       console.log("Submitting provider registration:", payload);
@@ -249,16 +249,16 @@ export default function RegisterProvider() {
         name: name,
         avatarUrl: pendingUserData.avatarUrl,
         userType: "provider",
-        fcm_token: "",
         location: location,
         services_array: servicesArray,
+        platform_tokens: 30,
       }));
 
       navigate("/dashboard");
 
     } catch (error: any) {
       console.error("Registration error:", error);
-      
+
       if (error.response?.status === 401) {
         setRegisterError("Authentication failed. Please try signing up again.");
         setShowExtraFields(false);
@@ -281,7 +281,7 @@ export default function RegisterProvider() {
   const handleGoogleSignIn = async () => {
     setRegisterError(null);
     setRegisterLoading(true);
-    
+
     try {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
@@ -304,18 +304,23 @@ export default function RegisterProvider() {
         // Existing user: try to fetch their data and login
         try {
           const userResponse = await apiService.get(`users/user_info/${user.uid}`);
+
+          if (userResponse.status !== 200) {
+            throw new Error("Failed to fetch user data from backend.");
+          }
+
           const userData = userResponse.data;
-          
+
           dispatch(setUser({
             uid: user.uid,
             name: user.displayName || user.email || "",
             avatarUrl: user.photoURL || "",
             userType: "provider",
-            fcm_token: "",
             location: userData.location || "",
             services_array: userData.services_array || [],
+            platform_tokens: userData.platform_tokens,
           }));
-          
+
           showToast("Welcome back!", "success");
           navigate("/dashboard");
         } catch (fetchError) {
@@ -347,7 +352,7 @@ export default function RegisterProvider() {
   const handleRegister = async () => {
     setRegisterError(null);
     setRegisterLoading(true);
-    
+
     try {
       if (!email || !password) {
         setRegisterError("Email and password are required.");
@@ -357,7 +362,7 @@ export default function RegisterProvider() {
 
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
-      
+
       // Store pending user data and show extra fields
       setPendingUserData({
         uid: user.uid,
@@ -365,7 +370,7 @@ export default function RegisterProvider() {
         avatarUrl: "",
         isGoogleUser: false
       });
-      
+
       setShowExtraFields(true);
       setRegisterLoading(false);
       showToast("Account created! Please complete your profile", "info");
@@ -389,28 +394,33 @@ export default function RegisterProvider() {
   const handleLogin = async () => {
     setRegisterError(null);
     setRegisterLoading(true);
-    
+
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
-      
+
       // Fetch user data from backend
       const userResponse = await apiService.get(`users/user_info/${user.uid}`);
+
+      if (userResponse.status !== 200) {
+        throw new Error("Failed to fetch user data from backend.");
+      }
+
       const userData = userResponse.data;
-      
+
       dispatch(setUser({
         uid: user.uid,
         name: user.displayName || userData.name || user.email || "",
         avatarUrl: user.photoURL || userData.avatar || "",
         userType: "provider",
-        fcm_token: "",
         location: userData.location || "",
         services_array: userData.services_array || [],
+        platform_tokens: userData.platform_tokens,
       }));
-      
+
       showToast("Login successful!", "success");
       navigate("/dashboard");
-      
+
     } catch (error: any) {
       console.error("Login error:", error);
       if (error.code === "auth/user-not-found" || error.code === "auth/wrong-password") {
@@ -438,10 +448,10 @@ export default function RegisterProvider() {
         }}>
           <Box display="flex" flexDirection="column" alignItems="center" gap={2}>
             <Typography variant={isMobile ? "h6" : "h5"} fontWeight={700} mb={1}>
-              {showExtraFields ? 'Complete Your Profile' : 
-               mode === 'register' ? 'Provider Registration' : 'Provider Sign In'}
+              {showExtraFields ? 'Complete Your Profile' :
+                mode === 'register' ? 'Provider Registration' : 'Provider Sign In'}
             </Typography>
-            
+
             {showExtraFields ? (
               showExtraFieldsForm()
             ) : mode === 'register' ? (
@@ -467,9 +477,9 @@ export default function RegisterProvider() {
                 >
                   Continue with Google
                 </Button>
-                
+
                 <Divider sx={{ my: 1.5, fontWeight: 600 }}>OR</Divider>
-                
+
                 <TextField
                   fullWidth
                   label="Email"
@@ -612,8 +622,8 @@ export default function RegisterProvider() {
         onClose={() => setToast(prev => ({ ...prev, open: false }))}
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       >
-        <Alert 
-          onClose={() => setToast(prev => ({ ...prev, open: false }))} 
+        <Alert
+          onClose={() => setToast(prev => ({ ...prev, open: false }))}
           severity={toast.severity}
           sx={{ width: '100%' }}
         >
