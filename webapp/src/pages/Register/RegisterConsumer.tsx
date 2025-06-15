@@ -3,7 +3,7 @@ import { Box, Typography, Paper, Button, TextField, Divider } from "@mui/materia
 import SvgIcon from "@mui/material/SvgIcon";
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
-import { auth } from "../../../src/firebase.ts";
+import { auth } from "@config/firebase.ts";
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 // ...existing imports...

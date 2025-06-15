@@ -1,5 +1,5 @@
 import axios from "axios";
-import { auth } from "../firebase";
+import { auth } from "@config/firebase";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api/v1";
 
@@ -25,25 +25,21 @@ apiService.interceptors.request.use(
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
-// Handle auth errors and network errors
+// Handle auth and network errors globally
 apiService.interceptors.response.use(
   (response) => response,
   async (error) => {
-    if (error.code === 'ERR_NETWORK') {
-      console.error('Network error - backend server may be down');
-      throw new Error('Backend server is not available. Please try again later.');
+    if (error.code === "ERR_NETWORK") {
+      console.error("Network error - backend server may be down");
+      throw new Error("Backend server is not available. Please try again later.");
     }
-    
     if (error.response?.status === 401) {
-      console.log("Authentication error, signing out...");
+      console.warn("Authentication error, signing out...");
       await auth.signOut();
     }
-    
     return Promise.reject(error);
   }
 );

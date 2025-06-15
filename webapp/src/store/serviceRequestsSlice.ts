@@ -1,7 +1,10 @@
+import apiService from '@utils/apiService';
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import apiService from '../utils/apiService';
 
-// Define the slice state
+/**
+ * Redux slice for service requests.
+ * Handles fetching, selecting, and error state for service requests.
+ */
 interface ServiceRequestsState {
   items: any[];
   status: 'idle' | 'loading' | 'succeeded' | 'failed';
@@ -9,7 +12,6 @@ interface ServiceRequestsState {
   selectedRequestId: string | null;
 }
 
-// Initial state
 const initialState: ServiceRequestsState = {
   items: [],
   status: 'idle',
@@ -17,6 +19,7 @@ const initialState: ServiceRequestsState = {
   selectedRequestId: null,
 };
 
+// Thunks for fetching service requests
 export const fetchServiceRequests = createAsyncThunk(
   'serviceRequests/fetchServiceRequests',
   async () => {
@@ -28,7 +31,6 @@ export const fetchServiceRequests = createAsyncThunk(
 export const fetchServiceRequestsForConsumer = createAsyncThunk(
   'serviceRequests/fetchServiceRequestsForConsumer',
   async (consumerId: string) => {
-    // Accept consumerId as an argument to the thunk
     const response = await apiService.get(`/requests/getActiveRequestsForConsumer/${consumerId}`);
     return response.data;
   }
@@ -37,17 +39,18 @@ export const fetchServiceRequestsForConsumer = createAsyncThunk(
 export const fetchServiceRequestsBasedOnService = createAsyncThunk(
   'serviceRequests/fetchServiceRequestsBasedOnService',
   async (providerId: string) => {
-    // Accept providerId as an argument to the thunk
     const response = await apiService.get(`/requests/getActiveRequestsForProvider/${providerId}`);
     return response.data;
   }
 );
 
-
 const serviceRequestsSlice = createSlice({
   name: 'serviceRequests',
   initialState,
   reducers: {
+    /**
+     * Set the currently selected service request ID.
+     */
     setSelectedRequestId(state, action) {
       state.selectedRequestId = action.payload;
     },

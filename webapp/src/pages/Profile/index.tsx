@@ -1,7 +1,7 @@
 import { Box, Typography, Paper, Avatar, Button } from "@mui/material";
 import { useAppSelector } from "@store/hooks";
 import { logout } from "@store/userSlice";
-import { auth } from "../../firebase";
+import { auth } from "@config/firebase";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 

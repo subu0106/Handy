@@ -6,7 +6,7 @@ import {
 import SvgIcon from "@mui/material/SvgIcon";
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
-import { auth } from "../../../src/firebase.ts";
+import { auth } from "@config/firebase.ts";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,

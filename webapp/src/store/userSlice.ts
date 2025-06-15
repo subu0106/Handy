@@ -1,6 +1,10 @@
 import { createSlice } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
 
+/**
+ * Redux slice for user authentication and profile state.
+ * Handles login, logout, and user profile updates.
+ */
 interface UserState {
   uid?: string;
   isAuthenticated: boolean;
@@ -9,7 +13,7 @@ interface UserState {
   userType: string;
   fcm_token?: string;
   location?: string;
-  services_array?: Array<string>;
+  services_array?: string[];
 }
 
 const initialState: UserState = {
@@ -27,15 +31,21 @@ const userSlice = createSlice({
   name: 'user',
   initialState,
   reducers: {
-    setUser(state, action: PayloadAction<{ 
-      name: string; 
-      avatarUrl?: string; 
-      uid: string; 
-      userType: string; 
-      fcm_token?: string; 
-      location?: string; 
-      services_array?: Array<string> 
-    }>) {
+    /**
+     * Set user state on login or profile update.
+     */
+    setUser(
+      state,
+      action: PayloadAction<{
+        name: string;
+        avatarUrl?: string;
+        uid: string;
+        userType: string;
+        fcm_token?: string;
+        location?: string;
+        services_array?: string[];
+      }>
+    ) {
       state.uid = action.payload.uid;
       state.name = action.payload.name;
       state.avatarUrl = action.payload.avatarUrl;
@@ -45,6 +55,9 @@ const userSlice = createSlice({
       state.location = action.payload.location;
       state.services_array = action.payload.services_array;
     },
+    /**
+     * Reset user state on logout.
+     */
     logout(state) {
       state.uid = '';
       state.isAuthenticated = false;
