@@ -23,7 +23,6 @@ apiService.interceptors.request.use(
       try {
         const token = await currentUser.getIdToken(false);
         config.headers.Authorization = `Bearer ${token}`;
-        console.log("Added auth token to request:", config.url);
       } catch (error) {
         console.error("Failed to get auth token:", error);
       }
