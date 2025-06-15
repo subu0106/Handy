@@ -2,7 +2,6 @@ import React from "react";
 import { 
   Box, 
   Typography, 
-  Paper, 
   Button, 
   Container,
   Grid,
@@ -11,8 +10,6 @@ import {
   CardActions
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import PersonIcon from "@mui/icons-material/Person";
-import WorkIcon from "@mui/icons-material/Work";
 import HomeRepairServiceIcon from "@mui/icons-material/HomeRepairService";
 import { useTheme } from "@mui/material/styles";
 
@@ -68,9 +65,9 @@ const Splash: React.FC = () => {
           </Typography>
         </Box>
 
-        <Grid container spacing={4} justifyContent="center">
+        <Grid container spacing={4} justifyContent="center" alignItems="stretch" sx={{ flexWrap: 'nowrap', minHeight: 400 }}>
           {/* Consumer Card */}
-          <Grid item xs={6} md={5}>
+          <Grid item xs={6} md={6} sx={{ display: 'flex', minWidth: 0 }}>
             <Card
               sx={{
                 height: "100%",
@@ -86,17 +83,17 @@ const Splash: React.FC = () => {
               onClick={() => navigate("/register/consumer")}
             >
               <CardContent sx={{ flex: 1, textAlign: "center", p: 4 }}>
-                <PersonIcon
-                  sx={{
-                    fontSize: 64,
-                    color: theme.palette.secondary.main,
-                    mb: 2,
-                  }}
-                />
+                <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+                  <img
+                    src="https://media.gettyimages.com/id/1345670568/photo/plumber-greeting-happy-clients-at-home-with-a-handshake.jpg?s=612x612&w=gi&k=20&c=5ObjHmVp3uyaKPDGr86bkvOmAR7JsjX_rbQKXzHylzE="
+                    alt="Happy customer at home"
+                    style={{ width: 120, height: 120, borderRadius: '50%', objectFit: 'cover', boxShadow: theme.shadows[3] }}
+                  />
+                </Box>
                 <Typography variant="h5" gutterBottom fontWeight={600}>
                   I need services
                 </Typography>
-                <Typography variant="body1" color="textSecondary" paragraph>
+                <Typography variant="body1" color="textSecondary" >
                   Looking for reliable professionals to help with home repairs, 
                   cleaning, maintenance, and more.
                 </Typography>
@@ -134,7 +131,7 @@ const Splash: React.FC = () => {
           </Grid>
 
           {/* Provider Card */}
-          <Grid item xs={6} md={5}>
+          <Grid item xs={6} md={6} sx={{ display: 'flex', minWidth: 0 }}>
             <Card
               sx={{
                 height: "100%",
@@ -150,13 +147,13 @@ const Splash: React.FC = () => {
               onClick={() => navigate("/register/provider")}
             >
               <CardContent sx={{ flex: 1, textAlign: "center", p: 4 }}>
-                <WorkIcon
-                  sx={{
-                    fontSize: 64,
-                    color: theme.palette.primary.main,
-                    mb: 2,
-                  }}
-                />
+                <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+                  <img
+                    src="https://media.istockphoto.com/id/1457385092/photo/an-asian-young-technician-service-man-wearing-blue-uniform-checking-cleaning-air-conditioner.jpg?s=612x612&w=0&k=20&c=Tqu5jMzD1TKFO1Fvow6d0JMDsEGU8T3kToP706bQFQI="
+                    alt="Service provider at work"
+                    style={{ width: 120, height: 120, borderRadius: '50%', objectFit: 'cover', boxShadow: theme.shadows[3] }}
+                  />
+                </Box>
                 <Typography variant="h5" gutterBottom fontWeight={600}>
                   I provide services
                 </Typography>
@@ -198,33 +195,10 @@ const Splash: React.FC = () => {
           </Grid>
         </Grid>
 
-        {/* Already have account section */}
-        <Box textAlign="center" mt={6}>
-          <Typography variant="body2" color="textSecondary" mb={2}>
-            Already have an account?
-          </Typography>
-          <Box display="flex" gap={2} justifyContent="center" flexWrap="wrap">
-            <Button
-              variant="outlined"
-              onClick={() => navigate("/login/consumer")}
-              sx={{ minWidth: 150 }}
-            >
-              Sign in as Consumer
-            </Button>
-            <Button
-              variant="outlined"
-              onClick={() => navigate("/login/provider")}
-              sx={{ minWidth: 150 }}
-            >
-              Sign in as Provider
-            </Button>
-          </Box>
-        </Box>
-
         {/* Footer */}
         <Box textAlign="center" mt={8}>
           <Typography variant="caption" color="textSecondary">
-            © 2024 Handy. All rights reserved.
+            © 2025 Handy. All rights reserved.
           </Typography>
         </Box>
       </Container>
