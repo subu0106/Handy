@@ -2,30 +2,30 @@ const constant = {
     HTTP_STATUS: {
         OK: 200,
         CREATED: 201,
-        BAD_REQUEST: 400,
-        UNAUTHORIZED: 401,
         FORBIDDEN: 403,
         NOT_FOUND: 404,
-        INTERNAL_SERVER_ERROR: 500,
-        UNPROCESSABLE_ENTITY: 422
+        BAD_REQUEST: 400,
+        UNAUTHORIZED: 401,
+        UNPROCESSABLE_ENTITY: 422,
+        INTERNAL_SERVER_ERROR: 500
     },
     DB_TABLES: {
         USERS: "users",
-        PROVIDERS: "providers",
-        SERVICES: "services",
-        PAIREDJOBS: "paired_jobs",
         OFFERS: "offers",
         REQUESTS: "requests",
+        SERVICES: "services",
+        PROVIDERS: "providers",
+        PAIREDJOBS: "paired_jobs",
     },
     USER_TYPES: {
+        ADMIN: "admin",
         CONSUMER: "consumer",
-        PROVIDER: "provider",
-        ADMIN: "admin"
+        PROVIDER: "provider"
     },
     REQUESTS_STATUS: {
+        CLOSED: "closed",
         PENDING: "pending",
-        ASSIGNED: "assigned",
-        CLOSED: "closed"
+        ASSIGNED: "assigned"
     },
     OFFERS_STATUS: {
         PENDING: "pending",
@@ -33,16 +33,16 @@ const constant = {
         REJECTED: "rejected"
     },
     SERVICES:{
-        ELECTRICITY: "electricity",
-        PLUMBING: "plumbing",
-        CARPENTRY: "carpentry",
-        CLEANING: "cleaning",
-        GARDENING: "gardening",
-        PAINTING: "painting",
+        HVAC: "hvac",
         MOVING: "moving",
+        CLEANING: "cleaning",
+        PLUMBING: "plumbing",
+        PAINTING: "painting",
+        CARPENTRY: "carpentry",
+        GARDENING: "gardening",
         LOCKSMITH: "locksmith",
+        ELECTRICITY: "electricity",
         PEST_CONTROL: "pest_control",
-        HVAC: "hvac"
     }
 }
 

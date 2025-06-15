@@ -1,21 +1,21 @@
-import { createBrowserRouter, Navigate } from "react-router-dom";
 import MainLayout from "@layouts/MainLayout";
+import { useAppSelector } from "@store/hooks";
+import { createBrowserRouter, Navigate } from "react-router-dom";
+import Jobs from "@pages/Jobs";
 import Home from "@pages/Home";
 import About from "@pages/About";
-import CreateServiceRequest from "@pages/CreateServiceRequest";
-import NotFound from "@pages/NotFound";
-import Profile from "@pages/Profile";
-import Providers from "@pages/Providers";
-import Jobs from "@pages/Jobs";
-import Register from "@pages/Register";
 import Offers from "@pages/Offers";
-import RegisterProvider from "@pages/Register/RegisterProvider";
-import RegisterConsumer from "@pages/Register/RegisterConsumer";
+import Profile from "@pages/Profile";
+import NotFound from "@pages/NotFound";
+import Register from "@pages/Register";
+import Splash from "@pages/WelcomePage";
+import Providers from "@pages/Providers";
 import ChatList from "@pages/Chats/ChatList";
 import ChatRoom from "@pages/Chats/ChatRoom";
-import Splash from "@pages/WelcomePage";
 import CreateOffer from "@pages/CreateOffer";
-import { useAppSelector } from "@store/hooks";
+import CreateServiceRequest from "@pages/CreateServiceRequest";
+import RegisterProvider from "@pages/Register/RegisterProvider";
+import RegisterConsumer from "@pages/Register/RegisterConsumer";
 
 // Protected Route Component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -39,6 +39,10 @@ const PublicRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+/**
+ * App router configuration for all public and protected routes.
+ * Uses route guards to redirect based on authentication state.
+ */
 export const createAppRouter = (mainLayoutProps: any) =>
   createBrowserRouter([
     {
@@ -85,10 +89,7 @@ export const createAppRouter = (mainLayoutProps: any) =>
         { path: "register/consumer", element: <RegisterConsumer /> },
         { path: "offers", element: <Offers /> },
         { path: "chats", element: <ChatList /> },
-        {
-          path: "chats/:chatId",
-          element: <ChatRoom />,
-        },
+        { path: "chats/:chatId", element: <ChatRoom /> },
       ],
     },
     {

@@ -24,7 +24,9 @@
     "noUncheckedSideEffectImports": true,
     "baseUrl": "./src",
     "paths": {
+      "@root/*": ["*"],
       "@assets/*": ["assets/*"],
+      "@config/*": ["config/*"],
       "@components/*": ["components/*"],
       "@layouts/*": ["layouts/*"],
       "@pages/*": ["pages/*"],
@@ -33,5 +35,5 @@
       "@utils/*": ["utils/*"],
     }
   },
-  "include": ["src"]
+  "include": ["src"],
 }

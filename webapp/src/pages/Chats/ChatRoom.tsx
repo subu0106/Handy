@@ -18,7 +18,7 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useAppSelector } from '@store/hooks';
 import { subscribeToMessages, sendMessage } from '../../utils/chatUtils';
 import type { Message } from '../../utils/chatUtils';
-import { database } from '../../firebase';
+import { database } from '@config/firebase';
 import { ref, get } from 'firebase/database';
 
 const ChatRoom: React.FC = () => {

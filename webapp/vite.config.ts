@@ -7,13 +7,15 @@ export default defineConfig({
   plugins: [react(),tailwindcss()],
   resolve: {
     alias: {
-      '@assets': '/src/assets',
-      '@components': '/src/components',
-      '@layouts': '/src/layouts',
-      '@pages': '/src/pages',
-      '@routes': '/src/routes',
-      '@store': '/src/store',
-      '@utils': '/src/utils',
+      '@root': '/src/',
+      '@assets': '/src/assets/',
+      '@components': '/src/components/',
+      '@config': '/src/config/',
+      '@layouts': '/src/layouts/',
+      '@pages': '/src/pages/',
+      '@routes': '/src/routes/',
+      '@store': '/src/store/',
+      '@utils': '/src/utils/',
     }
   }
 })
