@@ -1,20 +1,23 @@
+import apiService from '@utils/apiService';
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import apiService from '../utils/apiService';
 
-// Define the slice state
+/**
+ * Redux slice for offers related to a service request.
+ * Handles fetching offers and error state.
+ */
 interface OffersState {
   items: any[];
   status: 'idle' | 'loading' | 'succeeded' | 'failed';
   error: string | null;
 }
 
-// Initial state
 const initialState: OffersState = {
   items: [],
   status: 'idle',
   error: null,
 };
 
+// Thunk to fetch offers for a given request
 export const fetchOffers = createAsyncThunk(
   'offers/fetchOffers',
   async (requestId: string) => {

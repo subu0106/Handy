@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography } from '@mui/material';
-import { auth } from '../firebase';
+import { auth } from '@config/firebase';
 
 const SessionManager: React.FC = () => {
   const [showSessionExpired, setShowSessionExpired] = useState(false);

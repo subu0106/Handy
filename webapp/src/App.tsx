@@ -1,20 +1,27 @@
+import { io } from "socket.io-client";
+import { auth } from "@config/firebase";
+import apiService from "@utils/apiService";
+import { createAppRouter } from "@routes/index";
+import { RouterProvider } from "react-router-dom";
+import { onAuthStateChanged } from "firebase/auth";
+import { setUser, logout } from "@store/userSlice";
+import { fetchOffers } from "@store/offersSlice";
+import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { ThemeProvider, createTheme, CssBaseline, Snackbar, Alert } from "@mui/material";
-import { RouterProvider } from "react-router-dom";
-import { createAppRouter } from "@routes/index";
-import { fetchServiceRequests, fetchServiceRequestsBasedOnService } from "./store/serviceRequestsSlice";
-import { fetchOffers } from "./store/offersSlice";
-import { useAppDispatch, useAppSelector } from "@store/hooks";
-import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "./firebase";
-import { setUser, logout } from "./store/userSlice";
-import apiService from "./utils/apiService";
-import { io } from "socket.io-client";
+import { fetchServiceRequests, fetchServiceRequestsBasedOnService } from "@store/serviceRequestsSlice";
 
+/**
+ * Theme and WebSocket constants
+ */
 const THEME_KEY = "handy_theme_mode";
-const socket = io("http://localhost:5000", { autoConnect: false });
+const SOCKET_IO_BASE_URL = import.meta.env.VITE_SOCKET_IO_BASE_URL || "http://localhost:5000";
+const socket = io(SOCKET_IO_BASE_URL, { autoConnect: false });
 
-const getStoredTheme = () => {
+/**
+ * Get theme mode from localStorage or system preference
+ */
+const getStoredTheme = (): "light" | "dark" | null => {
   if (typeof window !== "undefined") {
     const stored = localStorage.getItem(THEME_KEY);
     if (stored === "light" || stored === "dark") return stored;
@@ -22,29 +29,41 @@ const getStoredTheme = () => {
   return null;
 };
 
-const getSystemTheme = () =>
+const getSystemTheme = (): "light" | "dark" =>
   window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 
+/**
+ * Main App Component
+ */
 const App = () => {
+  // State
   const [themeMode, setThemeMode] = useState<"light" | "dark">(() => getStoredTheme() || getSystemTheme());
   const [authLoading, setAuthLoading] = useState(true);
-  const [toast, setToast] = useState<{ open: boolean; msg: string; severity: "info" | "success" | "warning" | "error" }>({
+  const [toast, setToast] = useState({
     open: false,
     msg: "",
-    severity: "info",
+    severity: "info" as "info" | "success" | "warning" | "error",
   });
+
+  // Redux
   const dispatch = useAppDispatch();
   const user = useAppSelector((state) => state.user);
   const serviceRequests = useAppSelector((state) => state.serviceRequests) as any;
 
-  const showToast = useCallback((msg: string, severity: "info" | "success" | "warning" | "error" = "info") => {
-    setToast({ open: true, msg, severity });
-  }, []);
+  // Toast helper
+  const showToast = useCallback(
+    (msg: string, severity: "info" | "success" | "warning" | "error" = "info") => {
+      setToast({ open: true, msg, severity });
+    },
+    []
+  );
 
+  // Theme toggle handler
   const handleToggleTheme = useCallback(() => {
     setThemeMode((prev) => (prev === "dark" ? "light" : "dark"));
   }, []);
 
+  // MUI Theme
   const theme = useMemo(
     () =>
       createTheme({
@@ -100,24 +119,22 @@ const App = () => {
     [themeMode]
   );
 
+  // Router
   const router = useMemo(
     () => createAppRouter({ themeMode, onToggleTheme: handleToggleTheme }),
     [themeMode, handleToggleTheme]
   );
 
-  // Authentication persistence handling
+  /**
+   * Authentication state listener
+   */
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       try {
         if (firebaseUser) {
-          console.log('Firebase user detected:', firebaseUser.email);
-          
           try {
             const response = await apiService.get(`/users/user_info/${firebaseUser.uid}`);
             const userData = response.data;
-
-            console.log('Backend user data:', userData);
-
             dispatch(
               setUser({
                 uid: firebaseUser.uid,
@@ -129,29 +146,26 @@ const App = () => {
                 services_array: userData.services_array || [],
               })
             );
-
-            console.log("User authentication restored with backend data");
-          } catch (backendError) {
-            console.warn("Backend call failed, signing out user:", backendError);
+          } catch {
             await auth.signOut();
             dispatch(logout());
-            showToast('Session expired. Please sign in again.', 'warning');
+            showToast("Session expired. Please sign in again.", "warning");
           }
         } else {
-          console.log("No Firebase user, signing out");
           dispatch(logout());
         }
-      } catch (error) {
-        console.error("Error in auth state change:", error);
+      } catch {
         dispatch(logout());
       } finally {
         setAuthLoading(false);
       }
     });
-
     return () => unsubscribe();
   }, [dispatch, showToast]);
 
+  /**
+   * Listen for system theme changes if no theme is stored
+   */
   useEffect(() => {
     if (!getStoredTheme()) {
       const media = window.matchMedia("(prefers-color-scheme: dark)");
@@ -163,41 +177,35 @@ const App = () => {
     }
   }, []);
 
+  /**
+   * Persist theme mode in localStorage
+   */
   useEffect(() => {
     localStorage.setItem(THEME_KEY, themeMode);
   }, [themeMode]);
 
-  // WebSocket handling for both providers and consumers
+  /**
+   * WebSocket event handling for providers and consumers
+   */
   useEffect(() => {
-    console.log("user from App.tsx", user);
-    
     if (user?.isAuthenticated && user?.uid) {
       socket.connect();
-
       socket.on("connect", () => {
-        console.log("Connected to WebSocket server");
+        // Connected to WebSocket server
       });
-
-      // Provider-specific listeners (existing code)
       if (user.userType === "provider") {
         const providerServices = user.services_array;
-
         if (Array.isArray(providerServices)) {
           providerServices.forEach((service: string) => {
             socket.off(`new_request_${service}`);
             socket.on(`new_request_${service}`, (data) => {
-              showToast(
-                `New request: ${data.title} (Budget: $${data.budget})`,
-                "info"
-              );
+              showToast(`New request: ${data.title} (Budget: $${data.budget})`, "info");
               if (user?.uid) {
                 dispatch(fetchServiceRequestsBasedOnService(user.uid));
               }
             });
           });
         }
-
-        // Cleanup provider listeners
         return () => {
           if (Array.isArray(providerServices)) {
             providerServices.forEach((service: string) => {
@@ -207,67 +215,55 @@ const App = () => {
           socket.disconnect();
         };
       }
-
-      // Consumer-specific listeners (new code)
       if (user.userType === "consumer") {
         const offerTopic = `new_offer_${user.uid}`;
         const deleteOfferTopic = `delete_offer_${user.uid}`;
-        
-        // Remove any existing listeners
         socket.off(offerTopic);
         socket.off(deleteOfferTopic);
-        
-        // Listen for new offers
         socket.on(offerTopic, (offerData) => {
-          console.log("Received new offer notification:", offerData);
-          
           showToast(
             `New offer: $${offerData.budget} for "${offerData.request_title}" from ${offerData.provider_name}`,
             "success"
           );
-
-          // Refresh offers for the specific request if it's currently selected
           const { selectedRequestId } = serviceRequests;
           if (selectedRequestId && selectedRequestId.toString() === offerData.request_id.toString()) {
-            console.log("Refreshing offers for selected request:", selectedRequestId);
             dispatch(fetchOffers(selectedRequestId.toString()));
           }
         });
-
-        // Listen for deleted offers
         socket.on(deleteOfferTopic, (offerData) => {
-          console.log("Received deleted offer notification:", offerData);
           showToast(
             `Offer deleted for "${offerData.request_title}" from ${offerData.provider_name}`,
             "warning"
           );
-          // Refresh offers for the specific request if it's currently selected
           const { selectedRequestId } = serviceRequests;
           if (selectedRequestId && selectedRequestId.toString() === offerData.request_id.toString()) {
-            console.log("Refreshing offers for selected request after deletion:", selectedRequestId);
             dispatch(fetchOffers(selectedRequestId.toString()));
           }
         });
-
-        // Cleanup consumer listeners
         return () => {
           socket.off(offerTopic);
           socket.off(deleteOfferTopic);
           socket.disconnect();
         };
       }
-
-      // General cleanup if not provider or consumer
       return () => {
         socket.disconnect();
       };
     }
-
     return () => {
       socket.disconnect();
     };
-  }, [user?.userType, user?.services_array, user?.uid, user?.isAuthenticated, dispatch, showToast, serviceRequests?.selectedRequestId]);
+  }, [
+    user?.userType,
+    user?.services_array,
+    user?.uid,
+    user?.isAuthenticated,
+    dispatch,
+    showToast,
+    serviceRequests?.selectedRequestId,
+  ]);
 
+  // Loading screen
   if (authLoading) {
     return (
       <ThemeProvider theme={theme}>
@@ -290,13 +286,14 @@ const App = () => {
     );
   }
 
+  // Main app
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <RouterProvider router={router} />
       <Snackbar
         open={toast.open}
-        autoHideDuration={8000} // Increased duration for offer notifications
+        autoHideDuration={8000}
         onClose={() => setToast((t) => ({ ...t, open: false }))}
         anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
