@@ -16,7 +16,7 @@ import WorkIcon from "@mui/icons-material/Work";
 import LocalOfferIcon from "@mui/icons-material/LocalOffer";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import { useAppSelector } from "@store/hooks";
-import { subscribeToUserChats } from "../utils/chatUtils";
+import { subscribeToUserChats } from "@utils/chatUtils";
 import {
   Menu,
   MenuItem,
@@ -29,7 +29,7 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import ExitToAppIcon from "@mui/icons-material/ExitToApp";
 import { useDispatch } from "react-redux";
 import { logout } from "@store/userSlice";
-import { auth } from "../firebase";
+import { auth } from "@config/firebase";
 
 interface NavBarProps {
   userName: string;

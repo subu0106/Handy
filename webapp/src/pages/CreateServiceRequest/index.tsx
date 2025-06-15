@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Box, Paper, Typography, Button, MenuItem, TextField } from "@mui/material";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import apiService from "@utils/apiService";
-import constant from "../../constants"
+import constant from "@config/constants"
 
 const SERVICE_TYPES = [
   { value: "electricity", label: "Electricity",id: 1 },

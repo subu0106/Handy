@@ -1,6 +1,10 @@
+import apiService from '@utils/apiService';
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import apiService from '../utils/apiService';
 
+/**
+ * Redux slice for provider offers.
+ * Handles fetching, adding, updating, and deleting offers for providers.
+ */
 interface ProviderOffersState {
   items: any[];
   status: 'idle' | 'loading' | 'succeeded' | 'failed';
@@ -13,16 +17,16 @@ const initialState: ProviderOffersState = {
   error: null,
 };
 
+// Thunk to fetch offers for a provider
 export const fetchProviderOffers = createAsyncThunk(
   'providerOffers/fetchProviderOffers',
   async (providerId: string) => {
-    console.log('Fetching offers for provider:', providerId);
     const response = await apiService.get(`/offers/provider/${providerId}`);
-    console.log('Provider offers response:', response.data);
     return response.data;
   }
 );
 
+// Thunk to delete an offer by ID
 export const deleteProviderOffer = createAsyncThunk(
   'providerOffers/deleteOffer',
   async (offerId: string) => {
@@ -35,9 +39,15 @@ const providerOffersSlice = createSlice({
   name: 'providerOffers',
   initialState,
   reducers: {
+    /**
+     * Add a new offer to the state.
+     */
     addOffer: (state, action) => {
       state.items.push(action.payload);
     },
+    /**
+     * Update an existing offer in the state.
+     */
     updateOffer: (state, action) => {
       const index = state.items.findIndex(offer => offer.offer_id === action.payload.offer_id);
       if (index !== -1) {

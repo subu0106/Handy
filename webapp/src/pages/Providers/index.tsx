@@ -13,7 +13,7 @@ import {
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import { getFirestore, collection, getDocs, query } from "firebase/firestore";
-import { app, database } from "../../firebase";
+import { app, database } from "@config/firebase";
 
 const providers = [
 	{
