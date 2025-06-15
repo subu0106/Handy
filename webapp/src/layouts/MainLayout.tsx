@@ -5,25 +5,21 @@ import type { RootState } from "@store/store";
 import { useAppSelector } from "@store/hooks";
 
 /**
- * Main layout for authenticated routes.
- * Renders the navigation bar and the current page content.
+ * MainLayout component
+ * Provides the main layout for authenticated routes, including the navigation bar and page content.
  */
 interface MainLayoutProps {
-  themeMode: "light" | "dark";
   onToggleTheme: () => void;
 }
 
-const MainLayout: React.FC<MainLayoutProps> = ({ themeMode, onToggleTheme }) => {
+const MainLayout: React.FC<MainLayoutProps> = ({ onToggleTheme }) => {
   const user = useAppSelector((state: RootState) => state.user);
 
   return (
     <div>
-      <NavBar
-        userName={user.name}
-        avatarUrl={user.avatarUrl}
-        themeMode={themeMode}
-        onToggleTheme={onToggleTheme}
-      />
+      {/* Navigation Bar */}
+      <NavBar userName={user.name} avatarUrl={user.avatarUrl} onToggleTheme={onToggleTheme} />
+      {/* Main Content */}
       <main className="p-4">
         <Outlet />
       </main>

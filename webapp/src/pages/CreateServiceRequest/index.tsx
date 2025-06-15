@@ -3,13 +3,13 @@ import { useNavigate } from "react-router-dom";
 import { Box, Paper, Typography, Button, MenuItem, TextField } from "@mui/material";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import apiService from "@utils/apiService";
-import constant from "@config/constants"
+import CONSTANTS from "@config/constants";
 
 const SERVICE_TYPES = [
-  { value: "electricity", label: "Electricity",id: 1 },
+  { value: "electricity", label: "Electricity", id: 1 },
   { value: "plumbing", label: "Plumbing", id: 2 },
   { value: "carpentry", label: "Carpentry", id: 3 },
-  { value: "cleaning", label: "Cleaning" , id: 4 },
+  { value: "cleaning", label: "Cleaning", id: 4 },
   { value: "gardening", label: "Gardening", id: 5 },
   { value: "painting", label: "Painting", id: 6 },
   { value: "moving", label: "Moving", id: 7 },
@@ -29,23 +29,23 @@ const CreateServiceRequest: React.FC = () => {
   const user = useAppSelector((state) => state.user);
   const [location, setLocation] = useState("");
   const [budget, setBudget] = useState<number | null>(null);
-  const [timeframe , setTimeframe] = useState("");
+  const [timeframe, setTimeframe] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
     const data = {
-      user_id : user.uid,
-      service_id : SERVICE_TYPES.find((type) => type.value === serviceType)?.id,
+      user_id: user.uid,
+      service_id: SERVICE_TYPES.find((type) => type.value === serviceType)?.id,
       title,
       description,
       location: user.location || location, //need to add this to user data interface.
       budget,
       timeframe,
-      status: constant.REQUESTS_STATUS.PENDING,
+      status: CONSTANTS.REQUEST_STATUS.PENDING,
       created_at: new Date().toISOString(),
-    }
+    };
 
     console.log("Creating service request with data:", data);
     try {

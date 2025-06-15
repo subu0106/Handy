@@ -1,3 +1,8 @@
+/**
+ * Utility functions for chat operations using Firebase Realtime Database.
+ * Includes chat creation, messaging, and real-time subscriptions.
+ */
+
 import { database } from "@config/firebase";
 import { ref, push, onValue, serverTimestamp, set, get, off, update } from "firebase/database";
 
@@ -19,7 +24,10 @@ export interface Chat {
   createdAt: number;
 }
 
-// Create or get existing chat between two users
+/**
+ * Create or get an existing chat between two users.
+ * @returns The chat ID.
+ */
 export const createOrGetChat = async (
   currentUserId: string,
   otherUserId: string,
@@ -30,7 +38,6 @@ export const createOrGetChat = async (
     // Check if chat already exists
     const chatsRef = ref(database, "chats");
     const snapshot = await get(chatsRef);
-
     if (snapshot.exists()) {
       const chats = snapshot.val();
       for (const chatId in chats) {
@@ -40,11 +47,9 @@ export const createOrGetChat = async (
         }
       }
     }
-
     // Create new chat
     const newChatRef = push(chatsRef);
     const chatId = newChatRef.key!;
-
     await set(newChatRef, {
       participants: [currentUserId, otherUserId],
       participantNames: {
@@ -55,7 +60,6 @@ export const createOrGetChat = async (
       lastMessageTime: serverTimestamp(),
       createdAt: serverTimestamp(),
     });
-
     return chatId;
   } catch (error) {
     console.error("Error creating or getting chat:", error);
@@ -63,12 +67,13 @@ export const createOrGetChat = async (
   }
 };
 
-// Send a message
+/**
+ * Send a message in a chat.
+ */
 export const sendMessage = async (chatId: string, senderId: string, senderName: string, text: string) => {
   try {
     const messagesRef = ref(database, `chats/${chatId}/messages`);
     const newMessageRef = push(messagesRef);
-
     await set(newMessageRef, {
       senderId,
       senderName,
@@ -76,7 +81,6 @@ export const sendMessage = async (chatId: string, senderId: string, senderName: 
       timestamp: serverTimestamp(),
       createdAt: new Date().toISOString(),
     });
-
     // Update last message in chat
     const chatRef = ref(database, `chats/${chatId}`);
     await update(chatRef, {
@@ -95,12 +99,8 @@ export const sendMessage = async (chatId: string, senderId: string, senderName: 
  * @param callback - Function to call with the latest messages array.
  * @returns Unsubscribe function to stop listening.
  */
-export const subscribeToMessages = (
-  chatId: string,
-  callback: (messages: Message[]) => void
-): (() => void) => {
+export const subscribeToMessages = (chatId: string, callback: (messages: Message[]) => void): (() => void) => {
   const messagesRef = ref(database, `chats/${chatId}/messages`);
-
   const handleSnapshot = (snapshot: any) => {
     const messages: Message[] = [];
     if (snapshot.exists()) {
@@ -113,7 +113,6 @@ export const subscribeToMessages = (
     }
     callback(messages);
   };
-
   const unsubscribe = onValue(messagesRef, handleSnapshot);
   return () => off(messagesRef, "value", unsubscribe);
 };
@@ -124,12 +123,8 @@ export const subscribeToMessages = (
  * @param callback - Function to call with the latest chats array.
  * @returns Unsubscribe function to stop listening.
  */
-export const subscribeToUserChats = (
-  userId: string,
-  callback: (chats: Chat[]) => void
-): (() => void) => {
+export const subscribeToUserChats = (userId: string, callback: (chats: Chat[]) => void): (() => void) => {
   const chatsRef = ref(database, "chats");
-
   const handleSnapshot = (snapshot: any) => {
     const chats: Chat[] = [];
     if (snapshot.exists()) {
@@ -145,7 +140,6 @@ export const subscribeToUserChats = (
     }
     callback(chats);
   };
-
   const unsubscribe = onValue(chatsRef, handleSnapshot);
   return () => off(chatsRef, "value", unsubscribe);
 };

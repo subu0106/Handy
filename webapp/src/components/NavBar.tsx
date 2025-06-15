@@ -1,57 +1,33 @@
 import React, { useState, useEffect } from "react";
-import AppBar from "@mui/material/AppBar";
-import Toolbar from "@mui/material/Toolbar";
-import IconButton from "@mui/material/IconButton";
-import Badge from "@mui/material/Badge";
-import Avatar from "@mui/material/Avatar";
-import Typography from "@mui/material/Typography";
-import NotificationsIcon from "@mui/icons-material/Notifications";
-import MailIcon from "@mui/icons-material/Mail";
-import Box from "@mui/material/Box";
-import WbSunnyIcon from "@mui/icons-material/WbSunny";
-import NightlightRoundIcon from "@mui/icons-material/NightlightRound";
 import { useNavigate } from "react-router-dom";
-import GroupIcon from "@mui/icons-material/Group";
-import WorkIcon from "@mui/icons-material/Work";
-import LocalOfferIcon from "@mui/icons-material/LocalOffer";
-import PersonAddIcon from "@mui/icons-material/PersonAdd";
+import { Mail, Notifications, WbSunny, NightlightRound, ExitToApp, HomeRepairService } from "@mui/icons-material";
+import { AppBar, Toolbar, Typography, Menu, MenuItem, Divider, Box, Badge, Avatar } from "@mui/material";
+import { useTheme, alpha } from "@mui/material/styles";
+import { auth } from "@config/firebase";
 import { useAppSelector } from "@store/hooks";
 import { subscribeToUserChats } from "@utils/chatUtils";
-import {
-  Menu,
-  MenuItem,
-  Divider,
-  ListItemIcon,
-  ListItemText
-} from "@mui/material";
-import PersonIcon from "@mui/icons-material/Person";
-import SettingsIcon from "@mui/icons-material/Settings";
-import ExitToAppIcon from "@mui/icons-material/ExitToApp";
-import { useDispatch } from "react-redux";
-import { logout } from "@store/userSlice";
-import { auth } from "@config/firebase";
 
 interface NavBarProps {
   userName: string;
   avatarUrl?: string;
-  themeMode: 'light' | 'dark';
   onToggleTheme: () => void;
 }
 
-const NavBar: React.FC<NavBarProps> = ({ userName, avatarUrl, themeMode, onToggleTheme }) => {
+const NavBar: React.FC<NavBarProps> = ({ userName, avatarUrl, onToggleTheme }) => {
   const navigate = useNavigate();
-  const dispatch = useDispatch();
+  const theme = useTheme();
+  const themeMode = theme.palette.mode;
+  const isDark = theme.palette.mode === "dark";
   const user = useAppSelector((state) => state.user);
   const [unreadCount, setUnreadCount] = useState(0);
   const [profileAnchorEl, setProfileAnchorEl] = useState<null | HTMLElement>(null);
 
+  // Subscribe to unread chat count
   useEffect(() => {
     if (!user.uid) return;
-
     const unsubscribe = subscribeToUserChats(user.uid, (chats) => {
       setUnreadCount(chats.length);
     });
-
     return () => unsubscribe();
   }, [user.uid]);
 
@@ -73,17 +49,31 @@ const NavBar: React.FC<NavBarProps> = ({ userName, avatarUrl, themeMode, onToggl
     handleProfileClose();
   };
 
-  const handleProfilePage = () => {
-    navigate("/dashboard/profile");
-    handleProfileClose();
+  const buttonBoxStyle = {
+    cursor: "pointer",
+    borderRadius: 2,
+    p: 0.8,
+    mx: 1,
+    boxShadow: 1,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    transition: "background-color 0.2s ease-in-out",
+    bgcolor: alpha(theme.palette.text.primary, isDark ? 0.2 : 0.5),
+    "&:hover": {
+      bgcolor: alpha(theme.palette.text.primary, isDark ? 0.35 : 0.8),
+    },
   };
 
   return (
     <AppBar position="fixed" color="primary" elevation={1}>
       <Toolbar>
-        {/* Home Button and App Name at start */}
+        {/* Logo & Title */}
         <Box sx={{ display: "flex", alignItems: "center" }}>
-          {/* Remove HomeIcon button, only keep Handy symbol as home */}
+          <HomeRepairService
+            sx={{ mr: 1, fontSize: 28, color: "inherit", cursor: "pointer" }}
+            onClick={() => navigate("/dashboard")}
+          />
           <Typography
             variant="h6"
             sx={{
@@ -92,112 +82,101 @@ const NavBar: React.FC<NavBarProps> = ({ userName, avatarUrl, themeMode, onToggl
               cursor: "pointer",
               userSelect: "none",
               color: "inherit",
-              mr: 2
+              mr: 2,
             }}
             onClick={() => navigate("/dashboard")}
           >
             Handy
           </Typography>
         </Box>
-        
-        {/* Navigation Links */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1, ml: 2 }}>
-          <IconButton color="inherit" onClick={() => navigate("/dashboard/providers")} title="Providers">
-            <GroupIcon />
-          </IconButton>
-          <IconButton color="inherit" onClick={() => navigate("/dashboard/jobs")} title="My Jobs">
-            <WorkIcon />
-          </IconButton>
-          <IconButton color="inherit" onClick={() => navigate("/dashboard/offers")} title="Offers">
-            <LocalOfferIcon />
-          </IconButton>
-          <IconButton color="inherit" onClick={() => navigate("/dashboard/register")} title="Register">
-            <PersonAddIcon />
-          </IconButton>
-        </Box>
-        
+
         <Box sx={{ flexGrow: 1 }} />
-        
-        {/* Theme Switch Icon */}
-        <IconButton onClick={onToggleTheme} color="inherit" sx={{ mr: 1 }} aria-label="toggle theme">
-          {themeMode === "dark" ? <WbSunnyIcon /> : <NightlightRoundIcon />}
-        </IconButton>
-        
-        {/* Messages */}
-        <IconButton color="inherit" sx={{ ml: 1 }} onClick={() => navigate("/dashboard/chats")}>
-          <Badge badgeContent={unreadCount} color="error">
-            <MailIcon />
-          </Badge>
-        </IconButton>
-        
-        {/* Notifications */}
-        <IconButton color="inherit" sx={{ ml: 1 }}>
-          <Badge badgeContent={0} color="error">
-            <NotificationsIcon />
-          </Badge>
-        </IconButton>
-        
-        {/* Profile with Popup */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1, ml: 2 }}>
-          <IconButton onClick={handleProfileClick} sx={{ p: 0 }}>
-            <Avatar 
-              src={avatarUrl} 
-              alt={userName} 
-              sx={{ width: 32, height: 32 }}
-            />
-          </IconButton>
-          
-          {/* Profile Menu */}
-          <Menu
-            anchorEl={profileAnchorEl}
-            open={Boolean(profileAnchorEl)}
-            onClose={handleProfileClose}
-            anchorOrigin={{
-              vertical: 'bottom',
-              horizontal: 'right',
-            }}
-            transformOrigin={{
-              vertical: 'top',
-              horizontal: 'right',
+
+        {/* Button Group */}
+        <Box sx={{ display: "flex", alignItems: "center" }}>
+          {/* Theme Toggle */}
+          <Box onClick={onToggleTheme} aria-label="toggle theme" sx={buttonBoxStyle}>
+            {themeMode === "dark" ? <WbSunny fontSize="small" /> : <NightlightRound fontSize="small" />}
+          </Box>
+
+          {/* Messages */}
+          <Box onClick={() => navigate("/dashboard/chats")} aria-label="messages" sx={buttonBoxStyle}>
+            <Badge badgeContent={unreadCount} color="error">
+              <Mail fontSize="small" />
+            </Badge>
+          </Box>
+
+          {/* Notifications */}
+          <Box aria-label="notifications" sx={buttonBoxStyle}>
+            <Badge badgeContent={0} color="error">
+              <Notifications fontSize="small" />
+            </Badge>
+          </Box>
+
+          {/* Profile */}
+          <Box sx={{ ...buttonBoxStyle, ml: 1 }} onClick={handleProfileClick} aria-label="profile menu">
+            <Avatar src={avatarUrl} alt={userName} sx={{ width: 35, height: 35 }} />
+          </Box>
+        </Box>
+
+        {/* Profile Menu */}
+        <Menu
+          anchorEl={profileAnchorEl}
+          open={Boolean(profileAnchorEl)}
+          onClose={handleProfileClose}
+          anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+          transformOrigin={{ vertical: "top", horizontal: "right" }}
+          slotProps={{
+            paper: {
+              sx: {
+                minWidth: 220,
+                borderRadius: 2,
+                boxShadow: 3,
+                mt: 1,
+                p: 0,
+              },
+            },
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              py: 1.2,
+              px: 1.5,
+              gap: 0.3,
             }}
           >
-            {/* User Info */}
-            <Box sx={{ px: 2, py: 1 }}>
-              <Typography variant="subtitle1" fontWeight={600}>
-                {userName}
-              </Typography>
-              <Typography variant="body2" color="textSecondary">
-                {user.userType ? user.userType.charAt(0).toUpperCase() + user.userType.slice(1) : 'User'}
-              </Typography>
-            </Box>
-            
-            <Divider />
-            
-            {/* Menu Items */}
-            <MenuItem onClick={handleProfilePage}>
-              <ListItemIcon>
-                <PersonIcon fontSize="small" />
-              </ListItemIcon>
-              <ListItemText>Profile</ListItemText>
-            </MenuItem>
-            
-            <MenuItem onClick={handleProfileClose}>
-              <ListItemIcon>
-                <SettingsIcon fontSize="small" />
-              </ListItemIcon>
-              <ListItemText>Settings</ListItemText>
-            </MenuItem>
-            
-            <Divider />
-            
-            <MenuItem onClick={handleLogout}>
-              <ListItemIcon>
-                <ExitToAppIcon fontSize="small" />
-              </ListItemIcon>
-              <ListItemText>Logout</ListItemText>
-            </MenuItem>
-          </Menu>
-        </Box>
+            <Avatar src={avatarUrl} alt={userName} sx={{ width: 40, height: 40, mb: 0.5 }} />
+            <Typography variant="subtitle2" fontWeight={600} align="center" sx={{ fontSize: 15 }}>
+              {userName}
+            </Typography>
+            <Typography variant="caption" color="text.secondary" align="center">
+              {user.userType ? user.userType.charAt(0).toUpperCase() + user.userType.slice(1) : "User"}
+            </Typography>
+          </Box>
+
+          <Divider sx={{ my: 0.3 }} />
+
+          <MenuItem
+            onClick={handleLogout}
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              py: 0.8,
+              fontWeight: 500,
+              fontSize: 14,
+            }}
+          >
+            <ExitToApp fontSize="small" sx={{ mb: 0.2 }} />
+            <Typography variant="body2" sx={{ fontWeight: 500, fontSize: 14, mt: 0.2 }}>
+              Sign out
+            </Typography>
+          </MenuItem>
+        </Menu>
       </Toolbar>
     </AppBar>
   );
