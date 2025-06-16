@@ -15,7 +15,8 @@ import {
   IconButton,
   Grid,
   Card,
-  CardContent
+  CardContent,
+  alpha
 } from "@mui/material";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { fetchServiceRequestsBasedOnService } from "../../store/serviceRequestsSlice";
@@ -216,25 +217,25 @@ const ProviderHome: React.FC = () => {
                     const existingOffer = getExistingOffer(requestId.toString());
                     
                     return (
-                      <div
+                      <Box
                         key={requestId}
-                        style={{
-                          padding: 16,
-                          marginBottom: 12,
-                          borderRadius: 8,
-                          border: "1px solid #e0e0e0",
+                        sx={{
+                          padding: 2,
+                          marginBottom: 1.5,
+                          borderRadius: 1,
+                          border: "1px solid",
+                          borderColor: "divider",
                           display: "flex",
                           flexDirection: "column",
-                          gap: 8,
-                          transition: "background 0.2s, box-shadow 0.2s",
-                        }}
-                        onMouseOver={(e) => {
-                          e.currentTarget.style.background = "#f5f5f5";
-                          e.currentTarget.style.boxShadow = "0 2px 8px rgba(25, 118, 210, 0.08)";
-                        }}
-                        onMouseOut={(e) => {
-                          e.currentTarget.style.background = "";
-                          e.currentTarget.style.boxShadow = "none";
+                          gap: 1,
+                          transition: "all 0.3s ease",
+                          cursor: "pointer",
+                          "&:hover": {
+                            bgcolor: "action.hover",
+                            boxShadow: `0 4px 16px ${alpha(theme.palette.primary.main, 0.3)}`,
+                            transform: "translateY(-2px)",
+                            borderColor: "primary.main",
+                          },
                         }}
                       >
                         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -302,7 +303,7 @@ const ProviderHome: React.FC = () => {
                             View Details
                           </Button>
                         </div>
-                      </div>
+                      </Box>
                     );
                   })}
                 </div>
@@ -337,25 +338,25 @@ const ProviderHome: React.FC = () => {
               ) : (
                 <div>
                   {safeOffers.map((offer: any) => (
-                    <div
+                    <Box
                       key={offer.offer_id || offer.id}
-                      style={{
-                        padding: 12,
-                        marginBottom: 8,
-                        borderRadius: 6,
-                        border: "1px solid #e0e0e0",
+                      sx={{
+                        padding: 1.5,
+                        marginBottom: 1,
+                        borderRadius: 0.75,
+                        border: "1px solid",
+                        borderColor: "divider",
                         display: "flex",
                         flexDirection: "column",
-                        gap: 8,
-                        transition: "background 0.2s, box-shadow 0.2s",
-                      }}
-                      onMouseOver={(e) => {
-                        e.currentTarget.style.background = "#f5f5f5";
-                        e.currentTarget.style.boxShadow = "0 2px 8px rgba(25, 118, 210, 0.08)";
-                      }}
-                      onMouseOut={(e) => {
-                        e.currentTarget.style.background = "";
-                        e.currentTarget.style.boxShadow = "none";
+                        gap: 1,
+                        transition: "all 0.3s ease",
+                        cursor: "pointer",
+                        "&:hover": {
+                          bgcolor: "action.hover",
+                          boxShadow: `0 4px 16px ${alpha(theme.palette.primary.main, 0.3)}`,
+                          transform: "translateY(-2px)",
+                          borderColor: "primary.main",
+                        },
                       }}
                     >
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -452,7 +453,7 @@ const ProviderHome: React.FC = () => {
                           </Button>
                         )}
                       </div>
-                    </div>
+                    </Box>
                   ))}
                 </div>
               )}

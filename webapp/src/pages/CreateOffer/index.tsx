@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Box, Paper, Typography, Button, TextField, Chip } from "@mui/material";
+import { Box, Paper, Typography, Button, TextField, Chip, useTheme, alpha } from "@mui/material";
 import { useAppSelector } from "@store/hooks";
 import apiService from "@utils/apiService";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -8,6 +8,7 @@ import LocalOfferIcon from "@mui/icons-material/LocalOffer";
 
 const CreateOffer: React.FC = () => {
   const navigate = useNavigate();
+  const theme = useTheme();
   const { requestId } = useParams<{ requestId: string }>();
   const [budget, setBudget] = useState<number | null>(null);
   const [timeframe, setTimeframe] = useState("");
@@ -90,14 +91,38 @@ const CreateOffer: React.FC = () => {
   }
 
   return (
-    <Box display="flex" justifyContent="center" alignItems="center" minHeight="70vh" p={2}>
-      <Paper sx={{ p: 4, minWidth: 400, maxWidth: 600, width: "100%" }}>
+    <Box 
+      display="flex" 
+      justifyContent="center" 
+      alignItems="center" 
+      minHeight="70vh" 
+      p={2}
+      sx={{
+        backgroundColor: theme.palette.background.default,
+        marginTop: "80px", // Add space from navbar
+      }}
+    >
+      <Paper 
+        sx={{ 
+          p: 4, 
+          minWidth: 400, 
+          maxWidth: 600, 
+          width: "100%",
+          backgroundColor: theme.palette.background.paper,
+          boxShadow: theme.shadows[8],
+        }}
+      >
         {/* Header with back button */}
         <Box display="flex" alignItems="center" mb={3}>
           <Button
             startIcon={<ArrowBackIcon />}
             onClick={() => navigate("/dashboard")}
-            sx={{ mr: 2 }}
+            sx={{ 
+              mr: 2,
+              "&:hover": {
+                backgroundColor: alpha(theme.palette.primary.main, 0.1),
+              },
+            }}
           >
             Back
           </Button>
@@ -109,7 +134,7 @@ const CreateOffer: React.FC = () => {
 
         {/* Request Details Section */}
         {requestDetails && (
-          <Box mb={3} p={2} sx={{ backgroundColor: "grey.900", borderRadius: 1 }}>
+          <Box mb={3} p={2}>
             <Typography variant="h6" gutterBottom color="primary">
               Request Details
             </Typography>
@@ -132,7 +157,7 @@ const CreateOffer: React.FC = () => {
                 <Chip 
                   label={`Requested Timeframe: ${requestDetails.timeframe}`} 
                   size="small" 
-                  color="secondary" 
+                  color="primary" 
                   variant="outlined" 
                 />
               )}
@@ -140,6 +165,7 @@ const CreateOffer: React.FC = () => {
                 <Chip 
                   label={`Location: ${requestDetails.location}`} 
                   size="small" 
+                  color="primary"
                   variant="outlined" 
                 />
               )}
@@ -163,6 +189,13 @@ const CreateOffer: React.FC = () => {
               "Provide a competitive quote for the requested service"
             }
             inputProps={{ min: 1, step: 0.01 }}
+            sx={{
+              "& .MuiOutlinedInput-root": {
+                "&:hover fieldset": {
+                  borderColor: alpha(theme.palette.primary.main, 0.5),
+                },
+              },
+            }}
           />
 
           <TextField
@@ -177,10 +210,25 @@ const CreateOffer: React.FC = () => {
               `Customer requested: ${requestDetails.timeframe}. When can you complete this job?` : 
               "When can you complete this job?"
             }
+            sx={{
+              "& .MuiOutlinedInput-root": {
+                "&:hover fieldset": {
+                  borderColor: alpha(theme.palette.primary.main, 0.5),
+                },
+              },
+            }}
           />
 
           {error && (
-            <Box mt={2}>
+            <Box 
+              mt={2} 
+              p={1.5} 
+              sx={{ 
+                backgroundColor: alpha(theme.palette.error.main, 0.1),
+                borderRadius: 1,
+                border: `1px solid ${alpha(theme.palette.error.main, 0.2)}`,
+              }}
+            >
               <Typography color="error" variant="body2">
                 {error}
               </Typography>
@@ -192,6 +240,11 @@ const CreateOffer: React.FC = () => {
               variant="outlined" 
               onClick={() => navigate("/dashboard")}
               disabled={loading}
+              sx={{
+                "&:hover": {
+                  backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                },
+              }}
             >
               Cancel
             </Button>
@@ -200,7 +253,12 @@ const CreateOffer: React.FC = () => {
               variant="contained" 
               color="primary" 
               disabled={loading}
-              sx={{ minWidth: 120 }}
+              sx={{ 
+                minWidth: 120,
+                "&:hover": {
+                  backgroundColor: alpha(theme.palette.primary.main, 0.8),
+                },
+              }}
             >
               {loading ? "Creating..." : "Submit Offer"}
             </Button>
@@ -208,7 +266,15 @@ const CreateOffer: React.FC = () => {
         </form>
 
         {/* Help Text */}
-        <Box mt={3} p={2} sx={{ backgroundColor: "info.light", borderRadius: 1, color: "info.contrastText" }}>
+        <Box 
+          mt={3} 
+          p={2} 
+          sx={{ 
+            backgroundColor: alpha(theme.palette.info.main, 0.1),
+            borderRadius: 1,
+            border: `1px solid ${alpha(theme.palette.info.main, 0.2)}`,
+          }}
+        >
           <Typography variant="body2">
             <strong>Tips for a great offer:</strong>
             <br />
