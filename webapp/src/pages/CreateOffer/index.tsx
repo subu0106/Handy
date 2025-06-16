@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Box, Paper, Typography, Button, TextField, Chip, useTheme, alpha } from "@mui/material";
+import { Box, Paper, Typography, Button, TextField, Chip, useTheme, alpha, Stack } from "@mui/material";
 import { useAppSelector } from "@store/hooks";
 import apiService from "@utils/apiService";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -17,6 +17,22 @@ const CreateOffer: React.FC = () => {
   const [requestDetails, setRequestDetails] = useState<any>(null);
   const [loadingRequest, setLoadingRequest] = useState(true);
   const user = useAppSelector((state) => state.user);
+
+  // Enhanced chip styling for better dark theme visibility
+  const getChipStyles = (color: 'primary' | 'secondary' | 'success' | 'error' | 'warning' | 'info', variant: 'filled' | 'outlined' = 'filled') => {
+    const themeColor = theme.palette[color];
+    
+    return {
+      fontWeight: 'medium',
+      borderWidth: variant === 'outlined' ? 2 : 0,
+      backgroundColor: variant === 'filled' ? undefined : alpha(themeColor.main, 0.1),
+      borderColor: variant === 'outlined' ? themeColor.main : undefined,
+      color: variant === 'outlined' ? themeColor.main : themeColor.contrastText,
+      '&:hover': {
+        backgroundColor: alpha(themeColor.main, variant === 'outlined' ? 0.2 : 0.8)
+      }
+    };
+  };
 
   // Fetch request details when component mounts
   useEffect(() => {
@@ -134,43 +150,55 @@ const CreateOffer: React.FC = () => {
 
         {/* Request Details Section */}
         {requestDetails && (
-          <Box mb={3} p={2}>
-            <Typography variant="h6" gutterBottom color="primary">
+          <Paper 
+            elevation={0}
+            sx={{ 
+              p: 3, 
+              mb: 3,
+              borderRadius: 2, 
+              bgcolor: alpha(theme.palette.primary.main, 0.05),
+              border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`
+            }}
+          >
+            <Typography variant="h6" gutterBottom color="primary" fontWeight="bold">
               Request Details
             </Typography>
-            <Typography variant="body1" fontWeight={500} gutterBottom>
+            <Typography variant="h5" fontWeight="bold" color="primary" gutterBottom>
               {requestDetails.title}
             </Typography>
-            <Typography variant="body2" color="textSecondary" gutterBottom>
+            <Typography variant="body1" color="text.primary" gutterBottom lineHeight={1.6}>
               {requestDetails.description}
             </Typography>
-            <Box display="flex" gap={1} mt={1} flexWrap="wrap">
+            <Stack direction="row" spacing={1} flexWrap="wrap" gap={1} mt={2}>
               {requestDetails.budget && (
                 <Chip 
                   label={`Customer Budget: $${requestDetails.budget}`} 
                   size="small" 
-                  color="primary" 
+                  color="success" 
                   variant="outlined" 
+                  sx={getChipStyles('success', 'outlined')}
                 />
               )}
               {requestDetails.timeframe && (
                 <Chip 
                   label={`Requested Timeframe: ${requestDetails.timeframe}`} 
                   size="small" 
-                  color="primary" 
+                  color="info" 
                   variant="outlined" 
+                  sx={getChipStyles('info', 'outlined')}
                 />
               )}
               {requestDetails.location && (
                 <Chip 
                   label={`Location: ${requestDetails.location}`} 
                   size="small" 
-                  color="primary"
+                  color="warning"
                   variant="outlined" 
+                  sx={getChipStyles('warning', 'outlined')}
                 />
               )}
-            </Box>
-          </Box>
+            </Stack>
+          </Paper>
         )}
 
         {/* Simplified Offer Form */}
