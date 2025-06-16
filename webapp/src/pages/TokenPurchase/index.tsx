@@ -33,6 +33,7 @@ interface PaymentFormProps {
     tokens: number;
     quantity: number;
     totalPrice: number;
+    unitPrice: number; // Add unitPrice
     onSuccess: () => void;
     onCancel: () => void;
 }
@@ -41,6 +42,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
     tokens,
     quantity,
     totalPrice,
+    unitPrice, // Add unitPrice prop
     onSuccess,
     onCancel
 }) => {
@@ -63,12 +65,13 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
         setError("");
 
         try {
-            // Step 1: Create payment intent
+            // Step 1: Create payment intent with unitPrice
             const paymentIntentResponse = await apiService.post("/payment/createPaymentIntent", {
                 tokens,
                 quantity,
                 userType: user.userType,
-                user_id: user.uid
+                user_id: user.uid,
+                unitPrice // Send unitPrice from frontend
             });
 
             const { clientSecret, paymentIntentId } = paymentIntentResponse.data;
@@ -86,7 +89,8 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
                     card: cardElement,
                     billing_details: {
                         name: user.name,
-                        email: user.email || "",
+                        // Remove email since it's not available in user state
+                        // email: user.email || "",
                     },
                 },
             });
@@ -103,7 +107,12 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
 
                 // Update user tokens in Redux store
                 dispatch(setUser({
-                    ...user,
+                    uid: user.uid!,
+                    name: user.name,
+                    avatarUrl: user.avatarUrl,
+                    userType: user.userType,
+                    location: user.location,
+                    services_array: user.services_array,
                     platform_tokens: confirmResponse.data.platform_tokens
                 }));
 
@@ -273,7 +282,7 @@ export default function TokenPurchase() {
                     <Grid key={tokens} size={{ xs: 12, sm: 6, md: 4 }}>
                         <Paper elevation={3} sx={{ p: 3, textAlign: "center" }}>
                             <Typography variant="h6" gutterBottom>
-                                {tokens} Token{tokens > 1 ? "s" : ""}
+                                {tokens} Token{tokens > 1 ? "s Package" : ""}
                             </Typography>
                             <Typography variant="body1" gutterBottom>
                                 Unit Price: {price.toLocaleString()} LKR
@@ -326,6 +335,7 @@ export default function TokenPurchase() {
                                 tokens={selectedPackage.tokens}
                                 quantity={selectedPackage.quantity}
                                 totalPrice={selectedPackage.price * selectedPackage.quantity}
+                                unitPrice={selectedPackage.price} // Pass unitPrice to PaymentForm
                                 onSuccess={handlePaymentSuccess}
                                 onCancel={handlePaymentCancel}
                             />

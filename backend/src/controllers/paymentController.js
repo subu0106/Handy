@@ -4,39 +4,26 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const constant = require("../helpers/constants");
 const db = require("../helpers/dbHelper");
 
-const TOKEN_PACKAGE_MAP = {
-    consumer: {
-        1: 100,
-        20: 1800,
-        50: 4000
-    },
-    provider: {
-        1: 150,
-        20: 2800,
-        50: 6500
-    }
-};
-
 // Create payment intent for token purchase
 const createPaymentIntent = async (req, res) => {
     try {
-        const { tokens, quantity, userType, user_id } = req.body;
+        const { tokens, quantity, userType, user_id, unitPrice } = req.body;
 
         // Validate input
-        if (!tokens || !quantity || !userType || !user_id) {
+        if (!tokens || !quantity || !userType || !user_id || !unitPrice) {
             return res.status(constant.HTTP_STATUS.BAD_REQUEST).json({
-                message: "Missing required fields: tokens, quantity, userType, user_id"
+                message: "Missing required fields: tokens, quantity, userType, user_id, unitPrice"
             });
         }
 
-        if (!TOKEN_PACKAGE_MAP[userType] || !TOKEN_PACKAGE_MAP[userType][tokens]) {
+        // Validate unitPrice is positive
+        if (unitPrice <= 0) {
             return res.status(constant.HTTP_STATUS.BAD_REQUEST).json({
-                message: "Invalid token package or user type"
+                message: "Unit price must be greater than zero"
             });
         }
 
         // Calculate total amount
-        const unitPrice = TOKEN_PACKAGE_MAP[userType][tokens];
         const totalTokens = tokens * quantity;
         const totalAmount = unitPrice * quantity;
 
