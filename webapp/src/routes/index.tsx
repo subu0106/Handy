@@ -5,8 +5,7 @@ import Home from "@pages/Home";
 import NotFound from "@pages/NotFound";
 import Register from "@pages/Register";
 import Splash from "@pages/WelcomePage";
-import ChatList from "@pages/Chats/ChatList";
-import ChatRoom from "@pages/Chats/ChatRoom";
+import WhatsAppChat from "@pages/Chats/WhatsAppChat";
 import CreateOffer from "@pages/CreateOffer";
 import CreateServiceRequest from "@pages/CreateServiceRequest";
 import RegisterProvider from "@pages/Register/RegisterProvider";
@@ -71,9 +70,8 @@ export const createAppRouter = (mainLayoutProps: any) =>
       ),
       children: [
         { path: "", element: <Home /> },
-        { path: "chats", element: <ChatList /> },
+        { path: "chats", element: <WhatsAppChat /> },
         { path: "register", element: <Register /> },
-        { path: "chats/:chatId", element: <ChatRoom /> },
         { path: "register/provider", element: <RegisterProvider /> },
         { path: "register/consumer", element: <RegisterConsumer /> },
         { path: "create-offer/:requestId", element: <CreateOffer /> },
