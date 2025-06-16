@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import {
-  Box, Typography, Paper, Button, TextField, Divider, MenuItem, Select, InputLabel,
-  FormControl, OutlinedInput, Chip, useMediaQuery, Snackbar, Alert
+  Box, Typography, Paper, Button, TextField, MenuItem, Select, InputLabel,
+  FormControl, OutlinedInput, Chip, useMediaQuery
 } from "@mui/material";
 import SvgIcon from "@mui/material/SvgIcon";
 import Visibility from '@mui/icons-material/Visibility';
@@ -62,47 +62,24 @@ export default function RegisterProvider() {
   const [servicesArray, setServicesArray] = useState<number[]>([]);
   const [bio, setBio] = useState("");
 
-  // Store pending user data
-  const [pendingUserData, setPendingUserData] = useState<{
-    uid: string;
-    email: string;
-    avatarUrl: string;
-    isGoogleUser: boolean;
-  } | null>(null);
-
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
-  const [toast, setToast] = useState<{
-    open: boolean;
-    message: string;
-    severity: "success" | "error" | "warning" | "info"
-  }>({
-    open: false,
-    message: "",
-    severity: "info"
-  });
-
-  // Show toast function
-  const showToast = (message: string, severity: "success" | "error" | "warning" | "info" = "info") => {
-    setToast({ open: true, message, severity });
-  };
+  // Pending user states for different registration methods
+  const [pendingGoogleUser, setPendingGoogleUser] = useState<{ avatarUrl: string, email: string } | null>(null);
+  const [pendingEmailUser, setPendingEmailUser] = useState<{ avatarUrl: string, email: string } | null>(null);
 
   // Show extra fields after Google or email registration
-  const showExtraFieldsForm = () => (
+  const showExtraFieldsForm = (avatarUrl: string, userEmail: string) => (
     <Box width="100%" maxWidth={isMobile ? 1 : 400}>
-      <Typography variant="body2" color="text.secondary" mb={2} textAlign="center">
-        Complete your provider profile
-      </Typography>
       <TextField
         fullWidth
         label="Full Name"
         value={name}
         onChange={e => setName(e.target.value)}
         sx={{ mb: 2 }}
-        required
       />
       <TextField
         fullWidth
@@ -110,7 +87,6 @@ export default function RegisterProvider() {
         value={phone}
         onChange={e => setPhone(e.target.value)}
         sx={{ mb: 2 }}
-        required
       />
       <TextField
         fullWidth
@@ -118,9 +94,8 @@ export default function RegisterProvider() {
         value={location}
         onChange={e => setLocation(e.target.value)}
         sx={{ mb: 2 }}
-        required
       />
-      <FormControl fullWidth sx={{ mb: 2 }} required>
+      <FormControl fullWidth sx={{ mb: 2 }}>
         <InputLabel id="services-label">Services</InputLabel>
         <Select
           labelId="services-label"
@@ -146,7 +121,7 @@ export default function RegisterProvider() {
       </FormControl>
       <TextField
         fullWidth
-        label="Bio (Optional)"
+        label="Bio"
         value={bio}
         onChange={e => setBio(e.target.value)}
         multiline
@@ -159,8 +134,8 @@ export default function RegisterProvider() {
       <Button
         variant="contained"
         fullWidth
-        onClick={handleExtraFieldsSubmit}
-        disabled={registerLoading || !name || !phone || !location || servicesArray.length === 0}
+        onClick={() => handleExtraFieldsSubmit(avatarUrl, userEmail)}
+        disabled={registerLoading}
         sx={{
           background: '#111',
           color: '#fff',
@@ -172,84 +147,48 @@ export default function RegisterProvider() {
           '&:hover': { background: '#222' },
         }}
       >
-        {registerLoading ? "Creating Profile..." : "Complete Registration"}
+        {registerLoading ? "Submitting..." : "Submit"}
       </Button>
     </Box>
   );
 
   // Handles submitting extra fields after Google or email registration
-  const handleExtraFieldsSubmit = async () => {
+  const handleExtraFieldsSubmit = async (avatarUrl: string, userEmail: string) => {
     setRegisterError(null);
     setRegisterLoading(true);
-
     try {
-      if (!pendingUserData) {
-        setRegisterError("No user data found. Please try again.");
-        return;
-      }
-
-      if (!name || !phone || !location || servicesArray.length === 0) {
-        setRegisterError("Please fill in all required fields.");
-        return;
-      }
-
-      // Ensure we have a valid Firebase auth user
-      const currentUser = auth.currentUser;
-      if (!currentUser) {
-        setRegisterError("Authentication expired. Please try signing up again.");
-        setShowExtraFields(false);
-        setPendingUserData(null);
-        return;
-      }
-
-      // Get fresh auth token with retry logic
-      let token;
-      try {
-        token = await currentUser.getIdToken(true); // Force refresh
-        console.log("Auth token refreshed for user:", currentUser.uid);
-      } catch (tokenError) {
-        console.error("Failed to get auth token:", tokenError);
-        setRegisterError("Authentication failed. Please try signing up again.");
-        setShowExtraFields(false);
-        setPendingUserData(null);
+      const user = auth.currentUser;
+      if (!user) {
+        setRegisterError("No authenticated user found.");
         return;
       }
 
       const payload = {
-        user_id: pendingUserData.uid,
-        name: name,
-        email: pendingUserData.email,
+        user_id: user.uid,
+        name: name || user.displayName || "",
+        email: userEmail,
         user_type: "provider",
         phone,
         location,
-        avatar: pendingUserData.avatarUrl,
+        avatar: avatarUrl || "",
         services_array: servicesArray,
         availability: "available",
         average_rating: 0,
         review_count: 0,
-        bio: bio || "",
+        bio,
         platform_tokens: 30,
       };
 
       console.log("Submitting provider registration:", payload);
 
-      // Make request with explicit headers and better error handling
-      await apiService.post("/providers/registerProvider", payload, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        timeout: 15000 // Longer timeout for registration
-      });
-
-      showToast("Registration successful! Welcome to Handy!", "success");
+      await apiService.post("/providers/registerProvider", payload);
 
       dispatch(setUser({
-        uid: pendingUserData.uid,
-        name: name,
-        avatarUrl: pendingUserData.avatarUrl,
+        uid: user.uid,
+        name: name || user.displayName || user.email || "",
+        avatarUrl: avatarUrl || "",
         userType: "provider",
-        location: location,
+        location: location || "",
         services_array: servicesArray,
         platform_tokens: 30,
       }));
@@ -257,31 +196,20 @@ export default function RegisterProvider() {
       navigate("/dashboard");
 
     } catch (error: any) {
-      console.error("Registration error:", error);
-
-      if (error.response?.status === 401) {
-        setRegisterError("Authentication failed. Please try signing up again.");
-        setShowExtraFields(false);
-        setPendingUserData(null);
-      } else if (error.response?.status === 403) {
-        setRegisterError("Permission denied. Please check your account.");
-      } else if (error.response && error.response.data && error.response.data.error) {
+      if (error.response && error.response.data && error.response.data.error) {
         setRegisterError(error.response.data.error);
-      } else if (error.code === 'ERR_NETWORK') {
-        setRegisterError("Network error. Please check your connection and try again.");
       } else {
-        setRegisterError(error.message || "Registration failed. Please try again.");
+        setRegisterError(error.message || "Registration failed.");
       }
     } finally {
       setRegisterLoading(false);
     }
   };
 
-  // Google OAuth handler
+  // Google OAuth handler (Firebase implementation)
   const handleGoogleSignIn = async () => {
     setRegisterError(null);
     setRegisterLoading(true);
-
     try {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
@@ -289,100 +217,69 @@ export default function RegisterProvider() {
       const isNewUser = (result as any)?._tokenResponse?.isNewUser || false;
 
       if (isNewUser) {
-        // New user: show extra fields form
-        setPendingUserData({
-          uid: user.uid,
-          email: user.email || "",
+        // Show extra fields form for new users, pass avatar and email from Google
+        setPendingGoogleUser({
           avatarUrl: user.photoURL || "",
-          isGoogleUser: true
+          email: user.email || "",
         });
         setName(user.displayName || "");
         setShowExtraFields(true);
-        setRegisterLoading(false);
-        showToast("Please complete your provider profile", "info");
       } else {
-        // Existing user: try to fetch their data and login
-        try {
-          const userResponse = await apiService.get(`users/user_info/${user.uid}`);
+        // Existing user: fetch user data and login
+        const userResponse = await apiService.get(`users/user_info/${user.uid}`);
 
-          if (userResponse.status !== 200) {
-            throw new Error("Failed to fetch user data from backend.");
-          }
-
-          const userData = userResponse.data;
-
-          dispatch(setUser({
-            uid: user.uid,
-            name: user.displayName || user.email || "",
-            avatarUrl: user.photoURL || "",
-            userType: "provider",
-            location: userData.location || "",
-            services_array: userData.services_array || [],
-            platform_tokens: userData.platform_tokens,
-          }));
-
-          showToast("Welcome back!", "success");
-          navigate("/dashboard");
-        } catch (fetchError) {
-          // User exists in Firebase but not in our backend, treat as new user
-          setPendingUserData({
-            uid: user.uid,
-            email: user.email || "",
-            avatarUrl: user.photoURL || "",
-            isGoogleUser: true
-          });
-          setName(user.displayName || "");
-          setShowExtraFields(true);
-          setRegisterLoading(false);
-          showToast("Please complete your provider profile", "info");
+        if (userResponse.status !== 200) {
+          throw new Error("Failed to fetch user data from backend.");
         }
+
+        const userData = userResponse.data;
+
+        dispatch(setUser({
+          uid: user.uid,
+          name: user.displayName || user.email || "",
+          avatarUrl: user.photoURL || "",
+          userType: "provider",
+          location: userData.location || "",
+          services_array: userData.services_array || [],
+          platform_tokens: userData.platform_tokens,
+        }));
+        navigate("/dashboard");
       }
     } catch (error: any) {
-      console.error("Google sign-in error:", error);
       if (error.response && error.response.data && error.response.data.error) {
         setRegisterError(error.response.data.error);
       } else {
         setRegisterError(error.message || "Google sign-in failed.");
       }
-      setRegisterLoading(false);
     }
+    setRegisterLoading(false);
   };
 
-  // Email registration handler
+  // Registration handler for Firebase Auth + backend
   const handleRegister = async () => {
     setRegisterError(null);
     setRegisterLoading(true);
-
     try {
       if (!email || !password) {
         setRegisterError("Email and password are required.");
         setRegisterLoading(false);
         return;
       }
-
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
-
-      // Store pending user data and show extra fields
-      setPendingUserData({
-        uid: user.uid,
+      // Show extra fields form, pass avatar and email from Firebase
+      setPendingEmailUser({
+        avatarUrl: user.photoURL || "",
         email: user.email || "",
-        avatarUrl: "",
-        isGoogleUser: false
       });
-
       setShowExtraFields(true);
       setRegisterLoading(false);
-      showToast("Account created! Please complete your profile", "info");
 
     } catch (error: any) {
-      console.error("Email registration error:", error);
       if (error.code === "auth/email-already-in-use") {
-        setRegisterError("Email already registered. Please sign in instead.");
-      } else if (error.code === "auth/weak-password") {
-        setRegisterError("Password should be at least 6 characters.");
-      } else if (error.code === "auth/invalid-email") {
-        setRegisterError("Please enter a valid email address.");
+        setRegisterError("Email already registered.");
+      } else if (error.response && error.response.data && error.response.data.error) {
+        setRegisterError(error.response.data.error);
       } else {
         setRegisterError(error.message || "Registration failed.");
       }
@@ -390,16 +287,15 @@ export default function RegisterProvider() {
     }
   };
 
-  // Login handler
+  // Login handler for Firebase Auth
   const handleLogin = async () => {
+    console.log("Logging in with email:", email);
     setRegisterError(null);
     setRegisterLoading(true);
-
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
-
-      // Fetch user data from backend
+      
       const userResponse = await apiService.get(`users/user_info/${user.uid}`);
 
       if (userResponse.status !== 200) {
@@ -410,126 +306,100 @@ export default function RegisterProvider() {
 
       dispatch(setUser({
         uid: user.uid,
-        name: user.displayName || userData.name || user.email || "",
-        avatarUrl: user.photoURL || userData.avatar || "",
+        name: user.displayName || user.email || "",
+        avatarUrl: user.photoURL || "",
         userType: "provider",
         location: userData.location || "",
         services_array: userData.services_array || [],
         platform_tokens: userData.platform_tokens,
       }));
-
-      showToast("Login successful!", "success");
       navigate("/dashboard");
-
     } catch (error: any) {
-      console.error("Login error:", error);
       if (error.code === "auth/user-not-found" || error.code === "auth/wrong-password") {
         setRegisterError("Invalid email or password.");
-      } else if (error.code === "auth/invalid-email") {
-        setRegisterError("Please enter a valid email address.");
-      } else if (error.response && error.response.status === 404) {
-        setRegisterError("Account not found. Please register first.");
       } else {
         setRegisterError(error.message || "Login failed.");
       }
-      setRegisterLoading(false);
     }
+    setRegisterLoading(false);
   };
 
   return (
-    <>
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="70vh" sx={{ px: 1 }}>
-        <Paper sx={{
-          p: isMobile ? 2 : 4,
-          width: "100%",
-          maxWidth: isMobile ? 1 : 420,
-          borderRadius: 4,
-          boxShadow: 3,
-        }}>
-          <Box display="flex" flexDirection="column" alignItems="center" gap={2}>
-            <Typography variant={isMobile ? "h6" : "h5"} fontWeight={700} mb={1}>
-              {showExtraFields ? 'Complete Your Profile' :
-                mode === 'register' ? 'Provider Registration' : 'Provider Sign In'}
-            </Typography>
-
-            {showExtraFields ? (
-              showExtraFieldsForm()
-            ) : mode === 'register' ? (
+    <Box display="flex" justifyContent="center" alignItems="center" minHeight="70vh" sx={{ px: 1 }}>
+      <Paper sx={{
+        p: isMobile ? 2 : 4,
+        width: "100%",
+        maxWidth: isMobile ? 1 : 420,
+        borderRadius: 4,
+        boxShadow: 3,
+      }}>
+        <Box display="flex" flexDirection="column" alignItems="center" gap={2}>
+          <Typography variant={isMobile ? "h6" : "h5"} fontWeight={700} mb={1}>
+            {mode === 'register' ? 'Provider Registration' : 'Provider Sign In'}
+          </Typography>
+          {showExtraFields && (pendingGoogleUser || pendingEmailUser) ? (
+            showExtraFieldsForm(
+              (pendingGoogleUser || pendingEmailUser)?.avatarUrl || "",
+              (pendingGoogleUser || pendingEmailUser)?.email || ""
+            )
+          ) : mode === 'register' ? (
+            <>
               <Box width="100%" maxWidth={isMobile ? 1 : 400}>
-                <Button
-                  variant="outlined"
-                  fullWidth
-                  startIcon={<GoogleFavicon />}
-                  onClick={handleGoogleSignIn}
-                  disabled={registerLoading}
-                  sx={{
-                    background: '#fff',
-                    borderRadius: 2,
-                    fontWeight: 700,
-                    fontSize: '1.1rem',
-                    color: '#23272f',
-                    py: 1.2,
-                    mb: 2,
-                    borderColor: '#eee',
-                    boxShadow: 'none',
-                    '&:hover': { background: '#f5f5f5', borderColor: '#ccc' },
-                  }}
-                >
-                  Continue with Google
-                </Button>
-
-                <Divider sx={{ my: 1.5, fontWeight: 600 }}>OR</Divider>
-
-                <TextField
-                  fullWidth
-                  label="Email"
-                  type="email"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  sx={{ mb: 2 }}
-                  required
-                />
-                <TextField
-                  fullWidth
-                  label="Password"
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  sx={{ mb: 2 }}
-                  required
-                  InputProps={{
-                    endAdornment: (
-                      <Button
-                        onClick={() => setShowPassword((show) => !show)}
-                        sx={{ minWidth: 0, p: 0, color: '#888' }}
-                        tabIndex={-1}
-                      >
-                        {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
-                      </Button>
-                    ),
-                  }}
-                />
-                {registerError && (
-                  <Typography color="error" variant="body2" mb={1}>{registerError}</Typography>
-                )}
-                <Button
-                  variant="contained"
-                  fullWidth
-                  onClick={handleRegister}
-                  disabled={registerLoading || !email || !password}
-                  sx={{
-                    background: '#111',
-                    color: '#fff',
-                    fontWeight: 700,
-                    fontSize: '1.1rem',
-                    borderRadius: 2,
-                    py: 1.2,
-                    boxShadow: 'none',
-                    '&:hover': { background: '#222' },
-                  }}
-                >
-                  {registerLoading ? "Creating Account..." : "Sign up"}
-                </Button>
+                <form onSubmit={(e) => { e.preventDefault(); handleRegister(); }}>
+                  <TextField
+                    fullWidth
+                    label="Email"
+                    type="email"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    autoComplete="email"
+                    required
+                    sx={{ mb: 2 }}
+                  />
+                  <TextField
+                    fullWidth
+                    label="Password"
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    autoComplete="new-password"
+                    required
+                    sx={{ mb: 2 }}
+                    InputProps={{
+                      endAdornment: (
+                        <Button
+                          type="button"
+                          onClick={() => setShowPassword((show) => !show)}
+                          sx={{ minWidth: 0, p: 0, color: '#888' }}
+                          tabIndex={-1}
+                        >
+                          {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+                        </Button>
+                      ),
+                    }}
+                  />
+                  {registerError && (
+                    <Typography color="error" variant="body2" mb={1}>{registerError}</Typography>
+                  )}
+                  <Button
+                    variant="contained"
+                    fullWidth
+                    type="submit"
+                    disabled={registerLoading}
+                    sx={{
+                      background: '#111',
+                      color: '#fff',
+                      fontWeight: 700,
+                      fontSize: '1.1rem',
+                      borderRadius: 2,
+                      py: 1.2,
+                      boxShadow: 'none',
+                      '&:hover': { background: '#222' },
+                    }}
+                  >
+                    {registerLoading ? "Signing up..." : "Sign up"}
+                  </Button>
+                </form>
                 <Button
                   variant="text"
                   fullWidth
@@ -538,59 +408,75 @@ export default function RegisterProvider() {
                 >
                   Already have an account? Sign in
                 </Button>
-              </Box>
-            ) : (
-              <Box width="100%" maxWidth={isMobile ? 1 : 400}>
-                <TextField
-                  fullWidth
-                  label="Email"
-                  type="email"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  sx={{ mb: 2 }}
-                  required
-                />
-                <TextField
-                  fullWidth
-                  label="Password"
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  sx={{ mb: 2 }}
-                  required
-                  InputProps={{
-                    endAdornment: (
-                      <Button
-                        onClick={() => setShowPassword((show) => !show)}
-                        sx={{ minWidth: 0, p: 0, color: '#888' }}
-                        tabIndex={-1}
-                      >
-                        {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
-                      </Button>
-                    ),
-                  }}
-                />
-                {registerError && (
-                  <Typography color="error" variant="body2" mb={1}>{registerError}</Typography>
-                )}
                 <Button
-                  variant="contained"
+                  variant="text"
                   fullWidth
-                  onClick={handleLogin}
-                  disabled={registerLoading || !email || !password}
-                  sx={{
-                    background: '#111',
-                    color: '#fff',
-                    fontWeight: 700,
-                    fontSize: '1.1rem',
-                    borderRadius: 2,
-                    py: 1.2,
-                    boxShadow: 'none',
-                    '&:hover': { background: '#222' },
-                  }}
+                  startIcon={<GoogleFavicon />}
+                  onClick={handleGoogleSignIn}
+                  sx={{ mt: 1, color: '#4285F4', fontWeight: 600, textTransform: 'none' }}
                 >
-                  {registerLoading ? "Signing in..." : "Sign in"}
+                  Continue with Google
                 </Button>
+              </Box>
+            </>
+          ) : (
+            <>
+              <Box width="100%" maxWidth={isMobile ? 1 : 400}>
+                <form onSubmit={(e) => { e.preventDefault(); handleLogin(); }}>
+                  <TextField
+                    fullWidth
+                    label="Email"
+                    type="email"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    autoComplete="email"
+                    required
+                    sx={{ mb: 2 }}
+                  />
+                  <TextField
+                    fullWidth
+                    label="Password"
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    autoComplete="current-password"
+                    required
+                    sx={{ mb: 2 }}
+                    InputProps={{
+                      endAdornment: (
+                        <Button
+                          type="button"
+                          onClick={() => setShowPassword((show) => !show)}
+                          sx={{ minWidth: 0, p: 0, color: '#888' }}
+                          tabIndex={-1}
+                        >
+                          {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+                        </Button>
+                      ),
+                    }}
+                  />
+                  {registerError && (
+                    <Typography color="error" variant="body2" mb={1}>{registerError}</Typography>
+                  )}
+                  <Button
+                    variant="contained"
+                    fullWidth
+                    type="submit"
+                    disabled={registerLoading}
+                    sx={{
+                      background: '#111',
+                      color: '#fff',
+                      fontWeight: 700,
+                      fontSize: '1.1rem',
+                      borderRadius: 2,
+                      py: 1.2,
+                      boxShadow: 'none',
+                      '&:hover': { background: '#222' },
+                    }}
+                  >
+                    {registerLoading ? "Signing in..." : "Sign in"}
+                  </Button>
+                </form>
                 <Button
                   variant="text"
                   fullWidth
@@ -604,32 +490,15 @@ export default function RegisterProvider() {
                   fullWidth
                   startIcon={<GoogleFavicon />}
                   onClick={handleGoogleSignIn}
-                  disabled={registerLoading}
                   sx={{ mt: 1, color: '#4285F4', fontWeight: 600, textTransform: 'none' }}
                 >
                   Continue with Google
                 </Button>
               </Box>
-            )}
-          </Box>
-        </Paper>
-      </Box>
-
-      {/* Toast Notification */}
-      <Snackbar
-        open={toast.open}
-        autoHideDuration={6000}
-        onClose={() => setToast(prev => ({ ...prev, open: false }))}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-      >
-        <Alert
-          onClose={() => setToast(prev => ({ ...prev, open: false }))}
-          severity={toast.severity}
-          sx={{ width: '100%' }}
-        >
-          {toast.message}
-        </Alert>
-      </Snackbar>
-    </>
+            </>
+          )}
+        </Box>
+      </Paper>
+    </Box>
   );
 }
