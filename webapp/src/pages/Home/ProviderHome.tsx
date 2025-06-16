@@ -183,10 +183,24 @@ const ProviderHome: React.FC = () => {
   return (
     <>
       <div
-        style={{ width: "100vw", height: "calc(100vh - 64px)", display: "flex", position: "absolute", top: 64, left: 0 }}
+        style={{ 
+          width: "100vw", 
+          height: "calc(100vh - 64px)", 
+          display: "flex", 
+          position: "absolute", 
+          top: 64, 
+          left: 0,
+          overflow: "hidden" // Prevent overall overflow
+        }}
       >
         {/* Left: Available Service Requests */}
-        <div style={{ width: "50%", height: "100%", overflow: "auto", display: "flex", alignItems: "stretch" }}>
+        <div style={{ 
+          width: "50%", 
+          height: "100%", 
+          display: "flex", 
+          alignItems: "stretch",
+          minHeight: 0 // Allow flex child to shrink
+        }}>
           <div
             style={{
               margin: 24,
@@ -197,9 +211,18 @@ const ProviderHome: React.FC = () => {
               color: theme.palette.text.primary,
               display: "flex",
               flexDirection: "column",
+              minHeight: 0, // Allow flex child to shrink
+              overflow: "hidden" // Prevent container overflow
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: 8, padding: 24, paddingBottom: 0 }}>
+            {/* Header - Fixed height */}
+            <div style={{ 
+              display: "flex", 
+              alignItems: "center", 
+              gap: 8, 
+              padding: "24px 24px 12px 24px",
+              flexShrink: 0 // Prevent header from shrinking
+            }}>
               <AssignmentIcon color="primary" style={{ fontSize: 28 }} />
               <Typography variant="h6" gutterBottom style={{ margin: 0 }}>
                 Available Service Requests ({safeRequests.length})
@@ -215,7 +238,15 @@ const ProviderHome: React.FC = () => {
                 Messages
               </Button>
             </div>
-            <div style={{ padding: 24, paddingTop: 12, flex: 1 }}>
+            
+            {/* Scrollable content area */}
+            <div style={{ 
+              flex: 1, 
+              overflowY: "auto",
+              overflowX: "hidden",
+              padding: "0 24px 24px 24px",
+              minHeight: 0 // Allow content to shrink
+            }}>
               {requestsStatus === "loading" ? (
                 <div>Loading...</div>
               ) : safeRequests.length === 0 ? (
@@ -344,7 +375,13 @@ const ProviderHome: React.FC = () => {
         </div>
 
         {/* Right: My Offers */}
-        <div style={{ width: "50%", height: "100%", overflow: "auto", display: "flex", alignItems: "stretch" }}>
+        <div style={{ 
+          width: "50%", 
+          height: "100%", 
+          display: "flex", 
+          alignItems: "stretch",
+          minHeight: 0 // Allow flex child to shrink
+        }}>
           <div
             style={{
               margin: 24,
@@ -355,15 +392,32 @@ const ProviderHome: React.FC = () => {
               color: theme.palette.text.primary,
               display: "flex",
               flexDirection: "column",
+              minHeight: 0, // Allow flex child to shrink
+              overflow: "hidden" // Prevent container overflow
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: 8, padding: 24, paddingBottom: 0 }}>
+            {/* Header - Fixed height */}
+            <div style={{ 
+              display: "flex", 
+              alignItems: "center", 
+              gap: 8, 
+              padding: "24px 24px 12px 24px",
+              flexShrink: 0 // Prevent header from shrinking
+            }}>
               <LocalOfferIcon color="primary" style={{ fontSize: 28 }} />
               <Typography variant="h6" gutterBottom style={{ margin: 0 }}>
                 My Offers ({safeOffers.length})
               </Typography>
             </div>
-            <div style={{ padding: 24, paddingTop: 12, flex: 1 }}>
+            
+            {/* Scrollable content area */}
+            <div style={{ 
+              flex: 1, 
+              overflowY: "auto",
+              overflowX: "hidden",
+              padding: "0 24px 24px 24px",
+              minHeight: 0 // Allow content to shrink
+            }}>
               {safeOffers.length === 0 ? (
                 <div>No offers submitted yet.</div>
               ) : (
