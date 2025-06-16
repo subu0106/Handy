@@ -61,21 +61,6 @@ const ProviderHome: React.FC = () => {
   const [selectedOffer, setSelectedOffer] = useState<any>(null);
   const [offerDetailsModalOpen, setOfferDetailsModalOpen] = useState(false);
 
-   const [toast, setToast] = useState<{ 
-    open: boolean; 
-    message: string; 
-    severity: "success" | "error" | "warning" | "info" 
-  }>({
-    open: false,
-    message: "",
-    severity: "info"
-  });
-
-  // Show toast function
-  const showToast = (message: string, severity: "success" | "error" | "warning" | "info" = "info") => {
-    setToast({ open: true, message, severity });
-  };
-
   // Show all pending requests for providers
   const safeRequests = Array.isArray(requests) ? 
     requests.filter(req => req.status === 'pending')
@@ -102,7 +87,8 @@ const ProviderHome: React.FC = () => {
         await dispatch(deleteProviderOffer(offerId));
       } catch (error) {
         console.error('Error deleting offer:', error);
-        showToast('Failed to delete offer', 'error');}
+        console.log('ERROR: Failed to delete offer');
+      }
     }
   };
 
@@ -113,7 +99,7 @@ const ProviderHome: React.FC = () => {
 
   const handleSaveEdit = async (offerId: string) => {
     if (!editBudget || editBudget <= 0) {
-      showToast('Please enter a valid budget', 'warning');
+      console.log('WARNING: Please enter a valid budget');
       return;
     }
 
@@ -121,10 +107,10 @@ const ProviderHome: React.FC = () => {
     try {
       await dispatch(updateOfferBudget({ offerId, budget: editBudget }));
       setEditingOfferId(null);
-      showToast('Offer budget updated successfully', 'success');
+      console.log('SUCCESS: Offer budget updated successfully');
     } catch (error) {
       console.error('Error updating offer:', error);
-      showToast('Failed to update offer budget', 'error');
+      console.log('ERROR: Failed to update offer budget');
     } finally {
       setUpdateLoading(false);
     }
