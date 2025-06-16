@@ -12,6 +12,7 @@ const requestRoutes = require("./src/routes/requestRoutes");
 const providerRoutes = require("./src/routes/providerRoutes");
 const pairedJobsRoutes = require("./src/routes/pairedJobsRoutes");
 const userRouter = require("./src/routes/userRoutes");
+const paymentRoutes = require("./src/routes/paymentRoutes");
 
 const app = express();
 const server = http.createServer(app);
@@ -46,6 +47,7 @@ app.use("/api/v1/requests", requestRoutes.router);
 app.use("/api/v1/providers", providerRoutes.router);
 app.use("/api/v1/pairedJobs", pairedJobsRoutes.router);
 app.use("/api/v1/users", userRouter.router);
+app.use("/api/v1/payment", paymentRoutes.router);
 
 console.log('All routes registered successfully');
 
