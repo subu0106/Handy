@@ -95,10 +95,17 @@ const NavBar: React.FC<NavBarProps> = ({ userName, avatarUrl, onToggleTheme }) =
         {/* Button Group */}
         <Box sx={{ display: "flex", alignItems: "center" }}>
 
-          <Box onClick={() => navigate("/dashboard/purchase")} aria-label="purchase tokens" sx={buttonBoxStyle}>
-            <Badge badgeContent={user.platform_tokens} color="primary">
-              <TokenRounded fontSize="small" />
-            </Badge>
+          <Box onClick={() => navigate("/dashboard/purchase")} aria-label="purchase tokens" sx={{
+            ...buttonBoxStyle,
+            display: "flex",
+            alignItems: "center",
+            gap: 0.5,
+            px: 1.5
+          }}>
+            <TokenRounded fontSize="small" />
+            <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.875rem' }}>
+              {user.platform_tokens || 0}
+            </Typography>
           </Box>
 
           {/* Theme Toggle */}

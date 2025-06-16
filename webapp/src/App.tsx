@@ -143,6 +143,7 @@ const App = () => {
               name: userData.name || firebaseUser.displayName || firebaseUser.email || "",
               avatarUrl: userData.avatar || firebaseUser.photoURL || "",
               userType: userData.user_type || "",
+              platform_tokens: userData.platform_tokens,
               location: userData.location || "",
               services_array: userData.services_array || [],
             }));
