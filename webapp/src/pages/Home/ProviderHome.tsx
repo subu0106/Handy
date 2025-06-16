@@ -13,9 +13,11 @@ import {
   Avatar,
   Divider,
   IconButton,
-  Grid,
   Card,
-  CardContent
+  CardContent,
+  alpha,
+  Stack,
+  Paper
 } from "@mui/material";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { fetchServiceRequestsBasedOnService } from "../../store/serviceRequestsSlice";
@@ -31,11 +33,9 @@ import SaveIcon from "@mui/icons-material/Save";
 import CancelIcon from "@mui/icons-material/Cancel";
 import CloseIcon from "@mui/icons-material/Close";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
-import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import PersonIcon from "@mui/icons-material/Person";
 import DescriptionIcon from "@mui/icons-material/Description";
-import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import { useNavigate } from "react-router-dom";
 
 const ProviderHome: React.FC = () => {
@@ -164,13 +164,43 @@ const ProviderHome: React.FC = () => {
     );
   };
 
+  // Enhanced chip styling for better dark theme visibility
+  const getChipStyles = (color: 'primary' | 'secondary' | 'success' | 'error' | 'warning' | 'info', variant: 'filled' | 'outlined' = 'filled') => {
+    const themeColor = theme.palette[color];
+    
+    return {
+      fontWeight: 'medium',
+      borderWidth: variant === 'outlined' ? 2 : 0,
+      backgroundColor: variant === 'filled' ? undefined : alpha(themeColor.main, 0.1),
+      borderColor: variant === 'outlined' ? themeColor.main : undefined,
+      color: variant === 'outlined' ? themeColor.main : themeColor.contrastText,
+      '&:hover': {
+        backgroundColor: alpha(themeColor.main, variant === 'outlined' ? 0.2 : 0.8)
+      }
+    };
+  };
+
   return (
     <>
       <div
-        style={{ width: "100vw", height: "calc(100vh - 64px)", display: "flex", position: "absolute", top: 64, left: 0 }}
+        style={{ 
+          width: "100vw", 
+          height: "calc(100vh - 64px)", 
+          display: "flex", 
+          position: "absolute", 
+          top: 64, 
+          left: 0,
+          overflow: "hidden" // Prevent overall overflow
+        }}
       >
         {/* Left: Available Service Requests */}
-        <div style={{ width: "50%", height: "100%", overflow: "auto", display: "flex", alignItems: "stretch" }}>
+        <div style={{ 
+          width: "50%", 
+          height: "100%", 
+          display: "flex", 
+          alignItems: "stretch",
+          minHeight: 0 // Allow flex child to shrink
+        }}>
           <div
             style={{
               margin: 24,
@@ -181,9 +211,18 @@ const ProviderHome: React.FC = () => {
               color: theme.palette.text.primary,
               display: "flex",
               flexDirection: "column",
+              minHeight: 0, // Allow flex child to shrink
+              overflow: "hidden" // Prevent container overflow
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: 8, padding: 24, paddingBottom: 0 }}>
+            {/* Header - Fixed height */}
+            <div style={{ 
+              display: "flex", 
+              alignItems: "center", 
+              gap: 8, 
+              padding: "24px 24px 12px 24px",
+              flexShrink: 0 // Prevent header from shrinking
+            }}>
               <AssignmentIcon color="primary" style={{ fontSize: 28 }} />
               <Typography variant="h6" gutterBottom style={{ margin: 0 }}>
                 Available Service Requests ({safeRequests.length})
@@ -199,7 +238,15 @@ const ProviderHome: React.FC = () => {
                 Messages
               </Button>
             </div>
-            <div style={{ padding: 24, paddingTop: 12, flex: 1 }}>
+            
+            {/* Scrollable content area */}
+            <div style={{ 
+              flex: 1, 
+              overflowY: "auto",
+              overflowX: "hidden",
+              padding: "0 24px 24px 24px",
+              minHeight: 0 // Allow content to shrink
+            }}>
               {requestsStatus === "loading" ? (
                 <div>Loading...</div>
               ) : safeRequests.length === 0 ? (
@@ -216,25 +263,25 @@ const ProviderHome: React.FC = () => {
                     const existingOffer = getExistingOffer(requestId.toString());
                     
                     return (
-                      <div
+                      <Box
                         key={requestId}
-                        style={{
-                          padding: 16,
-                          marginBottom: 12,
-                          borderRadius: 8,
-                          border: "1px solid #e0e0e0",
+                        sx={{
+                          padding: 2,
+                          marginBottom: 1.5,
+                          borderRadius: 1,
+                          border: "1px solid",
+                          borderColor: "divider",
                           display: "flex",
                           flexDirection: "column",
-                          gap: 8,
-                          transition: "background 0.2s, box-shadow 0.2s",
-                        }}
-                        onMouseOver={(e) => {
-                          e.currentTarget.style.background = "#f5f5f5";
-                          e.currentTarget.style.boxShadow = "0 2px 8px rgba(25, 118, 210, 0.08)";
-                        }}
-                        onMouseOut={(e) => {
-                          e.currentTarget.style.background = "";
-                          e.currentTarget.style.boxShadow = "none";
+                          gap: 1,
+                          transition: "all 0.3s ease",
+                          cursor: "pointer",
+                          "&:hover": {
+                            bgcolor: "action.hover",
+                            boxShadow: `0 4px 16px ${alpha(theme.palette.primary.main, 0.3)}`,
+                            transform: "translateY(-2px)",
+                            borderColor: "primary.main",
+                          },
                         }}
                       >
                         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -248,6 +295,7 @@ const ProviderHome: React.FC = () => {
                               color="success" 
                               size="small" 
                               variant="filled"
+                              sx={getChipStyles('success', 'filled')}
                             />
                           )}
                         </div>
@@ -261,11 +309,26 @@ const ProviderHome: React.FC = () => {
                           </Typography>
                         )}
                         
-                        {req.budget && (
-                          <Typography variant="body2" color="textSecondary">
-                            Budget: ${req.budget}
-                          </Typography>
-                        )}
+                        <Stack direction="row" spacing={1} flexWrap="wrap" gap={1}>
+                          {req.budget && (
+                            <Chip 
+                              label={`Budget: $${req.budget}`}
+                              color="primary"
+                              variant="outlined"
+                              size="small"
+                              sx={getChipStyles('primary', 'outlined')}
+                            />
+                          )}
+                          {req.timeframe && (
+                            <Chip 
+                              label={`Timeframe: ${req.timeframe}`}
+                              color="info"
+                              variant="outlined"
+                              size="small"
+                              sx={getChipStyles('info', 'outlined')}
+                            />
+                          )}
+                        </Stack>
                         
                         <Typography variant="caption" color="textSecondary">
                           Posted on {new Date(req.created_at).toLocaleDateString()} at {new Date(req.created_at).toLocaleTimeString()}
@@ -302,7 +365,7 @@ const ProviderHome: React.FC = () => {
                             View Details
                           </Button>
                         </div>
-                      </div>
+                      </Box>
                     );
                   })}
                 </div>
@@ -312,7 +375,13 @@ const ProviderHome: React.FC = () => {
         </div>
 
         {/* Right: My Offers */}
-        <div style={{ width: "50%", height: "100%", overflow: "auto", display: "flex", alignItems: "stretch" }}>
+        <div style={{ 
+          width: "50%", 
+          height: "100%", 
+          display: "flex", 
+          alignItems: "stretch",
+          minHeight: 0 // Allow flex child to shrink
+        }}>
           <div
             style={{
               margin: 24,
@@ -323,39 +392,56 @@ const ProviderHome: React.FC = () => {
               color: theme.palette.text.primary,
               display: "flex",
               flexDirection: "column",
+              minHeight: 0, // Allow flex child to shrink
+              overflow: "hidden" // Prevent container overflow
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: 8, padding: 24, paddingBottom: 0 }}>
+            {/* Header - Fixed height */}
+            <div style={{ 
+              display: "flex", 
+              alignItems: "center", 
+              gap: 8, 
+              padding: "24px 24px 12px 24px",
+              flexShrink: 0 // Prevent header from shrinking
+            }}>
               <LocalOfferIcon color="primary" style={{ fontSize: 28 }} />
               <Typography variant="h6" gutterBottom style={{ margin: 0 }}>
                 My Offers ({safeOffers.length})
               </Typography>
             </div>
-            <div style={{ padding: 24, paddingTop: 12, flex: 1 }}>
+            
+            {/* Scrollable content area */}
+            <div style={{ 
+              flex: 1, 
+              overflowY: "auto",
+              overflowX: "hidden",
+              padding: "0 24px 24px 24px",
+              minHeight: 0 // Allow content to shrink
+            }}>
               {safeOffers.length === 0 ? (
                 <div>No offers submitted yet.</div>
               ) : (
                 <div>
                   {safeOffers.map((offer: any) => (
-                    <div
+                    <Box
                       key={offer.offer_id || offer.id}
-                      style={{
-                        padding: 12,
-                        marginBottom: 8,
-                        borderRadius: 6,
-                        border: "1px solid #e0e0e0",
+                      sx={{
+                        padding: 1.5,
+                        marginBottom: 1,
+                        borderRadius: 0.75,
+                        border: "1px solid",
+                        borderColor: "divider",
                         display: "flex",
                         flexDirection: "column",
-                        gap: 8,
-                        transition: "background 0.2s, box-shadow 0.2s",
-                      }}
-                      onMouseOver={(e) => {
-                        e.currentTarget.style.background = "#f5f5f5";
-                        e.currentTarget.style.boxShadow = "0 2px 8px rgba(25, 118, 210, 0.08)";
-                      }}
-                      onMouseOut={(e) => {
-                        e.currentTarget.style.background = "";
-                        e.currentTarget.style.boxShadow = "none";
+                        gap: 1,
+                        transition: "all 0.3s ease",
+                        cursor: "pointer",
+                        "&:hover": {
+                          bgcolor: "action.hover",
+                          boxShadow: `0 4px 16px ${alpha(theme.palette.primary.main, 0.3)}`,
+                          transform: "translateY(-2px)",
+                          borderColor: "primary.main",
+                        },
                       }}
                     >
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -363,8 +449,10 @@ const ProviderHome: React.FC = () => {
                         <Typography>{offer.request_title || `Request #${offer.request_id}`}</Typography>
                         <Chip 
                           label={offer.status || 'pending'} 
-                          color={offer.status === 'accepted' ? 'success' : offer.status === 'rejected' ? 'error' : 'default'}
+                          color={offer.status === 'accepted' ? 'success' : offer.status === 'rejected' ? 'error' : 'warning'}
                           size="small"
+                          variant="filled"
+                          sx={getChipStyles(offer.status === 'accepted' ? 'success' : offer.status === 'rejected' ? 'error' : 'warning', 'filled')}
                         />
                       </div>
                       
@@ -401,19 +489,31 @@ const ProviderHome: React.FC = () => {
                           </Button>
                         </Box>
                       ) : (
-                        <Typography variant="body2" color="textSecondary">
-                          Your Quote: ${offer.budget}
-                        </Typography>
-                      )}
-                      
-                      <Typography variant="body2" color="textSecondary">
-                        Timeframe: {offer.timeframe}
-                      </Typography>
-                      
-                      {offer.customer_budget && (
-                        <Typography variant="body2" color="textSecondary">
-                          Customer Budget: ${offer.customer_budget}
-                        </Typography>
+                        <Stack direction="row" spacing={1} flexWrap="wrap" gap={1}>
+                          <Chip 
+                            label={`Your Quote: $${offer.budget}`}
+                            color="success"
+                            variant="outlined"
+                            size="small"
+                            sx={getChipStyles('success', 'outlined')}
+                          />
+                          {offer.customer_budget && (
+                            <Chip 
+                              label={`Customer Budget: $${offer.customer_budget}`}
+                              color="info"
+                              variant="outlined"
+                              size="small"
+                              sx={getChipStyles('info', 'outlined')}
+                            />
+                          )}
+                          <Chip 
+                            label={`Timeframe: ${offer.timeframe}`}
+                            color="primary"
+                            variant="outlined"
+                            size="small"
+                            sx={getChipStyles('primary', 'outlined')}
+                          />
+                        </Stack>
                       )}
                       
                       <Typography variant="caption" color="textSecondary">
@@ -452,7 +552,7 @@ const ProviderHome: React.FC = () => {
                           </Button>
                         )}
                       </div>
-                    </div>
+                    </Box>
                   ))}
                 </div>
               )}
@@ -468,9 +568,11 @@ const ProviderHome: React.FC = () => {
         maxWidth="md"
         fullWidth
         PaperProps={{
-          style: {
-            borderRadius: 16,
+          sx: {
+            borderRadius: 2,
             maxHeight: '90vh',
+            backgroundColor: theme.palette.background.paper,
+            color: theme.palette.text.primary,
           },
         }}
       >
@@ -480,6 +582,8 @@ const ProviderHome: React.FC = () => {
             alignItems: 'center',
             justifyContent: 'space-between',
             pb: 1,
+            backgroundColor: theme.palette.background.paper,
+            color: theme.palette.text.primary,
           }}
         >
           <Box display="flex" alignItems="center" gap={2}>
@@ -504,7 +608,7 @@ const ProviderHome: React.FC = () => {
           <IconButton
             onClick={handleCloseRequestDetails}
             sx={{
-              color: 'grey.500',
+              color: theme.palette.text.secondary,
             }}
           >
             <CloseIcon />
@@ -513,48 +617,70 @@ const ProviderHome: React.FC = () => {
 
         <Divider />
 
-        <DialogContent sx={{ p: 3 }}>
+        <DialogContent sx={{ p: 3, backgroundColor: theme.palette.background.paper }}>
           {selectedRequest && (
-            <Grid container spacing={3}>
-              {/* Description Card */}
-              <Grid item xs={12}>
-                <Card variant="outlined" sx={{ borderRadius: 2 }}>
-                  <CardContent>
-                    <Box display="flex" alignItems="center" gap={1} mb={2}>
-                      <DescriptionIcon color="primary" />
-                      <Typography variant="h6" fontWeight="bold">
-                        Description
-                      </Typography>
-                    </Box>
-                    <Typography variant="body1" lineHeight={1.6}>
-                      {selectedRequest.description || 'No description provided'}
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
+            <Stack spacing={3}>
+              {/* Main Information Section */}
+              <Paper 
+                elevation={0}
+                sx={{ 
+                  p: 3, 
+                  borderRadius: 2, 
+                  bgcolor: alpha(theme.palette.primary.main, 0.05),
+                  border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`
+                }}
+              >
+                <Box display="flex" alignItems="center" gap={1} mb={2}>
+                  <DescriptionIcon color="primary" />
+                  <Typography variant="h6" fontWeight="bold">
+                    Service Request
+                  </Typography>
+                </Box>
+                
+                <Typography variant="h5" fontWeight="bold" color="primary" gutterBottom>
+                  {selectedRequest.title}
+                </Typography>
+                
+                <Typography variant="body1" lineHeight={1.6} mb={3}>
+                  {selectedRequest.description || 'No description provided'}
+                </Typography>
 
-              {/* Budget & Location Info */}
-              <Grid item xs={12} md={6}>
-                <Card variant="outlined" sx={{ borderRadius: 2, height: '100%' }}>
-                  <CardContent>
-                    <Box display="flex" alignItems="center" gap={1} mb={2}>
-                      <AttachMoneyIcon color="success" />
-                      <Typography variant="h6" fontWeight="bold">
-                        Budget Information
-                      </Typography>
-                    </Box>
-                    <Typography variant="h4" color="success.main" fontWeight="bold">
-                      ${selectedRequest.budget}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Customer's proposed budget
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
+                <Stack direction="row" spacing={1} flexWrap="wrap" gap={1}>
+                  <Chip
+                    label={`Budget: $${selectedRequest.budget}`}
+                    color="success"
+                    variant="outlined"
+                    sx={getChipStyles('success', 'outlined')}
+                  />
+                  {selectedRequest.timeframe && (
+                    <Chip
+                      label={`Timeframe: ${selectedRequest.timeframe}`}
+                      color="info"
+                      variant="outlined"
+                      sx={getChipStyles('info', 'outlined')}
+                    />
+                  )}
+                  <Chip
+                    label={selectedRequest.status || 'pending'}
+                    color={selectedRequest.status === 'pending' ? 'warning' : 'success'}
+                    variant="filled"
+                    sx={getChipStyles(selectedRequest.status === 'pending' ? 'warning' : 'success', 'filled')}
+                  />
+                  {selectedRequest.service && (
+                    <Chip
+                      label={selectedRequest.service}
+                      color="primary"
+                      variant="outlined"
+                      sx={getChipStyles('primary', 'outlined')}
+                    />
+                  )}
+                </Stack>
+              </Paper>
 
-              <Grid item xs={12} md={6}>
-                <Card variant="outlined" sx={{ borderRadius: 2, height: '100%' }}>
+              {/* Details Grid */}
+              <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                {/* Location Info */}
+                <Card variant="outlined" sx={{ borderRadius: 2, flex: '1 1 300px', backgroundColor: theme.palette.background.paper }}>
                   <CardContent>
                     <Box display="flex" alignItems="center" gap={1} mb={2}>
                       <LocationOnIcon color="error" />
@@ -570,36 +696,27 @@ const ProviderHome: React.FC = () => {
                     </Typography>
                   </CardContent>
                 </Card>
-              </Grid>
 
-              {/* Customer & Timing Info */}
-              <Grid item xs={12} md={6}>
-                <Card variant="outlined" sx={{ borderRadius: 2, height: '100%' }}>
+                {/* Customer Info */}
+                <Card variant="outlined" sx={{ borderRadius: 2, flex: '1 1 300px', backgroundColor: theme.palette.background.paper }}>
                   <CardContent>
                     <Box display="flex" alignItems="center" gap={1} mb={2}>
                       <PersonIcon color="info" />
                       <Typography variant="h6" fontWeight="bold">
-                        Customer Information
+                        Customer
                       </Typography>
                     </Box>
-                    <Typography variant="body1" fontWeight="medium">
-                      Customer ID: {selectedRequest.user_id}
+                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                      Customer ID
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Request Status: 
-                      <Chip 
-                        label={selectedRequest.status || 'pending'} 
-                        size="small" 
-                        color={selectedRequest.status === 'pending' ? 'warning' : 'default'}
-                        sx={{ ml: 1 }}
-                      />
+                    <Typography variant="body1" fontWeight="medium" sx={{ fontFamily: 'monospace', fontSize: '0.9rem' }}>
+                      {selectedRequest.user_id}
                     </Typography>
                   </CardContent>
                 </Card>
-              </Grid>
 
-              <Grid item xs={12} md={6}>
-                <Card variant="outlined" sx={{ borderRadius: 2, height: '100%' }}>
+                {/* Posted Date */}
+                <Card variant="outlined" sx={{ borderRadius: 2, flex: '1 1 300px', backgroundColor: theme.palette.background.paper }}>
                   <CardContent>
                     <Box display="flex" alignItems="center" gap={1} mb={2}>
                       <CalendarTodayIcon color="warning" />
@@ -623,37 +740,14 @@ const ProviderHome: React.FC = () => {
                     </Typography>
                   </CardContent>
                 </Card>
-              </Grid>
-
-              {/* Service Category */}
-              {selectedRequest.service && (
-                <Grid item xs={12}>
-                  <Card variant="outlined" sx={{ borderRadius: 2 }}>
-                    <CardContent>
-                      <Box display="flex" alignItems="center" gap={1} mb={2}>
-                        <AssignmentIcon color="primary" />
-                        <Typography variant="h6" fontWeight="bold">
-                          Service Category
-                        </Typography>
-                      </Box>
-                      <Chip
-                        label={selectedRequest.service}
-                        color="primary"
-                        variant="outlined"
-                        size="large"
-                        sx={{ fontSize: '1rem', fontWeight: 'medium' }}
-                      />
-                    </CardContent>
-                  </Card>
-                </Grid>
-              )}
-            </Grid>
+              </Box>
+            </Stack>
           )}
         </DialogContent>
 
         <Divider />
 
-        <DialogActions sx={{ p: 3, gap: 1 }}>
+        <DialogActions sx={{ p: 3, gap: 1, backgroundColor: theme.palette.background.paper }}>
           <Button
             onClick={handleCloseRequestDetails}
             variant="outlined"
@@ -698,9 +792,11 @@ const ProviderHome: React.FC = () => {
         maxWidth="md"
         fullWidth
         PaperProps={{
-          style: {
-            borderRadius: 16,
+          sx: {
+            borderRadius: 2,
             maxHeight: '90vh',
+            backgroundColor: theme.palette.background.paper,
+            color: theme.palette.text.primary,
           },
         }}
       >
@@ -710,6 +806,8 @@ const ProviderHome: React.FC = () => {
             alignItems: 'center',
             justifyContent: 'space-between',
             pb: 1,
+            backgroundColor: theme.palette.background.paper,
+            color: theme.palette.text.primary,
           }}
         >
           <Box display="flex" alignItems="center" gap={2}>
@@ -734,7 +832,7 @@ const ProviderHome: React.FC = () => {
           <IconButton
             onClick={handleCloseOfferDetails}
             sx={{
-              color: 'grey.500',
+              color: theme.palette.text.secondary,
             }}
           >
             <CloseIcon />
@@ -743,93 +841,73 @@ const ProviderHome: React.FC = () => {
 
         <Divider />
 
-        <DialogContent sx={{ p: 3 }}>
+        <DialogContent sx={{ p: 3, backgroundColor: theme.palette.background.paper }}>
           {selectedOffer && (
-            <Grid container spacing={3}>
-              {/* Offer Status & ID */}
-              <Grid item xs={12} md={6}>
-                <Card variant="outlined" sx={{ borderRadius: 2, height: '100%' }}>
-                  <CardContent>
-                    <Box display="flex" alignItems="center" gap={1} mb={2}>
-                      <LocalOfferIcon color="primary" />
-                      <Typography variant="h6" fontWeight="bold">
-                        Offer Information
-                      </Typography>
-                    </Box>
-                    <Typography variant="body1" fontWeight="medium" mb={1}>
-                      Offer ID: {selectedOffer.offer_id}
-                    </Typography>
-                    <Typography variant="body1" fontWeight="medium" mb={2}>
-                      Request ID: {selectedOffer.request_id}
-                    </Typography>
+            <Stack spacing={3}>
+              {/* Main Offer Information */}
+              <Paper 
+                elevation={0}
+                sx={{ 
+                  p: 3, 
+                  borderRadius: 2, 
+                  bgcolor: alpha(theme.palette.secondary.main, 0.05),
+                  border: `1px solid ${alpha(theme.palette.secondary.main, 0.1)}`
+                }}
+              >
+                <Box display="flex" alignItems="center" gap={1} mb={2}>
+                  <LocalOfferIcon color="secondary" />
+                  <Typography variant="h6" fontWeight="bold">
+                    Offer Summary
+                  </Typography>
+                </Box>
+                
+                <Typography variant="h5" fontWeight="bold" color="secondary" gutterBottom>
+                  {selectedOffer.request_title || `Request #${selectedOffer.request_id}`}
+                </Typography>
+                
+                <Stack direction="row" spacing={1} flexWrap="wrap" gap={1} mb={2}>
+                  <Chip
+                    label={`Your Quote: $${selectedOffer.budget}`}
+                    color="success"
+                    variant="filled"
+                    sx={getChipStyles('success', 'filled')}
+                  />
+                  <Chip
+                    label={`Timeframe: ${selectedOffer.timeframe}`}
+                    color="info"
+                    variant="outlined"
+                    sx={getChipStyles('info', 'outlined')}
+                  />
+                  <Chip
+                    label={selectedOffer.status || 'pending'}
+                    color={selectedOffer.status === 'accepted' ? 'success' : selectedOffer.status === 'rejected' ? 'error' : 'warning'}
+                    variant="filled"
+                    sx={getChipStyles(selectedOffer.status === 'accepted' ? 'success' : selectedOffer.status === 'rejected' ? 'error' : 'warning', 'filled')}
+                  />
+                  {selectedOffer.customer_budget && (
                     <Chip
-                      label={selectedOffer.status || 'pending'}
-                      color={selectedOffer.status === 'accepted' ? 'success' : selectedOffer.status === 'rejected' ? 'error' : 'warning'}
-                      size="large"
-                      sx={{ fontSize: '1rem', fontWeight: 'medium' }}
+                      label={`Customer Budget: $${selectedOffer.customer_budget}`}
+                      color="primary"
+                      variant="outlined"
+                      sx={getChipStyles('primary', 'outlined')}
                     />
-                  </CardContent>
-                </Card>
-              </Grid>
+                  )}
+                </Stack>
 
-              {/* Budget Information */}
-              <Grid item xs={12} md={6}>
-                <Card variant="outlined" sx={{ borderRadius: 2, height: '100%' }}>
-                  <CardContent>
-                    <Box display="flex" alignItems="center" gap={1} mb={2}>
-                      <AttachMoneyIcon color="success" />
-                      <Typography variant="h6" fontWeight="bold">
-                        Budget Details
-                      </Typography>
-                    </Box>
-                    <Typography variant="h4" color="success.main" fontWeight="bold" mb={1}>
-                      ${selectedOffer.budget}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" mb={1}>
-                      Your quoted price
-                    </Typography>
-                    {selectedOffer.customer_budget && (
-                      <>
-                        <Typography variant="body1" fontWeight="medium">
-                          Customer Budget: ${selectedOffer.customer_budget}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          Customer's proposed budget
-                        </Typography>
-                      </>
-                    )}
-                  </CardContent>
-                </Card>
-              </Grid>
+                <Typography variant="body2" color="text.secondary">
+                  Offer ID: {selectedOffer.offer_id} • Request ID: {selectedOffer.request_id}
+                </Typography>
+              </Paper>
 
-              {/* Timeframe Information */}
-              <Grid item xs={12} md={6}>
-                <Card variant="outlined" sx={{ borderRadius: 2, height: '100%' }}>
-                  <CardContent>
-                    <Box display="flex" alignItems="center" gap={1} mb={2}>
-                      <AccessTimeIcon color="info" />
-                      <Typography variant="h6" fontWeight="bold">
-                        Timeframe
-                      </Typography>
-                    </Box>
-                    <Typography variant="body1" fontWeight="medium">
-                      {selectedOffer.timeframe}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Estimated completion time
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
-
-              {/* Offer Date */}
-              <Grid item xs={12} md={6}>
-                <Card variant="outlined" sx={{ borderRadius: 2, height: '100%' }}>
+              {/* Additional Details */}
+              <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                {/* Submission Date */}
+                <Card variant="outlined" sx={{ borderRadius: 2, flex: '1 1 300px', backgroundColor: theme.palette.background.paper }}>
                   <CardContent>
                     <Box display="flex" alignItems="center" gap={1} mb={2}>
                       <CalendarTodayIcon color="warning" />
                       <Typography variant="h6" fontWeight="bold">
-                        Offer Submitted
+                        Submitted On
                       </Typography>
                     </Box>
                     <Typography variant="body1" fontWeight="medium">
@@ -848,17 +926,15 @@ const ProviderHome: React.FC = () => {
                     </Typography>
                   </CardContent>
                 </Card>
-              </Grid>
 
-              {/* Request Description (if available) */}
-              {selectedOffer.request_description && (
-                <Grid item xs={12}>
-                  <Card variant="outlined" sx={{ borderRadius: 2 }}>
+                {/* Request Description (if available) */}
+                {selectedOffer.request_description && (
+                  <Card variant="outlined" sx={{ borderRadius: 2, flex: '1 1 400px', backgroundColor: theme.palette.background.paper }}>
                     <CardContent>
                       <Box display="flex" alignItems="center" gap={1} mb={2}>
                         <DescriptionIcon color="primary" />
                         <Typography variant="h6" fontWeight="bold">
-                          Original Request Description
+                          Original Request
                         </Typography>
                       </Box>
                       <Typography variant="body1" lineHeight={1.6}>
@@ -866,13 +942,11 @@ const ProviderHome: React.FC = () => {
                       </Typography>
                     </CardContent>
                   </Card>
-                </Grid>
-              )}
+                )}
 
-              {/* Location (if available) */}
-              {selectedOffer.request_location && (
-                <Grid item xs={12}>
-                  <Card variant="outlined" sx={{ borderRadius: 2 }}>
+                {/* Location (if available) */}
+                {selectedOffer.request_location && (
+                  <Card variant="outlined" sx={{ borderRadius: 2, flex: '1 1 300px', backgroundColor: theme.palette.background.paper }}>
                     <CardContent>
                       <Box display="flex" alignItems="center" gap={1} mb={2}>
                         <LocationOnIcon color="error" />
@@ -888,15 +962,15 @@ const ProviderHome: React.FC = () => {
                       </Typography>
                     </CardContent>
                   </Card>
-                </Grid>
-              )}
-            </Grid>
+                )}
+              </Box>
+            </Stack>
           )}
         </DialogContent>
 
         <Divider />
 
-        <DialogActions sx={{ p: 3, gap: 1 }}>
+        <DialogActions sx={{ p: 3, gap: 1, backgroundColor: theme.palette.background.paper }}>
           <Button
             onClick={handleCloseOfferDetails}
             variant="outlined"

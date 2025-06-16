@@ -8,6 +8,11 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  alpha,
+  Stack,
+  Paper,
+  Avatar,
+  Divider,
 } from "@mui/material";
 import apiService from "@utils/apiService";
 import type { RootState } from "@store/store";
@@ -34,19 +39,9 @@ const ConsumerHome: React.FC = () => {
   const [selectedOffer, setSelectedOffer] = useState<any>(null);
   const [acceptingOffer, setAcceptingOffer] = useState(false);
 
-  const [toast, setToast] = useState<{
-    open: boolean;
-    message: string;
-    severity: "success" | "error" | "warning" | "info";
-  }>({
-    open: false,
-    message: "",
-    severity: "info",
-  });
-
   // Show toast function
   const showToast = (message: string, severity: "success" | "error" | "warning" | "info" = "info") => {
-    setToast({ open: true, message, severity });
+    console.log(`${severity.toUpperCase()}: ${message}`);
   };
 
   // Filter requests by current user (consumer)
@@ -145,6 +140,22 @@ const ConsumerHome: React.FC = () => {
   // Check if request is already assigned
   const isRequestAssigned = selectedRequest?.status === "assigned";
 
+  // Enhanced chip styling for better dark theme visibility
+  const getChipStyles = (color: 'primary' | 'secondary' | 'success' | 'error' | 'warning' | 'info', variant: 'filled' | 'outlined' = 'filled') => {
+    const themeColor = theme.palette[color];
+    
+    return {
+      fontWeight: 'medium',
+      borderWidth: variant === 'outlined' ? 2 : 0,
+      backgroundColor: variant === 'filled' ? undefined : alpha(themeColor.main, 0.1),
+      borderColor: variant === 'outlined' ? themeColor.main : undefined,
+      color: variant === 'outlined' ? themeColor.main : themeColor.contrastText,
+      '&:hover': {
+        backgroundColor: alpha(themeColor.main, variant === 'outlined' ? 0.2 : 0.8)
+      }
+    };
+  };
+
   return (
     <>
       <div
@@ -155,10 +166,17 @@ const ConsumerHome: React.FC = () => {
           position: "absolute",
           top: 64,
           left: 0,
+          overflow: "hidden" // Prevent overall overflow
         }}
       >
         {/* Left: My Service Requests */}
-        <div style={{ width: "50%", height: "100%", overflow: "auto", display: "flex", alignItems: "stretch" }}>
+        <div style={{ 
+          width: "50%", 
+          height: "100%", 
+          display: "flex", 
+          alignItems: "stretch",
+          minHeight: 0 // Allow flex child to shrink
+        }}>
           <div
             style={{
               margin: 24,
@@ -169,9 +187,18 @@ const ConsumerHome: React.FC = () => {
               color: theme.palette.text.primary,
               display: "flex",
               flexDirection: "column",
+              minHeight: 0, // Allow flex child to shrink
+              overflow: "hidden" // Prevent container overflow
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: 8, padding: 24, paddingBottom: 12 }}>
+            {/* Header - Fixed height */}
+            <div style={{ 
+              display: "flex", 
+              alignItems: "center", 
+              gap: 8, 
+              padding: "24px 24px 12px 24px",
+              flexShrink: 0 // Prevent header from shrinking
+            }}>
               <Assignment color="primary" style={{ fontSize: 28 }} />
               <Typography variant="h6" gutterBottom style={{ margin: 0 }}>
                 My Service Requests ({safeRequests.length})
@@ -189,8 +216,11 @@ const ConsumerHome: React.FC = () => {
               </Button>
             </div>
 
-            {/* Create Service Request Button - Moved to Top */}
-            <div style={{ padding: "0 24px 12px 24px" }}>
+            {/* Create Service Request Button - Fixed height */}
+            <div style={{ 
+              padding: "0 24px 12px 24px",
+              flexShrink: 0 // Prevent button from shrinking
+            }}>
               <button
                 onClick={() => navigate("/dashboard/create-service-request")}
                 style={{
@@ -224,7 +254,14 @@ const ConsumerHome: React.FC = () => {
               </button>
             </div>
 
-            <div style={{ padding: "0 24px 24px 24px", flex: 1 }}>
+            {/* Scrollable content area */}
+            <div style={{ 
+              flex: 1, 
+              overflowY: "auto",
+              overflowX: "hidden",
+              padding: "0 24px 24px 24px",
+              minHeight: 0 // Allow content to shrink
+            }}>
               {requestsStatus === "loading" ? (
                 <div>Loading...</div>
               ) : safeRequests.length === 0 ? (
@@ -244,33 +281,28 @@ const ConsumerHome: React.FC = () => {
                     const isSelected = selectedRequestId === requestId;
 
                     return (
-                      <div
+                      <Box
                         key={requestId}
-                        style={{
-                          padding: 12,
-                          marginBottom: 8,
-                          cursor: "pointer",
-                          background: isSelected ? "#e3f2fd" : undefined,
-                          borderRadius: 8,
-                          border: isSelected ? `2px solid ${theme.palette.primary.main}` : "1px solid #e0e0e0",
+                        sx={{
+                          padding: 2,
+                          marginBottom: 1.5,
+                          borderRadius: 1,
+                          border: "1px solid",
+                          borderColor: isSelected ? "primary.main" : "divider",
                           display: "flex",
                           flexDirection: "column",
-                          gap: 8,
-                          transition: "background 0.2s, box-shadow 0.2s, border-color 0.2s",
+                          gap: 1,
+                          transition: "all 0.3s ease",
+                          cursor: "pointer",
+                          backgroundColor: isSelected ? alpha(theme.palette.primary.main, 0.08) : "transparent",
+                          "&:hover": {
+                            bgcolor: isSelected ? alpha(theme.palette.primary.main, 0.12) : "action.hover",
+                            boxShadow: `0 4px 16px ${alpha(theme.palette.primary.main, 0.3)}`,
+                            transform: "translateY(-2px)",
+                            borderColor: "primary.main",
+                          },
                         }}
                         onClick={() => handleRequestClick(requestId)}
-                        onMouseOver={(e) => {
-                          if (!isSelected) {
-                            e.currentTarget.style.background = "#f5f5f5";
-                          }
-                          e.currentTarget.style.boxShadow = "0 2px 8px rgba(25, 118, 210, 0.08)";
-                        }}
-                        onMouseOut={(e) => {
-                          if (!isSelected) {
-                            e.currentTarget.style.background = "";
-                          }
-                          e.currentTarget.style.boxShadow = "none";
-                        }}
                       >
                         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                           <Assignment color={isSelected ? "primary" : "action"} style={{ fontSize: 22 }} />
@@ -284,49 +316,71 @@ const ConsumerHome: React.FC = () => {
                             {req.title}
                           </Typography>
                           {req.status === "assigned" && (
-                            <Chip label="Assigned" color="success" size="small" variant="filled" />
+                            <Chip 
+                              label="Assigned" 
+                              color="success" 
+                              size="small" 
+                              variant="filled"
+                              sx={getChipStyles('success', 'filled')}
+                            />
                           )}
                         </div>
 
                         {req.description && (
-                          <Typography variant="body2" color="textSecondary" style={{ marginLeft: 30 }}>
-                            {req.description.length > 60 ? `${req.description.substring(0, 60)}...` : req.description}
+                          <Typography variant="body2" color="textSecondary">
+                            {req.description.length > 100 
+                              ? `${req.description.substring(0, 100)}...` 
+                              : req.description
+                            }
                           </Typography>
                         )}
+
+                        <Stack direction="row" spacing={1} flexWrap="wrap" gap={1}>
+                          <Chip 
+                            label={`Budget: $${req.budget}`}
+                            color="success"
+                            variant="outlined"
+                            size="small"
+                            sx={getChipStyles('success', 'outlined')}
+                          />
+                          {req.timeframe && (
+                            <Chip 
+                              label={`Timeframe: ${req.timeframe}`}
+                              color="info"
+                              variant="outlined"
+                              size="small"
+                              sx={getChipStyles('info', 'outlined')}
+                            />
+                          )}
+                        </Stack>
 
                         <div
                           style={{
                             display: "flex",
                             justifyContent: "space-between",
                             alignItems: "center",
-                            marginLeft: 30,
                           }}
                         >
                           <Typography variant="caption" color="textSecondary">
-                            Budget: ${req.budget} • {req.timeframe}
+                            {new Date(req.created_at).toLocaleDateString()} at {new Date(req.created_at).toLocaleTimeString()}
                           </Typography>
-                          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                            <Typography variant="caption" color="textSecondary">
-                              {new Date(req.created_at).toLocaleDateString()}
-                            </Typography>
-                            <Typography
-                              variant="caption"
-                              style={{
-                                color:
-                                  req.status === "pending"
-                                    ? theme.palette.warning.main
-                                    : req.status === "assigned"
-                                    ? theme.palette.success.main
-                                    : theme.palette.text.secondary,
-                                fontWeight: 500,
-                                textTransform: "capitalize",
-                              }}
-                            >
-                              {req.status}
-                            </Typography>
-                          </div>
+                          <Typography
+                            variant="caption"
+                            style={{
+                              color:
+                                req.status === "pending"
+                                  ? theme.palette.warning.main
+                                  : req.status === "assigned"
+                                  ? theme.palette.success.main
+                                  : theme.palette.text.secondary,
+                              fontWeight: 500,
+                              textTransform: "capitalize",
+                            }}
+                          >
+                            {req.status}
+                          </Typography>
                         </div>
-                      </div>
+                      </Box>
                     );
                   })}
                 </div>
@@ -336,7 +390,13 @@ const ConsumerHome: React.FC = () => {
         </div>
 
         {/* Right: Offers for Selected Request */}
-        <div style={{ width: "50%", height: "100%", overflow: "auto", display: "flex", alignItems: "stretch" }}>
+        <div style={{ 
+          width: "50%", 
+          height: "100%", 
+          display: "flex", 
+          alignItems: "stretch",
+          minHeight: 0 // Allow flex child to shrink
+        }}>
           <div
             style={{
               margin: 24,
@@ -347,15 +407,32 @@ const ConsumerHome: React.FC = () => {
               color: theme.palette.text.primary,
               display: "flex",
               flexDirection: "column",
+              minHeight: 0, // Allow flex child to shrink
+              overflow: "hidden" // Prevent container overflow
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: 8, padding: 24, paddingBottom: 0 }}>
+            {/* Header - Fixed height */}
+            <div style={{ 
+              display: "flex", 
+              alignItems: "center", 
+              gap: 8, 
+              padding: "24px 24px 12px 24px",
+              flexShrink: 0 // Prevent header from shrinking
+            }}>
               <LocalOffer color="primary" style={{ fontSize: 28 }} />
               <Typography variant="h6" gutterBottom style={{ margin: 0 }}>
                 {selectedRequestId ? `Offers (${safeOffers.length})` : "Select a Service Request"}
               </Typography>
             </div>
-            <div style={{ padding: 24, paddingTop: 12, flex: 1 }}>
+            
+            {/* Scrollable content area */}
+            <div style={{ 
+              flex: 1, 
+              overflowY: "auto",
+              overflowX: "hidden",
+              padding: "0 24px 24px 24px",
+              minHeight: 0 // Allow content to shrink
+            }}>
               {selectedRequestId ? (
                 offersStatus === "loading" ? (
                   <div>Loading offers...</div>
@@ -374,30 +451,30 @@ const ConsumerHome: React.FC = () => {
                 ) : (
                   <div>
                     {safeOffers.map((offer: any) => (
-                      <div
+                      <Box
                         key={offer.offer_id || offer.id}
-                        style={{
-                          padding: 16,
-                          marginBottom: 12,
-                          borderRadius: 8,
-                          border: offer.status === "accepted" ? "2px solid #4caf50" : "1px solid #e0e0e0",
+                        sx={{
+                          padding: 2,
+                          marginBottom: 1.5,
+                          borderRadius: 1,
+                          border: "1px solid",
+                          borderColor: offer.status === "accepted" ? "success.main" : "divider",
                           display: "flex",
                           flexDirection: "column",
-                          gap: 8,
-                          transition: "background 0.2s, box-shadow 0.2s",
-                          backgroundColor: offer.status === "accepted" ? "#f1f8e9" : undefined,
-                        }}
-                        onMouseOver={(e) => {
-                          if (offer.status !== "accepted") {
-                            e.currentTarget.style.background = "#f5f5f5";
-                          }
-                          e.currentTarget.style.boxShadow = "0 2px 8px rgba(25, 118, 210, 0.08)";
-                        }}
-                        onMouseOut={(e) => {
-                          if (offer.status !== "accepted") {
-                            e.currentTarget.style.background = "";
-                          }
-                          e.currentTarget.style.boxShadow = "none";
+                          gap: 1,
+                          transition: "all 0.3s ease",
+                          cursor: "pointer",
+                          backgroundColor: offer.status === "accepted" 
+                            ? alpha(theme.palette.success.main, 0.08) 
+                            : "transparent",
+                          "&:hover": {
+                            bgcolor: offer.status === "accepted" 
+                              ? alpha(theme.palette.success.main, 0.12) 
+                              : "action.hover",
+                            boxShadow: `0 4px 16px ${alpha(theme.palette.primary.main, 0.3)}`,
+                            transform: "translateY(-2px)",
+                            borderColor: "primary.main",
+                          },
                         }}
                       >
                         <div style={{ display: "flex", alignItems: "center", gap: 8, justifyContent: "space-between" }}>
@@ -414,21 +491,31 @@ const ConsumerHome: React.FC = () => {
                               size="small"
                               variant="filled"
                               icon={<CheckCircle />}
+                              sx={getChipStyles('success', 'filled')}
                             />
                           )}
                         </div>
 
-                        {offer.timeframe && (
-                          <Typography variant="body2" color="textSecondary">
-                            Timeframe: {offer.timeframe}
-                          </Typography>
-                        )}
-
-                        {offer.provider_name && (
-                          <Typography variant="body2" color="textSecondary">
-                            Provider: {offer.provider_name}
-                          </Typography>
-                        )}
+                        <Stack direction="row" spacing={1} flexWrap="wrap" gap={1}>
+                          {offer.timeframe && (
+                            <Chip 
+                              label={`Timeframe: ${offer.timeframe}`}
+                              color="info"
+                              variant="outlined"
+                              size="small"
+                              sx={getChipStyles('info', 'outlined')}
+                            />
+                          )}
+                          {offer.provider_name && (
+                            <Chip 
+                              label={`Provider: ${offer.provider_name}`}
+                              color="primary"
+                              variant="outlined"
+                              size="small"
+                              sx={getChipStyles('primary', 'outlined')}
+                            />
+                          )}
+                        </Stack>
 
                         <Typography variant="caption" color="textSecondary">
                           Received on {new Date(offer.created_at).toLocaleDateString()} at{" "}
@@ -463,7 +550,7 @@ const ConsumerHome: React.FC = () => {
                             </Button>
                           )}
                         </div>
-                      </div>
+                      </Box>
                     ))}
                   </div>
                 )
@@ -484,54 +571,119 @@ const ConsumerHome: React.FC = () => {
       </div>
 
       {/* Offer Confirmation Dialog */}
-      <Dialog open={confirmDialogOpen} onClose={() => setConfirmDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>
-          <Box display="flex" alignItems="center" gap={1}>
-            <CheckCircle color="success" />
-            <Typography variant="h6">Confirm Offer Acceptance</Typography>
+      <Dialog 
+        open={confirmDialogOpen} 
+        onClose={() => setConfirmDialogOpen(false)} 
+        maxWidth="sm" 
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            maxHeight: '90vh',
+            backgroundColor: theme.palette.background.paper,
+            color: theme.palette.text.primary,
+          },
+        }}
+      >
+        <DialogTitle
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            pb: 1,
+            backgroundColor: theme.palette.background.paper,
+            color: theme.palette.text.primary,
+          }}
+        >
+          <Box display="flex" alignItems="center" gap={2}>
+            <Avatar
+              sx={{
+                bgcolor: theme.palette.success.main,
+                width: 48,
+                height: 48,
+              }}
+            >
+              <CheckCircle />
+            </Avatar>
+            <Box>
+              <Typography variant="h5" component="div" fontWeight="bold">
+                Confirm Offer Acceptance
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Review offer details before accepting
+              </Typography>
+            </Box>
           </Box>
         </DialogTitle>
 
-        <DialogContent>
+        <Divider />
+
+        <DialogContent sx={{ p: 3, backgroundColor: theme.palette.background.paper }}>
           {selectedOffer && (
-            <Box>
-              <Typography variant="body1" gutterBottom>
-                Are you sure you want to accept this offer?
-              </Typography>
+            <Stack spacing={3}>
+              {/* Main Offer Information */}
+              <Paper 
+                elevation={0}
+                sx={{ 
+                  p: 3, 
+                  borderRadius: 2, 
+                  bgcolor: alpha(theme.palette.success.main, 0.05),
+                  border: `1px solid ${alpha(theme.palette.success.main, 0.1)}`
+                }}
+              >
+                <Box display="flex" alignItems="center" gap={1} mb={2}>
+                  <LocalOffer color="success" />
+                  <Typography variant="h6" fontWeight="bold">
+                    Offer Details
+                  </Typography>
+                </Box>
+                
+                <Stack direction="row" spacing={1} flexWrap="wrap" gap={1} mb={2}>
+                  <Chip
+                    label={`Budget: $${selectedOffer.budget}`}
+                    color="success"
+                    variant="filled"
+                    sx={getChipStyles('success', 'filled')}
+                  />
+                  <Chip
+                    label={`Timeframe: ${selectedOffer.timeframe}`}
+                    color="info"
+                    variant="outlined"
+                    sx={getChipStyles('info', 'outlined')}
+                  />
+                  <Chip
+                    label={`Provider: ${selectedOffer.provider_name || "Provider"}`}
+                    color="primary"
+                    variant="outlined"
+                    sx={getChipStyles('primary', 'outlined')}
+                  />
+                </Stack>
 
-              <Box mt={2} p={2} sx={{ backgroundColor: "grey.100", borderRadius: 1 }}>
-                <Typography variant="body2" color="textSecondary" gutterBottom>
-                  <strong>Offer Details:</strong>
-                </Typography>
-                <Typography variant="body1">
-                  <strong>Budget:</strong> ${selectedOffer.budget}
-                </Typography>
-                <Typography variant="body1">
-                  <strong>Timeframe:</strong> {selectedOffer.timeframe}
-                </Typography>
-                <Typography variant="body1">
-                  <strong>Provider:</strong> {selectedOffer.provider_name || "Provider"}
-                </Typography>
-              </Box>
-
-              <Box mt={2}>
-                <Typography variant="body2" color="textSecondary">
+                <Typography variant="body2" color="text.secondary" mt={2}>
                   By accepting this offer, a job will be created and this request will be marked as assigned. You'll be
                   able to communicate with the provider through the chat system.
                 </Typography>
-              </Box>
-            </Box>
+              </Paper>
+            </Stack>
           )}
         </DialogContent>
 
-        <DialogActions>
-          <Button onClick={() => setConfirmDialogOpen(false)} disabled={acceptingOffer}>
+        <Divider />
+
+        <DialogActions sx={{ p: 3, gap: 1, backgroundColor: theme.palette.background.paper }}>
+          <Button 
+            onClick={() => setConfirmDialogOpen(false)} 
+            variant="outlined"
+            size="large"
+            disabled={acceptingOffer}
+          >
             Cancel
           </Button>
           <Button
             onClick={confirmAcceptOffer}
             variant="contained"
             color="success"
+            size="large"
             disabled={acceptingOffer}
             startIcon={<CheckCircle />}
           >

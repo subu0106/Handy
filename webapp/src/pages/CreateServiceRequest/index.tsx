@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Box, Paper, Typography, Button, MenuItem, TextField } from "@mui/material";
-import { useAppDispatch, useAppSelector } from "@store/hooks";
+import { Box, Paper, Typography, Button, MenuItem, TextField, useTheme, IconButton, alpha } from "@mui/material";
+import { useAppSelector } from "@store/hooks";
+import { ArrowBack } from "@mui/icons-material";
 import apiService from "@utils/apiService";
 import CONSTANTS from "@config/constants";
 
@@ -19,8 +20,8 @@ const SERVICE_TYPES = [
 ];
 
 const CreateServiceRequest: React.FC = () => {
-  const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const theme = useTheme();
   const [serviceType, setServiceType] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -30,6 +31,10 @@ const CreateServiceRequest: React.FC = () => {
   const [location, setLocation] = useState("");
   const [budget, setBudget] = useState<number | null>(null);
   const [timeframe, setTimeframe] = useState("");
+
+  const handleCancel = () => {
+    navigate("/dashboard");
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,11 +64,49 @@ const CreateServiceRequest: React.FC = () => {
   };
 
   return (
-    <Box display="flex" justifyContent="center" alignItems="center" minHeight="70vh">
-      <Paper sx={{ p: 4, minWidth: 350 }}>
-        <Typography variant="h5" gutterBottom>
-          Create Service Request
-        </Typography>
+    <Box
+      sx={{
+        width: "100vw",
+        height: "calc(100vh - 64px)",
+        position: "absolute",
+        top: 64,
+        left: 0,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: theme.palette.background.default,
+        padding: 3,
+        overflowY: "auto",
+      }}
+    >
+      <Paper 
+        sx={{ 
+          p: 4, 
+          minWidth: 400, 
+          maxWidth: 600, 
+          width: "100%",
+          borderRadius: 2,
+          boxShadow: "0 4px 24px rgba(0,0,0,0.12)",
+          backgroundColor: theme.palette.background.paper,
+        }}
+      >
+        {/* Header with back button */}
+        <Box display="flex" alignItems="center" gap={2} mb={3}>
+          <IconButton
+            onClick={handleCancel}
+            sx={{
+              backgroundColor: alpha(theme.palette.primary.main, 0.1),
+              "&:hover": {
+                backgroundColor: alpha(theme.palette.primary.main, 0.2),
+              },
+            }}
+          >
+            <ArrowBack color="primary" />
+          </IconButton>
+          <Typography variant="h5" fontWeight="bold">
+            Create Service Request
+          </Typography>
+        </Box>
         <form onSubmit={handleSubmit}>
           <TextField
             select
@@ -129,13 +172,28 @@ const CreateServiceRequest: React.FC = () => {
           />
 
           {error && (
-            <Typography color="error" variant="body2">
+            <Typography color="error" variant="body2" sx={{ mt: 2 }}>
               {error}
             </Typography>
           )}
 
-          <Box mt={2} display="flex" justifyContent="flex-end">
-            <Button type="submit" variant="contained" color="primary" disabled={loading}>
+          <Box mt={3} display="flex" justifyContent="flex-end" gap={2}>
+            <Button 
+              variant="outlined" 
+              color="primary" 
+              onClick={handleCancel}
+              disabled={loading}
+              sx={{ minWidth: 100 }}
+            >
+              Cancel
+            </Button>
+            <Button 
+              type="submit" 
+              variant="contained" 
+              color="primary" 
+              disabled={loading}
+              sx={{ minWidth: 100 }}
+            >
               {loading ? "Creating..." : "Create"}
             </Button>
           </Box>
