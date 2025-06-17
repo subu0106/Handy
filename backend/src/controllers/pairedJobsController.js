@@ -76,7 +76,7 @@ const createPairedJob = async (req, res) => {
         consumer_id,
         request_title: request.title,
         budget: budget || request.budget,
-        message: `New job assigned: "${request.title}" - $${budget || request.budget}`
+        message: `New job assigned: "${request.title}" - LKR ${budget || request.budget}`
       };
 
       console.log(`Emitting new job assignment to provider: new_job_${provider_id}`, notificationData);
