@@ -39,11 +39,6 @@ const ConsumerHome: React.FC = () => {
   const [selectedOffer, setSelectedOffer] = useState<any>(null);
   const [acceptingOffer, setAcceptingOffer] = useState(false);
 
-  // Show toast function
-  const showToast = (message: string, severity: "success" | "error" | "warning" | "info" = "info") => {
-    console.log(`${severity.toUpperCase()}: ${message}`);
-  };
-
   // Filter requests by current user (consumer)
   const safeRequests = Array.isArray(requests)
     ? requests
@@ -114,7 +109,7 @@ const ConsumerHome: React.FC = () => {
         status: "assigned",
       });
 
-      showToast("Offer accepted successfully!", "success");
+      console.log("SUCCESS: Offer accepted successfully!");
 
       // Refresh data
       if (user.uid) {
@@ -126,7 +121,7 @@ const ConsumerHome: React.FC = () => {
       setSelectedOffer(null);
     } catch (error) {
       console.error("Error accepting offer:", error);
-      showToast("Failed to accept offer. Please try again.", "error");
+      console.log("ERROR: Failed to accept offer. Please try again.");
     } finally {
       setAcceptingOffer(false);
     }
@@ -259,7 +254,7 @@ const ConsumerHome: React.FC = () => {
               flex: 1, 
               overflowY: "auto",
               overflowX: "hidden",
-              padding: "0 24px 24px 24px",
+              padding: "16px 24px 24px 24px", // Added 16px top padding
               minHeight: 0 // Allow content to shrink
             }}>
               {requestsStatus === "loading" ? (
