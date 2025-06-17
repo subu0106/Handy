@@ -203,7 +203,7 @@ const App = () => {
           providerServices.forEach((service: string) => {
             socket.off(`new_request_${service}`);
             socket.on(`new_request_${service}`, (data) => {
-              showToast(`New request: ${data.title} (Budget: $${data.budget})`, "info");
+              showToast(`New request: ${data.title} (Budget: LKR ${data.budget})`, "info");
               if (user?.uid) {
                 dispatch(fetchServiceRequestsBasedOnService(user.uid));
               }
@@ -238,7 +238,7 @@ const App = () => {
         socket.off(updateOfferTopic);
         socket.on(offerTopic, (offerData) => {
           showToast(
-            `New offer: $${offerData.budget} for "${offerData.request_title}" from ${offerData.provider_name}`,
+            `New offer: LKR ${offerData.budget} for "${offerData.request_title}" from ${offerData.provider_name}`,
             "success"
           );
           const { selectedRequestId } = serviceRequests;
@@ -256,7 +256,7 @@ const App = () => {
         socket.on(updateOfferTopic, (offerData) => {
           console.log("Received updated offer notification:", offerData);
           showToast(
-            `Offer budget updated: from $${offerData.old_budget} to $${offerData.new_budget} for "${offerData.request_title}" from ${offerData.provider_name}`,
+            `Offer budget updated: from LKR ${offerData.old_budget} to LKR ${offerData.new_budget} for "${offerData.request_title}" from ${offerData.provider_name}`,
             "info"
           );
           // Refresh offers for the specific request if it's currently selected

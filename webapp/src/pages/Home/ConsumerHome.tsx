@@ -337,7 +337,7 @@ const ConsumerHome: React.FC = () => {
 
                         <Stack direction="row" spacing={1} flexWrap="wrap" gap={1}>
                           <Chip 
-                            label={`Budget: $${req.budget}`}
+                            label={`Budget: LKR ${req.budget}`}
                             color="success"
                             variant="outlined"
                             size="small"
@@ -640,7 +640,7 @@ const ConsumerHome: React.FC = () => {
                 
                 <Stack direction="row" spacing={1} flexWrap="wrap" gap={1} mb={2}>
                   <Chip
-                    label={`Budget: $${selectedOffer.budget}`}
+                    label={`Budget: LKR ${selectedOffer.budget}`}
                     color="success"
                     variant="filled"
                     sx={getChipStyles('success', 'filled')}

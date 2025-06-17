@@ -312,7 +312,7 @@ const ProviderHome: React.FC = () => {
                         <Stack direction="row" spacing={1} flexWrap="wrap" gap={1}>
                           {req.budget && (
                             <Chip 
-                              label={`Budget: $${req.budget}`}
+                              label={`Budget: LKR ${req.budget}`}
                               color="primary"
                               variant="outlined"
                               size="small"
@@ -491,7 +491,7 @@ const ProviderHome: React.FC = () => {
                       ) : (
                         <Stack direction="row" spacing={1} flexWrap="wrap" gap={1}>
                           <Chip 
-                            label={`Your Quote: $${offer.budget}`}
+                            label={`Your Quote: LKR ${offer.budget}`}
                             color="success"
                             variant="outlined"
                             size="small"
@@ -499,7 +499,7 @@ const ProviderHome: React.FC = () => {
                           />
                           {offer.customer_budget && (
                             <Chip 
-                              label={`Customer Budget: $${offer.customer_budget}`}
+                              label={`Customer Budget: LKR ${offer.customer_budget}`}
                               color="info"
                               variant="outlined"
                               size="small"
@@ -647,7 +647,7 @@ const ProviderHome: React.FC = () => {
 
                 <Stack direction="row" spacing={1} flexWrap="wrap" gap={1}>
                   <Chip
-                    label={`Budget: $${selectedRequest.budget}`}
+                    label={`Budget: LKR ${selectedRequest.budget}`}
                     color="success"
                     variant="outlined"
                     sx={getChipStyles('success', 'outlined')}
@@ -867,7 +867,7 @@ const ProviderHome: React.FC = () => {
                 
                 <Stack direction="row" spacing={1} flexWrap="wrap" gap={1} mb={2}>
                   <Chip
-                    label={`Your Quote: $${selectedOffer.budget}`}
+                    label={`Your Quote: LKR ${selectedOffer.budget}`}
                     color="success"
                     variant="filled"
                     sx={getChipStyles('success', 'filled')}
@@ -886,7 +886,7 @@ const ProviderHome: React.FC = () => {
                   />
                   {selectedOffer.customer_budget && (
                     <Chip
-                      label={`Customer Budget: $${selectedOffer.customer_budget}`}
+                      label={`Customer Budget: LKR ${selectedOffer.customer_budget}`}
                       color="primary"
                       variant="outlined"
                       sx={getChipStyles('primary', 'outlined')}

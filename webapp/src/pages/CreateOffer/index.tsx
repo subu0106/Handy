@@ -172,7 +172,7 @@ const CreateOffer: React.FC = () => {
             <Stack direction="row" spacing={1} flexWrap="wrap" gap={1} mt={2}>
               {requestDetails.budget && (
                 <Chip 
-                  label={`Customer Budget: $${requestDetails.budget}`} 
+                  label={`Customer Budget: LKR ${requestDetails.budget}`} 
                   size="small" 
                   color="success" 
                   variant="outlined" 
@@ -213,7 +213,7 @@ const CreateOffer: React.FC = () => {
             margin="normal"
             placeholder="Enter your price for this job"
             helperText={requestDetails?.budget ? 
-              `Customer's budget is $${requestDetails.budget}. Provide a competitive quote.` : 
+              `Customer's budget is LKR ${requestDetails.budget}. Provide a competitive quote.` : 
               "Provide a competitive quote for the requested service"
             }
             inputProps={{ min: 1, step: 0.01 }}
