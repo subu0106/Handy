@@ -26,14 +26,14 @@ import {
 import apiService from "@utils/apiService";
 import { setUser } from "@store/userSlice";
 
-// Initialize Stripe (add your publishable key to .env)
+// Initialize Stripe
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
 interface PaymentFormProps {
     tokens: number;
     quantity: number;
     totalPrice: number;
-    unitPrice: number; // Add unitPrice
+    unitPrice: number;
     onSuccess: () => void;
     onCancel: () => void;
 }
@@ -42,7 +42,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
     tokens,
     quantity,
     totalPrice,
-    unitPrice, // Add unitPrice prop
+    unitPrice,
     onSuccess,
     onCancel
 }) => {
@@ -65,18 +65,18 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
         setError("");
 
         try {
-            // Step 1: Create payment intent with unitPrice
+            // Create payment intent
             const paymentIntentResponse = await apiService.post("/payment/createPaymentIntent", {
                 tokens,
                 quantity,
                 userType: user.userType,
                 user_id: user.uid,
-                unitPrice // Send unitPrice from frontend
+                unitPrice
             });
 
             const { clientSecret, paymentIntentId } = paymentIntentResponse.data;
 
-            // Step 2: Confirm payment with Stripe
+            // Confirm payment
             const cardElement = elements.getElement(CardElement);
             if (!cardElement) {
                 setError("Card element not found");
@@ -89,8 +89,6 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
                     card: cardElement,
                     billing_details: {
                         name: user.name,
-                        // Remove email since it's not available in user state
-                        // email: user.email || "",
                     },
                 },
             });
@@ -101,7 +99,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
                 return;
             }
 
-            // Step 3: Confirm payment on backend
+            // Confirm payment on backend
             if (paymentIntent.status === "succeeded") {
                 const confirmResponse = await apiService.post(`/payment/confirmPayment/${paymentIntentId}`);
 
