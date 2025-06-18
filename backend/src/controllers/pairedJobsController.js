@@ -99,17 +99,58 @@ const createPairedJob = async (req, res) => {
 
 const getPairedJobs = async (req, res) => {
   const {consumer_id, provider_id} = req.query;
+  
+  // Helper function to enrich paired jobs with user names
+  const enrichPairedJobs = async (jobs) => {
+    return await Promise.all(
+      jobs.map(async (job) => {
+        try {
+          // Get consumer details
+          const consumer = await db.getOne(
+            constant.DB_TABLES.USERS,
+            "WHERE user_id = $1",
+            [job.consumer_id]
+          );
+          
+          // Get provider details
+          const provider = await db.getOne(
+            constant.DB_TABLES.USERS,
+            "WHERE user_id = $1",
+            [job.provider_id]
+          );
+          
+          return {
+            ...job,
+            consumer_name: consumer?.name || "Consumer",
+            provider_name: provider?.name || "Provider"
+          };
+        } catch (error) {
+          console.error("Error enriching job data:", error);
+          return {
+            ...job,
+            consumer_name: "Consumer",
+            provider_name: "Provider"
+          };
+        }
+      })
+    );
+  };
+
   if (consumer_id && provider_id) {
     try{
       const conditions = `WHERE consumer_id = $1 and provider_id = $2`;
-      const paireJobList = await db.getAll(constant.DB_TABLES.PAIREDJOBS, conditions, [consumer_id, provider_id]);
-      if (paireJobList && paireJobList.length > 0) {
-        res.status(constant.HTTP_STATUS.OK).json(paireJobList);
+      const pairedJobList = await db.getAll(constant.DB_TABLES.PAIREDJOBS, conditions, [consumer_id, provider_id]);
+      if (pairedJobList && pairedJobList.length > 0) {
+        const enrichedJobs = await enrichPairedJobs(pairedJobList);
+        res.status(constant.HTTP_STATUS.OK).json(enrichedJobs);
       } else {
         res.status(constant.HTTP_STATUS.NOT_FOUND).json({message: "No paired jobs found"});
       }    
     } catch(err){
-      res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR);
+      console.error("Error fetching paired jobs (both IDs):", err);
+      res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+        message: "Internal server error"
+      });
       throw err;
     } 
   } else if (consumer_id) {
@@ -117,12 +158,16 @@ const getPairedJobs = async (req, res) => {
       const conditions = `WHERE consumer_id = $1`;
       const consumerPairedJobList = await db.getAll(constant.DB_TABLES.PAIREDJOBS, conditions, [consumer_id]);
       if (consumerPairedJobList && consumerPairedJobList.length > 0) {
-        res.status(constant.HTTP_STATUS.OK).json(consumerPairedJobList);
+        const enrichedJobs = await enrichPairedJobs(consumerPairedJobList);
+        res.status(constant.HTTP_STATUS.OK).json(enrichedJobs);
       } else {
         res.status(constant.HTTP_STATUS.NOT_FOUND).json({message: `No paired jobs found for consumer ID: ${consumer_id}`});
       }    
     } catch(err){
-      res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR);
+      console.error("Error fetching paired jobs (consumer):", err);
+      res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+        message: "Internal server error"
+      });
       throw err;
     } 
   } else if (provider_id) {
@@ -130,12 +175,17 @@ const getPairedJobs = async (req, res) => {
       const conditions = `WHERE provider_id = $1`;
       const providerPairedJobList = await db.getAll(constant.DB_TABLES.PAIREDJOBS, conditions, [provider_id]);
       if (providerPairedJobList && providerPairedJobList.length > 0) {
-        res.status(constant.HTTP_STATUS.OK).json(providerPairedJobList);
+        const enrichedJobs = await enrichPairedJobs(providerPairedJobList);
+        res.status(constant.HTTP_STATUS.OK).json(enrichedJobs);
+        console.log(`Paired jobs found for provider ID: ${provider_id}`, enrichedJobs);
       } else {
         res.status(constant.HTTP_STATUS.NOT_FOUND).json({message: `No paired jobs found for provider ID: ${provider_id}`});
       }    
     } catch(err){
-      res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR);
+      console.error("Error fetching paired jobs (provider):", err);
+      res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+        message: "Internal server error"
+      });
       throw err;
     } 
   } else {
@@ -143,7 +193,121 @@ const getPairedJobs = async (req, res) => {
   }
 };
 
+const addRatingAndReview = async (req, res) => {
+  try {
+    const { job_id } = req.params;
+    const { rating, review } = req.body;
+
+    // Validate input
+    if (!job_id) {
+      return res.status(constant.HTTP_STATUS.BAD_REQUEST).json({
+        message: "job_id is required"
+      });
+    }
+
+    if (!rating || rating < 1 || rating > 5) {
+      return res.status(constant.HTTP_STATUS.BAD_REQUEST).json({
+        message: "Rating must be between 1 and 5"
+      });
+    }
+
+    // Check if the paired job exists
+    const existingJob = await db.getOne(
+      constant.DB_TABLES.PAIREDJOBS,
+      "WHERE job_id = $1",
+      [job_id]
+    );
+
+    if (!existingJob) {
+      return res.status(constant.HTTP_STATUS.NOT_FOUND).json({
+        message: "Paired job not found"
+      });
+    }
+
+    // Check if rating already exists
+    if (existingJob.rating) {
+      return res.status(constant.HTTP_STATUS.BAD_REQUEST).json({
+        message: "This job has already been rated"
+      });
+    }
+
+    // Update the paired job with rating and review
+    const updateData = {
+      rating: rating,
+      review: review || null
+    };
+
+    const updatedJob = await db.update(
+      constant.DB_TABLES.PAIREDJOBS,
+      updateData,
+      "WHERE job_id = $1",
+      [job_id]
+    );
+
+    if (!updatedJob) {
+      return res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+        message: "Failed to update rating and review"
+      });
+    }
+
+    // Update provider's average rating
+    const provider = await db.getOne(
+      constant.DB_TABLES.PROVIDERS,
+      "WHERE user_id = $1",
+      [existingJob.provider_id]
+    );
+
+    if (provider) {
+      const currentRating = provider.average_rating || 0;
+      const currentCount = provider.review_count || 0;
+      
+      const newTotalRating = (currentRating * currentCount) + rating;
+      const newReviewCount = currentCount + 1;
+      const newAverageRating = newTotalRating / newReviewCount;
+
+      await db.update(
+        constant.DB_TABLES.PROVIDERS,
+        {
+          average_rating: newAverageRating,
+          review_count: newReviewCount
+        },
+        "WHERE user_id = $1",
+        [existingJob.provider_id]
+      );
+    }
+
+    // Emit WebSocket notification to provider
+    const io = req.app.get("io");
+    if (io) {
+      const notificationData = {
+        job_id: job_id,
+        consumer_id: existingJob.consumer_id,
+        rating: rating,
+        review: review,
+        message: `New ${rating}-star rating received for "${existingJob.title}"`
+      };
+
+      console.log(`Emitting rating notification to provider: new_rating_${existingJob.provider_id}`, notificationData);
+      io.emit(`new_rating_${existingJob.provider_id}`, notificationData);
+    }
+
+    res.status(constant.HTTP_STATUS.OK).json({
+      success: true,
+      message: "Rating and review submitted successfully",
+      job: updatedJob
+    });
+
+  } catch (err) {
+    console.error("Error adding rating and review:", err);
+    res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      error: "Internal server error",
+      details: err.message
+    });
+  }
+};
+
 module.exports = {
     createPairedJob,
-    getPairedJobs
+    getPairedJobs,
+    addRatingAndReview
 };
