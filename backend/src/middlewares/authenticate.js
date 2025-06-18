@@ -13,7 +13,7 @@ const authenticateToken = async (req, res, next) => {
         const decodedToken = await admin.auth().verifyIdToken(idToken=authToken);
         next();
     } catch(error) {
-        console.log(error);
+        // console.log(error);
         return res.status(constants.HTTP_STATUS.UNAUTHORIZED).json({message: "Unauthorized Access Token"});
     }
 }

@@ -172,7 +172,6 @@ const ConsumerHome: React.FC = () => {
       setSelectedOffer(null);
     } catch (error) {
       console.error("Error accepting offer:", error);
-      console.log("ERROR: Failed to accept offer. Please try again.");
     } finally {
       setAcceptingOffer(false);
     }
@@ -211,7 +210,6 @@ const ConsumerHome: React.FC = () => {
       setReview("");
     } catch (error) {
       console.error("Error submitting rating:", error);
-      console.log("ERROR: Failed to submit rating. Please try again.");
     } finally {
       setSubmittingRating(false);
     }

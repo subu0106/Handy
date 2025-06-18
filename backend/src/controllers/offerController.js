@@ -40,7 +40,7 @@ const createOffers = async (req, res) => {
         message: `New offer received for "${request.title}" - LKR ${data.budget}`
       };
 
-      console.log(`Emitting new offer to consumer: new_offer_${request.user_id}`, notificationData);
+      // console.log(`Emitting new offer to consumer: new_offer_${request.user_id}`, notificationData);
       
       // Emit to the consumer who created the request
       io.emit(`new_offer_${request.user_id}`, notificationData);
@@ -145,7 +145,7 @@ const deleteOffer = async (req, res) => {
         message: `Offer deleted for "${request.title}" from ${provider?.name || "Provider"} - LKR ${offer.budget}`
       };
 
-      console.log(`Emitting deletion of offer to consumer: delete_offer_${request.user_id}`, notificationData);
+      // console.log(`Emitting deletion of offer to consumer: delete_offer_${request.user_id}`, notificationData);
       
       // Emit to the consumer who created the request
       io.emit(`delete_offer_${request.user_id}`, notificationData);
@@ -337,7 +337,7 @@ const updateOfferBudget = async (req, res) => {
           message: `Offer budget updated for "${request.title}" - New price: LKR ${budget} (was LKR ${offer.budget})`
         };
 
-        console.log(`Emitting offer budget update to consumer: update_offer_${request.user_id}`, notificationData);
+        // console.log(`Emitting offer budget update to consumer: update_offer_${request.user_id}`, notificationData);
         io.emit(`update_offer_${request.user_id}`, notificationData);
       }
 

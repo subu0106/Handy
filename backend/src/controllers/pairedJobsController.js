@@ -58,7 +58,7 @@ const createPairedJob = async (req, res) => {
       // rating and review will be null initially
     };
 
-    console.log('Creating paired job with data:', jobData);
+    // console.log('Creating paired job with data:', jobData);
 
     const job = await db.create(constant.DB_TABLES.PAIREDJOBS, jobData);
 
@@ -79,7 +79,7 @@ const createPairedJob = async (req, res) => {
         message: `New job assigned: "${request.title}" - LKR ${budget || request.budget}`
       };
 
-      console.log(`Emitting new job assignment to provider: new_job_${provider_id}`, notificationData);
+      // console.log(`Emitting new job assignment to provider: new_job_${provider_id}`, notificationData);
       io.emit(`paired_jobs_${provider_id}`, notificationData);
     }
     
@@ -177,7 +177,7 @@ const getPairedJobs = async (req, res) => {
       if (providerPairedJobList && providerPairedJobList.length > 0) {
         const enrichedJobs = await enrichPairedJobs(providerPairedJobList);
         res.status(constant.HTTP_STATUS.OK).json(enrichedJobs);
-        console.log(`Paired jobs found for provider ID: ${provider_id}`, enrichedJobs);
+        // console.log(`Paired jobs found for provider ID: ${provider_id}`, enrichedJobs);
       } else {
         res.status(constant.HTTP_STATUS.NOT_FOUND).json({message: `No paired jobs found for provider ID: ${provider_id}`});
       }    
@@ -287,7 +287,7 @@ const addRatingAndReview = async (req, res) => {
         message: `New ${rating}-star rating received for "${existingJob.title}"`
       };
 
-      console.log(`Emitting rating notification to provider: new_rating_${existingJob.provider_id}`, notificationData);
+      // console.log(`Emitting rating notification to provider: new_rating_${existingJob.provider_id}`, notificationData);
       io.emit(`new_rating_${existingJob.provider_id}`, notificationData);
     }
 

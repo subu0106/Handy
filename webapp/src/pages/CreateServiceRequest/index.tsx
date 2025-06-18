@@ -52,7 +52,7 @@ const CreateServiceRequest: React.FC = () => {
       created_at: new Date().toISOString(),
     };
 
-    console.log("Creating service request with data:", data);
+    // console.log("Creating service request with data:", data);
     try {
       await apiService.post("/requests/createRequest", data);
       navigate("/dashboard");

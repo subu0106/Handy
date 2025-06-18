@@ -137,7 +137,6 @@ const ProviderHome: React.FC = () => {
         await dispatch(deleteProviderOffer(offerId));
       } catch (error) {
         console.error('Error deleting offer:', error);
-        console.log('ERROR: Failed to delete offer');
       }
     }
   };
@@ -160,7 +159,6 @@ const ProviderHome: React.FC = () => {
       console.log('SUCCESS: Offer budget updated successfully');
     } catch (error) {
       console.error('Error updating offer:', error);
-      console.log('ERROR: Failed to update offer budget');
     } finally {
       setUpdateLoading(false);
     }

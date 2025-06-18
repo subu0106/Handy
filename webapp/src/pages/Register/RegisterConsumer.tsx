@@ -114,7 +114,7 @@ export default function RegisterConsumer() {
         platform_tokens: 20,
       };
 
-      console.log("Submitting consumer registration:", payload);
+      // console.log("Submitting consumer registration:", payload);
 
       await apiService.post("/consumers/registerConsumer", payload);
 
@@ -219,7 +219,7 @@ export default function RegisterConsumer() {
 
   // Login handler for Firebase Auth
   const handleLogin = async () => {
-    console.log("Logging in with email:", email);
+    // console.log("Logging in with email:", email);
     setRegisterError(null);
     setRegisterLoading(true);
     try {
