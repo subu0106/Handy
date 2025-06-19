@@ -85,7 +85,7 @@ const CreateOffer: React.FC = () => {
       timeframe: timeframe.trim(),
     };
 
-    console.log("Creating offer with data:", data);
+    // console.log("Creating offer with data:", data);
     
     try {
       await apiService.post("/offers/createOffers", data);

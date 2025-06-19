@@ -213,7 +213,7 @@ const App = () => {
         const pairedJobsTopic = `paired_jobs_${user.uid}`;
         socket.off(pairedJobsTopic);
         socket.on(pairedJobsTopic, (jobData) => {
-          console.log("Accepted Offer job notification:", jobData);
+          // console.log("Accepted Offer job notification:", jobData);
           showToast(jobData.message, "success");
           if (user?.uid) {
             dispatch(fetchServiceRequestsBasedOnService(user.uid));
@@ -254,7 +254,7 @@ const App = () => {
           }
         });
         socket.on(updateOfferTopic, (offerData) => {
-          console.log("Received updated offer notification:", offerData);
+          // console.log("Received updated offer notification:", offerData);
           showToast(
             `Offer budget updated: from LKR ${offerData.old_budget} to LKR ${offerData.new_budget} for "${offerData.request_title}" from ${offerData.provider_name}`,
             "info"
@@ -262,7 +262,7 @@ const App = () => {
           // Refresh offers for the specific request if it's currently selected
           const { selectedRequestId } = serviceRequests;
           if (selectedRequestId && selectedRequestId.toString() === offerData.request_id.toString()) {
-            console.log("Refreshing offers for selected request after update:", selectedRequestId);
+            // console.log("Refreshing offers for selected request after update:", selectedRequestId);
             dispatch(fetchOffers(selectedRequestId.toString()));
           }
         });

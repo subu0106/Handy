@@ -179,7 +179,7 @@ export default function RegisterProvider() {
         platform_tokens: 30,
       };
 
-      console.log("Submitting provider registration:", payload);
+      // console.log("Submitting provider registration:", payload);
 
       await apiService.post("/providers/registerProvider", payload);
 
@@ -289,7 +289,7 @@ export default function RegisterProvider() {
 
   // Login handler for Firebase Auth
   const handleLogin = async () => {
-    console.log("Logging in with email:", email);
+    // console.log("Logging in with email:", email);
     setRegisterError(null);
     setRegisterLoading(true);
     try {

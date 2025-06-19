@@ -66,11 +66,11 @@ const registerProvider = async (req, res) => {
 
     // Step 3: Update services table to include this provider
     if (services_array) {
-      console.log('services_array', services_array);
+      // console.log('services_array', services_array);
       const services = await db.getAll(constant.DB_TABLES.SERVICES, '', []);
-      console.log('services', services);
+      // console.log('services', services);
       const servicePromises = services_array.map(async (serviceId) => {
-        console.log('serviceIddddd', serviceId);
+        // console.log('serviceIddddd', serviceId);
         const service = services.find((s) => s.service_id === serviceId);
         if (service) {
           const providersArr = Array.isArray(service.providers_array)

@@ -27,7 +27,7 @@ apiService.interceptors.request.use(
         console.error("Failed to get auth token:", error);
       }
     } else {
-      console.log("No current user for request:", config.url);
+      // console.log("No current user for request:", config.url);
     }
     return config;
   },

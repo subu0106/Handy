@@ -49,18 +49,18 @@ app.use("/api/v1/pairedJobs", pairedJobsRoutes.router);
 app.use("/api/v1/users", userRouter.router);
 app.use("/api/v1/payment", paymentRoutes.router);
 
-console.log('All routes registered successfully');
+// console.log('All routes registered successfully');
 
 io.on("connection", (socket) => {
-  console.log("A user connected:", socket.id);
+  // console.log("A user connected:", socket.id);
   
   socket.on("disconnect", () => {
-    console.log("User disconnected:", socket.id);
+    // console.log("User disconnected:", socket.id);
   });
 });
 
 server.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-  console.log(`Test the server at: http://localhost:${port}/api/v1/health`);
-  console.log('WebSocket server ready for connections');
+  // console.log(`Server is running on port ${port}`);
+  // console.log(`Test the server at: http://localhost:${port}/api/v1/health`);
+  // console.log('WebSocket server ready for connections');
 });
