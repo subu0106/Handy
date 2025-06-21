@@ -1,26 +1,21 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { 
-  Box, 
-  Paper, 
-  Typography, 
-  Button, 
-  MenuItem, 
-  TextField, 
-  useTheme, 
-  IconButton, 
+import {
+  Box,
+  Paper,
+  Typography,
+  Button,
+  MenuItem,
+  TextField,
+  useTheme,
+  IconButton,
   alpha,
   Card,
   CardMedia,
-  CircularProgress
+  CircularProgress,
 } from "@mui/material";
 import { useAppSelector, useAppDispatch } from "@store/hooks";
-import { 
-  ArrowBack,
-  PhotoCamera,
-  Delete as DeleteIcon,
-  CloudUpload
-} from "@mui/icons-material";
+import { ArrowBack, PhotoCamera, Delete as DeleteIcon, CloudUpload } from "@mui/icons-material";
 import apiService from "@utils/apiService";
 import CONSTANTS from "@config/constants";
 import { setUser } from "@store/userSlice";
@@ -52,11 +47,10 @@ const CreateServiceRequest: React.FC = () => {
   const [location, setLocation] = useState("");
   const [budget, setBudget] = useState<number | null>(null);
   const [timeframe, setTimeframe] = useState("");
-  
+
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
-  const [imageUrl, setImageUrl] = useState<string>("");
 
   const handleCancel = () => {
     navigate("/dashboard");
@@ -65,7 +59,7 @@ const CreateServiceRequest: React.FC = () => {
   const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+      const validTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
       if (!validTypes.includes(file.type)) {
         setError("Please select a valid image file (JPEG, PNG, WebP)");
         return;
@@ -91,21 +85,21 @@ const CreateServiceRequest: React.FC = () => {
   // NEW: Upload image to Cloudinary
   const uploadImageToCloudinary = async (file: File): Promise<string> => {
     const formData = new FormData();
-    formData.append('file', file);
-    formData.append('upload_preset', import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET);
+    formData.append("file", file);
+    formData.append("upload_preset", import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET);
 
     try {
       const response = await fetch(
         `https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME}/image/upload`,
         {
-          method: 'POST',
+          method: "POST",
           body: formData,
         }
       );
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error.message || 'Cloudinary upload failed');
+        throw new Error(errorData.error.message || "Cloudinary upload failed");
       }
 
       const data = await response.json();
@@ -119,7 +113,6 @@ const CreateServiceRequest: React.FC = () => {
   const handleRemoveImage = () => {
     setSelectedImage(null);
     setImagePreview(null);
-    setImageUrl("");
     setError("");
   };
 
@@ -128,7 +121,7 @@ const CreateServiceRequest: React.FC = () => {
     setLoading(true);
     setError("");
     setSuccess("");
-    
+
     try {
       let finalImageUrl = "";
 
@@ -137,7 +130,6 @@ const CreateServiceRequest: React.FC = () => {
         try {
           // UPDATED: Call the new Cloudinary upload function
           finalImageUrl = await uploadImageToCloudinary(selectedImage);
-          setImageUrl(finalImageUrl);
         } catch (uploadError: any) {
           setError(uploadError.message || "Failed to upload image. Please try again.");
           setLoading(false);
@@ -177,11 +169,10 @@ const CreateServiceRequest: React.FC = () => {
       }
 
       setSuccess("Request created successfully!");
-      
+
       setTimeout(() => {
         navigate("/dashboard");
       }, 1500);
-      
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to create service request");
     } finally {
@@ -232,7 +223,7 @@ const CreateServiceRequest: React.FC = () => {
             Create Service Request
           </Typography>
         </Box>
-        
+
         <form onSubmit={handleSubmit}>
           <TextField
             select
@@ -250,7 +241,7 @@ const CreateServiceRequest: React.FC = () => {
               </MenuItem>
             ))}
           </TextField>
-          
+
           <TextField
             label="Service Title"
             value={title}
@@ -261,7 +252,7 @@ const CreateServiceRequest: React.FC = () => {
             placeholder="e.g., Fix kitchen sink plumbing"
             helperText="Provide a clear, descriptive title for your service request"
           />
-          
+
           <TextField
             label="Service Description"
             value={description}
@@ -298,7 +289,7 @@ const CreateServiceRequest: React.FC = () => {
             helperText="What's your budget for this service?"
             inputProps={{ min: 1, step: 0.01 }}
           />
-          
+
           <TextField
             label="Expected Timeframe"
             value={timeframe}
@@ -318,12 +309,12 @@ const CreateServiceRequest: React.FC = () => {
             <Typography variant="body2" color="text.secondary" gutterBottom>
               Upload an image to help providers understand your request better
             </Typography>
-            
+
             {!imagePreview ? (
               <Box>
                 <input
                   accept="image/*"
-                  style={{ display: 'none' }}
+                  style={{ display: "none" }}
                   id="image-upload"
                   type="file"
                   onChange={handleImageSelect}
@@ -335,7 +326,7 @@ const CreateServiceRequest: React.FC = () => {
                     startIcon={<PhotoCamera />}
                     sx={{
                       mt: 1,
-                      borderStyle: 'dashed',
+                      borderStyle: "dashed",
                       borderWidth: 2,
                       p: 2,
                       "&:hover": {
@@ -349,23 +340,23 @@ const CreateServiceRequest: React.FC = () => {
               </Box>
             ) : (
               <Box mt={2}>
-                <Card sx={{ maxWidth: 300, position: 'relative' }}>
+                <Card sx={{ maxWidth: 300, position: "relative" }}>
                   <CardMedia
                     component="img"
                     height="200"
                     image={imagePreview}
                     alt="Service request image preview"
-                    sx={{ objectFit: 'cover' }}
+                    sx={{ objectFit: "cover" }}
                   />
                   <IconButton
                     onClick={handleRemoveImage}
                     sx={{
-                      position: 'absolute',
+                      position: "absolute",
                       top: 8,
                       right: 8,
                       backgroundColor: alpha(theme.palette.error.main, 0.8),
-                      color: 'white',
-                      '&:hover': {
+                      color: "white",
+                      "&:hover": {
                         backgroundColor: theme.palette.error.main,
                       },
                     }}
@@ -382,7 +373,15 @@ const CreateServiceRequest: React.FC = () => {
           </Box>
 
           {error && (
-            <Box mt={2} p={1.5} sx={{ backgroundColor: alpha(theme.palette.error.main, 0.1), borderRadius: 1, border: `1px solid ${alpha(theme.palette.error.main, 0.2)}` }}>
+            <Box
+              mt={2}
+              p={1.5}
+              sx={{
+                backgroundColor: alpha(theme.palette.error.main, 0.1),
+                borderRadius: 1,
+                border: `1px solid ${alpha(theme.palette.error.main, 0.2)}`,
+              }}
+            >
               <Typography color="error" variant="body2">
                 {error}
               </Typography>
@@ -390,7 +389,15 @@ const CreateServiceRequest: React.FC = () => {
           )}
 
           {success && (
-            <Box mt={2} p={1.5} sx={{ backgroundColor: alpha(theme.palette.success.main, 0.1), borderRadius: 1, border: `1px solid ${alpha(theme.palette.success.main, 0.2)}` }}>
+            <Box
+              mt={2}
+              p={1.5}
+              sx={{
+                backgroundColor: alpha(theme.palette.success.main, 0.1),
+                borderRadius: 1,
+                border: `1px solid ${alpha(theme.palette.success.main, 0.2)}`,
+              }}
+            >
               <Typography color="success.main" variant="body2">
                 {success}
               </Typography>
@@ -398,7 +405,13 @@ const CreateServiceRequest: React.FC = () => {
           )}
 
           <Box mt={3} display="flex" justifyContent="flex-end" gap={2}>
-            <Button variant="outlined" color="primary" onClick={handleCancel} disabled={loading || uploadingImage} sx={{ minWidth: 100 }}>
+            <Button
+              variant="outlined"
+              color="primary"
+              onClick={handleCancel}
+              disabled={loading || uploadingImage}
+              sx={{ minWidth: 100 }}
+            >
               Cancel
             </Button>
             <Button
@@ -407,9 +420,13 @@ const CreateServiceRequest: React.FC = () => {
               color="primary"
               disabled={loading || uploadingImage}
               startIcon={
-                uploadingImage ? <CircularProgress size={16} color="inherit" /> : 
-                loading ? <CircularProgress size={16} color="inherit" /> : 
-                <CloudUpload />
+                uploadingImage ? (
+                  <CircularProgress size={16} color="inherit" />
+                ) : loading ? (
+                  <CircularProgress size={16} color="inherit" />
+                ) : (
+                  <CloudUpload />
+                )
               }
               sx={{ minWidth: 140 }}
             >
@@ -419,10 +436,10 @@ const CreateServiceRequest: React.FC = () => {
         </form>
 
         {/* Help Text */}
-        <Box 
-          mt={3} 
-          p={2} 
-          sx={{ 
+        <Box
+          mt={3}
+          p={2}
+          sx={{
             backgroundColor: alpha(theme.palette.info.main, 0.1),
             borderRadius: 1,
             border: `1px solid ${alpha(theme.palette.info.main, 0.2)}`,
@@ -438,8 +455,7 @@ const CreateServiceRequest: React.FC = () => {
             • Set a realistic budget and timeframe
             <br />
             • Provide clear location details
-            <br />
-            • You can chat with providers after they submit offers
+            <br />• You can chat with providers after they submit offers
           </Typography>
         </Box>
       </Paper>
