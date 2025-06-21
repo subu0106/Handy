@@ -193,7 +193,43 @@ const getOffersByRequestId = async (req, res) => {
       return res.status(constant.HTTP_STATUS.OK).json([]);
     }
     
-    res.status(constant.HTTP_STATUS.OK).json(offers);
+    // Enrich offers with provider information
+    const enrichedOffers = await Promise.all(
+      offers.map(async (offer) => {
+        try {
+          // Get provider user details
+          const provider = await db.getOne(
+            constant.DB_TABLES.USERS,
+            "WHERE user_id = $1",
+            [offer.provider_id]
+          );
+          
+          // Get provider rating and review count
+          const providerDetails = await db.getOne(
+            constant.DB_TABLES.PROVIDERS,
+            "WHERE user_id = $1",
+            [offer.provider_id]
+          );
+          
+          return {
+            ...offer,
+            provider_name: provider?.name || "Provider",
+            provider_rating: providerDetails?.average_rating || 0,
+            provider_review_count: providerDetails?.review_count || 0
+          };
+        } catch (error) {
+          console.error("Error enriching offer with provider data:", error);
+          return {
+            ...offer,
+            provider_name: "Provider",
+            provider_rating: 0,
+            provider_review_count: 0
+          };
+        }
+      })
+    );
+    
+    res.status(constant.HTTP_STATUS.OK).json(enrichedOffers);
   } catch (err) {
     console.error('Error fetching offers:', err);
     res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
