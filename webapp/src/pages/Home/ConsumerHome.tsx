@@ -53,8 +53,17 @@ const ConsumerHome: React.FC = () => {
   const { items: requests = [], status: requestsStatus = "", selectedRequestId = null } = serviceRequests;
   const { items: offers = [], status: offersStatus = "" } = offersState;
 
+  const getInitialTab = (): 'requests' | 'jobs' => {
+    const savedTab = localStorage.getItem('consumerActiveTab');
+    return (savedTab === 'requests' || savedTab === 'jobs') ? savedTab : 'requests';
+  };
+
   // Tab state
-  const [activeTab, setActiveTab] = useState<'requests' | 'jobs'>('requests');
+  const [activeTab, setActiveTab] = useState<'requests' | 'jobs'>(getInitialTab());
+
+  useEffect(() => {
+    localStorage.setItem('consumerActiveTab', activeTab);
+  }, [activeTab]);
 
   // State for offer confirmation
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);

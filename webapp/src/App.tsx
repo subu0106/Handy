@@ -10,6 +10,8 @@ import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { fetchServiceRequestsBasedOnService } from "@store/serviceRequestsSlice";
 import { ThemeProvider, createTheme, CssBaseline, Snackbar, Alert, CircularProgress } from "@mui/material";
+import { off, set } from "firebase/database";
+import { fetchProviderOffers } from "./store/providerOffersSlice";
 
 /**
  * Theme and WebSocket constants
@@ -210,6 +212,28 @@ const App = () => {
             });
           });
         }
+        const offerRejectionTopic = `offer_declined_${user.uid}`;
+
+        socket.off(offerRejectionTopic);
+        socket.on(offerRejectionTopic, (rejectionData) => {
+          showToast(
+            rejectionData.message 
+          );
+          if (user?.uid) {
+            dispatch(fetchServiceRequestsBasedOnService(user.uid));
+            dispatch(fetchProviderOffers(user.uid));
+            dispatch(setUser({
+              uid: user.uid!,
+              name: user.name,
+              avatarUrl: user.avatarUrl,
+              userType: user.userType,
+              location: user.location,
+              services_array: user.services_array,
+              platform_tokens: rejectionData.platform_tokens || user.platform_tokens,
+            }))
+          }
+        });
+
         const pairedJobsTopic = `paired_jobs_${user.uid}`;
         socket.off(pairedJobsTopic);
         socket.on(pairedJobsTopic, (jobData) => {
@@ -226,6 +250,7 @@ const App = () => {
             });
           }
           socket.off(pairedJobsTopic);
+          socket.off(offerRejectionTopic);
           socket.disconnect();
         };
       }
