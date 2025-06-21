@@ -17,7 +17,48 @@ import { fetchProviderOffers } from "./store/providerOffersSlice";
  */
 const THEME_KEY = "handy_theme_mode";
 const SOCKET_IO_BASE_URL = import.meta.env.VITE_SOCKET_IO_BASE_URL || "http://localhost:5000";
-const socket = io(SOCKET_IO_BASE_URL, { autoConnect: false });
+
+// Enhanced Socket.IO configuration with better error handling
+const socket = io(SOCKET_IO_BASE_URL, { 
+  autoConnect: false,
+  transports: ['websocket', 'polling'],
+  upgrade: true,
+  rememberUpgrade: false, // Set to false for better compatibility
+  timeout: 20000,
+  forceNew: true,
+  reconnection: true,
+  reconnectionDelay: 1000,
+  reconnectionAttempts: 5,
+  maxReconnectionAttempts: 5,
+  path: '/socket.io/' // Explicitly set the path
+});
+
+// Add comprehensive error handling
+socket.on('connect', () => {
+  console.log('Socket.IO connected successfully:', socket.id);
+});
+
+socket.on('connect_error', (error) => {
+  console.error('Socket.IO connection error:', error);
+  console.error('Error details:', {
+    message: error.message,
+    description: error.description,
+    context: error.context,
+    type: error.type
+  });
+});
+
+socket.on('disconnect', (reason) => {
+  console.log('Socket.IO disconnected:', reason);
+});
+
+socket.on('reconnect', (attemptNumber) => {
+  console.log('Socket.IO reconnected after', attemptNumber, 'attempts');
+});
+
+socket.on('reconnect_error', (error) => {
+  console.error('Socket.IO reconnection error:', error);
+});
 
 /**
  * Get theme mode from localStorage or system preference
@@ -313,6 +354,41 @@ const App = () => {
     showToast,
     serviceRequests?.selectedRequestId,
   ]);
+
+  // Add this function after your socket configuration
+  const testSocketConnection = useCallback(() => {
+    console.log('Testing Socket.IO connection...');
+    console.log('Socket.IO Base URL:', SOCKET_IO_BASE_URL);
+    console.log('Socket connected:', socket.connected);
+    console.log('Socket ID:', socket.id);
+    
+    // Test if the server is reachable
+    fetch(`${SOCKET_IO_BASE_URL.replace('/socket.io', '')}/api/v1/health`)
+      .then(response => response.json())
+      .then(data => {
+        console.log('Backend health check:', data);
+      })
+      .catch(error => {
+        console.error('Backend health check failed:', error);
+      });
+      
+    // Test Socket.IO health endpoint
+    fetch(`${SOCKET_IO_BASE_URL.replace('/socket.io', '')}/socket.io/health`)
+      .then(response => response.json())
+      .then(data => {
+        console.log('Socket.IO health check:', data);
+      })
+      .catch(error => {
+        console.error('Socket.IO health check failed:', error);
+      });
+  }, []);
+
+  // Call this in your useEffect for debugging
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      testSocketConnection();
+    }
+  }, [testSocketConnection]);
 
   // Loading screen
   if (authLoading) {
