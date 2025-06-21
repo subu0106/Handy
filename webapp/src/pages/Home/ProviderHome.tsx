@@ -20,6 +20,8 @@ import {
   Paper,
   Tabs,
   Tab,
+  Alert,
+  CardMedia,
 } from "@mui/material";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { fetchServiceRequestsBasedOnService } from "../../store/serviceRequestsSlice";
@@ -394,8 +396,8 @@ const ProviderHome: React.FC = () => {
                         border: "1px solid",
                         borderColor: "divider",
                         display: "flex",
-                        flexDirection: "column",
-                        gap: 1,
+                        flexDirection: "row", // Changed from column to row
+                        gap: 2,
                         transition: "all 0.3s ease",
                         cursor: "pointer",
                         "&:hover": {
@@ -406,81 +408,110 @@ const ProviderHome: React.FC = () => {
                         },
                       }}
                     >
-                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <AssignmentIcon color="primary" style={{ fontSize: 22 }} />
-                        <Typography variant="h6" style={{ fontWeight: 600 }}>
-                          {req.title}
-                        </Typography>
-                        {existingOffer && (
-                          <Chip
-                            label="Offer Submitted"
-                            color="success"
-                            size="small"
-                            variant="filled"
-                            sx={getChipStyles("success", "filled")}
-                          />
+                      {/* Left Side: Details */}
+                      <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 1 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <AssignmentIcon color="primary" style={{ fontSize: 22 }} />
+                          <Typography variant="h6" style={{ fontWeight: 600 }}>
+                            {req.title}
+                          </Typography>
+                          {existingOffer && (
+                            <Chip
+                              label="Offer Submitted"
+                              color="success"
+                              size="small"
+                              variant="filled"
+                              sx={getChipStyles("success", "filled")}
+                            />
+                          )}
+                        </div>
+
+                        {req.description && (
+                          <Typography variant="body2" color="textSecondary">
+                            {req.description.length > 120 ? `${req.description.substring(0, 120)}...` : req.description}
+                          </Typography>
                         )}
-                      </div>
 
-                      {req.description && (
-                        <Typography variant="body2" color="textSecondary">
-                          {req.description.length > 100 ? `${req.description.substring(0, 100)}...` : req.description}
-                        </Typography>
-                      )}
-
-                      <Stack direction="row" spacing={1} flexWrap="wrap" gap={1}>
-                        {req.budget && (
-                          <Chip
-                            label={`Budget: LKR ${req.budget}`}
-                            color="primary"
-                            variant="outlined"
-                            size="small"
-                            sx={getChipStyles("primary", "outlined")}
-                          />
-                        )}
-                        {req.timeframe && (
-                          <Chip
-                            label={`Timeframe: ${req.timeframe}`}
-                            color="info"
-                            variant="outlined"
-                            size="small"
-                            sx={getChipStyles("info", "outlined")}
-                          />
-                        )}
-                      </Stack>
-
-                      <Typography variant="caption" color="textSecondary">
-                        Posted on {new Date(req.created_at).toLocaleDateString()} at{" "}
-                        {new Date(req.created_at).toLocaleTimeString()}
-                      </Typography>
-
-                      <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-                        {existingOffer ? (
-                          <>
-                            <Button
+                        <Stack direction="row" spacing={1} flexWrap="wrap" gap={1}>
+                          {req.budget && (
+                            <Chip
+                              label={`Budget: LKR ${req.budget}`}
+                              color="primary"
                               variant="outlined"
                               size="small"
-                              color="error"
-                              startIcon={<DeleteIcon />}
-                              onClick={() => handleDeleteOffer(existingOffer.offer_id, existingOffer)}
-                            >
-                              Delete Offer
+                              sx={getChipStyles("primary", "outlined")}
+                            />
+                          )}
+                          {req.timeframe && (
+                            <Chip
+                              label={`Timeframe: ${req.timeframe}`}
+                              color="info"
+                              variant="outlined"
+                              size="small"
+                              sx={getChipStyles("info", "outlined")}
+                            />
+                          )}
+                        </Stack>
+
+                        <Typography variant="caption" color="textSecondary">
+                          Posted on {new Date(req.created_at).toLocaleDateString()} at{" "}
+                          {new Date(req.created_at).toLocaleTimeString()}
+                        </Typography>
+
+                        <div style={{ display: "flex", gap: 8, marginTop: "auto" }}>
+                          {existingOffer ? (
+                            <>
+                              <Button
+                                variant="outlined"
+                                size="small"
+                                color="error"
+                                startIcon={<DeleteIcon />}
+                                onClick={() => handleDeleteOffer(existingOffer.offer_id, existingOffer)}
+                              >
+                                Delete Offer
+                              </Button>
+                            </>
+                          ) : (
+                            <Button variant="contained" size="small" onClick={() => handleCreateOffer(requestId)}>
+                              Create Offer
                             </Button>
-                          </>
-                        ) : (
-                          <Button variant="contained" size="small" onClick={() => handleCreateOffer(requestId)}>
-                            Create Offer
+                          )}
+                          <Button
+                            variant="outlined"
+                            size="small"
+                            startIcon={<VisibilityIcon />}
+                            onClick={() => handleViewRequestDetails(req)}
+                          >
+                            View Details
                           </Button>
-                        )}
-                        <Button
-                          variant="outlined"
-                          size="small"
-                          startIcon={<VisibilityIcon />}
-                          onClick={() => handleViewRequestDetails(req)}
-                        >
-                          View Details
-                        </Button>
-                      </div>
+                        </div>
+                      </Box>
+
+                      {/* Right Side: Image */}
+                      {req.image_url && (
+                        <Box sx={{ width: 140, flexShrink: 0, alignSelf: "flex-start" }}>
+                          <Card sx={{ borderRadius: 1, width: "100%" }}>
+                            <CardMedia
+                              component="img"
+                              height="120"
+                              image={req.image_url}
+                              alt="Request image"
+                              sx={{
+                                objectFit: "cover",
+                                cursor: "pointer",
+                                transition: "transform 0.2s",
+                                "&:hover": {
+                                  transform: "scale(1.05)",
+                                },
+                              }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                window.open(req.image_url, "_blank");
+                              }}
+                            />
+                          </Card>
+                        </Box>
+                      )}
                     </Box>
                   );
                 })}
@@ -1131,6 +1162,34 @@ const ProviderHome: React.FC = () => {
                   </CardContent>
                 </Card>
               </Box>
+
+              {selectedRequest.image_url && (
+                <Box mt={2} mb={2}>
+                  <Typography variant="h6" gutterBottom>
+                    Image
+                  </Typography>
+                  <Card sx={{ maxWidth: 400, borderRadius: 2 }}>
+                    <CardMedia
+                      component="img"
+                      height="250"
+                      image={selectedRequest.image_url}
+                      alt="Service request image"
+                      sx={{
+                        objectFit: "cover",
+                        cursor: "pointer",
+                        transition: "transform 0.2s",
+                        "&:hover": {
+                          transform: "scale(1.02)",
+                        },
+                      }}
+                      onClick={() => window.open(selectedRequest.image_url, "_blank")}
+                    />
+                  </Card>
+                  <Typography variant="caption" color="text.secondary" display="block" mt={1}>
+                    Click to view full size
+                  </Typography>
+                </Box>
+              )}
             </Stack>
           )}
         </DialogContent>
