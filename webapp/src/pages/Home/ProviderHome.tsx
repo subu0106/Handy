@@ -20,7 +20,6 @@ import {
   Paper,
   Tabs,
   Tab,
-  Alert,
   CardMedia,
 } from "@mui/material";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
