@@ -7,7 +7,42 @@ const createOffers = async (req, res) => {
     data.status = constant.OFFERS_STATUS.PENDING;
     data.created_at = new Date();
 
+    // Check if required fields are present
+    if (!data.provider_id) {
+      return res.status(constant.HTTP_STATUS.BAD_REQUEST).json({message: "provider_id is required"});
+    }
+
+    // Check if provider has enough platform tokens
+    const provider = await db.getOne(
+      constant.DB_TABLES.USERS, 
+      "WHERE user_id = $1", 
+      [data.provider_id]
+    );
+
+    if (!provider) {
+      return res.status(constant.HTTP_STATUS.NOT_FOUND).json({message: "Provider not found"});
+    }
+
+    if (provider.platform_tokens < 1) {
+      return res.status(constant.HTTP_STATUS.BAD_REQUEST).json({
+        message: "Insufficient platform tokens. You need at least 1 token to create an offer."
+      });
+    }
+
     const offer = await db.create(constant.DB_TABLES.OFFERS, data);
+
+    if (!offer) {
+      return res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR).json({message: "Failed to create offer"});
+    }
+
+    // Deduct 1 platform token from provider
+    const updatedTokens = provider.platform_tokens - 1;
+    await db.update(
+      constant.DB_TABLES.USERS,
+      { platform_tokens: updatedTokens },
+      'WHERE user_id = $1',
+      [data.provider_id]
+    );
     
     // Get the request details to find the consumer and emit notification
     const request = await db.getOne(
@@ -17,13 +52,6 @@ const createOffers = async (req, res) => {
     );
 
     if (request) {
-      // Get provider details for the notification
-      const provider = await db.getOne(
-        constant.DB_TABLES.USERS,
-        "WHERE user_id = $1",
-        [data.provider_id]
-      );
-
       // Get io instance from app
       const io = req.app.get("io");
       
@@ -40,13 +68,14 @@ const createOffers = async (req, res) => {
         message: `New offer received for "${request.title}" - LKR ${data.budget}`
       };
 
-      // console.log(`Emitting new offer to consumer: new_offer_${request.user_id}`, notificationData);
-      
       // Emit to the consumer who created the request
       io.emit(`new_offer_${request.user_id}`, notificationData);
     }
     
-    res.status(constant.HTTP_STATUS.CREATED).json(offer);
+    res.status(constant.HTTP_STATUS.CREATED).json({
+      ...offer,
+      platform_tokens: updatedTokens
+    });
   } catch (err) {
     console.error("Error creating offer:", err);
     res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR).json({

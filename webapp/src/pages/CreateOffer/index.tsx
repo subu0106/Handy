@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Box, Paper, Typography, Button, TextField, Chip, useTheme, alpha, Stack } from "@mui/material";
-import { useAppSelector } from "@store/hooks";
+import { useAppSelector, useAppDispatch } from "@store/hooks";
 import apiService from "@utils/apiService";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import LocalOfferIcon from "@mui/icons-material/LocalOffer";
+import { setUser } from "@store/userSlice";
 
 const CreateOffer: React.FC = () => {
   const navigate = useNavigate();
@@ -17,6 +18,7 @@ const CreateOffer: React.FC = () => {
   const [requestDetails, setRequestDetails] = useState<any>(null);
   const [loadingRequest, setLoadingRequest] = useState(true);
   const user = useAppSelector((state) => state.user);
+  const dispatch = useAppDispatch();
 
   // Enhanced chip styling for better dark theme visibility
   const getChipStyles = (color: 'primary' | 'secondary' | 'success' | 'error' | 'warning' | 'info', variant: 'filled' | 'outlined' = 'filled') => {
@@ -84,14 +86,29 @@ const CreateOffer: React.FC = () => {
       budget: budget,
       timeframe: timeframe.trim(),
     };
-
-    // console.log("Creating offer with data:", data);
     
     try {
-      await apiService.post("/offers/createOffers", data);
+      const response = await apiService.post("/offers/createOffers", data);
+
+      // Update the user's platform tokens in Redux store
+      if (response.data.platform_tokens !== undefined) {
+        dispatch(
+          setUser({
+            uid: user.uid!,
+            name: user.name,
+            avatarUrl: user.avatarUrl,
+            userType: user.userType,
+            location: user.location,
+            services_array: user.services_array,
+            platform_tokens: response.data.platform_tokens, // Updated token count
+          })
+        );
+      }
+
       navigate("/dashboard");
     } catch (err: any) {
-      setError("Failed to create offer");
+      const errorMessage = err.response?.data?.message || "Failed to create offer";
+      setError(errorMessage);
       console.error("Error creating offer:", err);
     } finally {
       setLoading(false);
