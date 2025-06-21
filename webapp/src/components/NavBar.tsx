@@ -1,32 +1,31 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { 
-  Mail, 
-  Notifications, 
-  WbSunny, 
-  NightlightRound, 
-  ExitToApp, 
-  HomeRepairService, 
+import {
+  Mail,
+  Notifications,
+  WbSunny,
+  NightlightRound,
+  ExitToApp,
+  HomeRepairService,
   TokenRounded,
   Edit,
   Save,
   Cancel,
   Person,
   LocationOn,
-  Phone,
   Email,
   Work,
-  Close
+  Close,
 } from "@mui/icons-material";
-import { 
-  AppBar, 
-  Toolbar, 
-  Typography, 
-  Menu, 
-  MenuItem, 
-  Divider, 
-  Box, 
-  Badge, 
+import {
+  AppBar,
+  Toolbar,
+  Typography,
+  Menu,
+  MenuItem,
+  Divider,
+  Box,
+  Badge,
   Avatar,
   Dialog,
   DialogTitle,
@@ -45,7 +44,7 @@ import {
   useTheme,
   alpha,
   Snackbar,
-  Alert
+  Alert,
 } from "@mui/material";
 import { auth } from "@config/firebase";
 import { useAppSelector, useAppDispatch } from "@store/hooks";
@@ -80,21 +79,21 @@ const NavBar: React.FC<NavBarProps> = ({ userName, avatarUrl, onToggleTheme }) =
   const themeMode = theme.palette.mode;
   const isDark = theme.palette.mode === "dark";
   const user = useAppSelector((state) => state.user);
-  
+
   // State for navbar functionality
   const [unreadCount, setUnreadCount] = useState(0);
   const [profileAnchorEl, setProfileAnchorEl] = useState<null | HTMLElement>(null);
-  
+
   // State for profile dialog
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
-  
+
   // Editable profile fields
   const [editName, setEditName] = useState(user.name || "");
   const [editLocation, setEditLocation] = useState(user.location || "");
   const [editServices, setEditServices] = useState<number[]>([]);
-  
+
   // Toast state
   const [toast, setToast] = useState<{
     open: boolean;
@@ -103,7 +102,7 @@ const NavBar: React.FC<NavBarProps> = ({ userName, avatarUrl, onToggleTheme }) =
   }>({
     open: false,
     message: "",
-    severity: "info"
+    severity: "info",
   });
 
   // Subscribe to unread chat count
@@ -119,11 +118,11 @@ const NavBar: React.FC<NavBarProps> = ({ userName, avatarUrl, onToggleTheme }) =
   useEffect(() => {
     setEditName(user.name || "");
     setEditLocation(user.location || "");
-    
+
     // Convert service names to IDs for editing
     if (user.services_array && user.services_array.length > 0) {
-      const serviceIds = user.services_array.map(serviceName => {
-        const service = SERVICES.find(s => s.name === serviceName);
+      const serviceIds = user.services_array.map((serviceName) => {
+        const service = SERVICES.find((s) => s.name === serviceName);
         return service ? service.id : 1;
       });
       setEditServices(serviceIds);
@@ -156,8 +155,8 @@ const NavBar: React.FC<NavBarProps> = ({ userName, avatarUrl, onToggleTheme }) =
     setEditName(user.name || "");
     setEditLocation(user.location || "");
     if (user.services_array && user.services_array.length > 0) {
-      const serviceIds = user.services_array.map(serviceName => {
-        const service = SERVICES.find(s => s.name === serviceName);
+      const serviceIds = user.services_array.map((serviceName) => {
+        const service = SERVICES.find((s) => s.name === serviceName);
         return service ? service.id : 1;
       });
       setEditServices(serviceIds);
@@ -172,8 +171,8 @@ const NavBar: React.FC<NavBarProps> = ({ userName, avatarUrl, onToggleTheme }) =
       setEditName(user.name || "");
       setEditLocation(user.location || "");
       if (user.services_array && user.services_array.length > 0) {
-        const serviceIds = user.services_array.map(serviceName => {
-          const service = SERVICES.find(s => s.name === serviceName);
+        const serviceIds = user.services_array.map((serviceName) => {
+          const service = SERVICES.find((s) => s.name === serviceName);
           return service ? service.id : 1;
         });
         setEditServices(serviceIds);
@@ -210,10 +209,11 @@ const NavBar: React.FC<NavBarProps> = ({ userName, avatarUrl, onToggleTheme }) =
         location: editLocation.trim(),
       };
 
-      const basicEndpoint = user.userType === "provider" 
-        ? `/providers/updateProvider/${user.uid}`
-        : `/consumers/updateConsumer/${user.uid}`;
-      
+      const basicEndpoint =
+        user.userType === "provider"
+          ? `/providers/updateProvider/${user.uid}`
+          : `/consumers/updateConsumer/${user.uid}`;
+
       console.log("Updating basic profile...");
       await apiService.put(basicEndpoint, basicUpdatePayload);
       console.log("Basic profile updated successfully");
@@ -221,40 +221,41 @@ const NavBar: React.FC<NavBarProps> = ({ userName, avatarUrl, onToggleTheme }) =
       // Step 2: Update services separately for providers using the dedicated endpoint
       if (user.userType === "provider") {
         const servicesPayload = {
-          services_array: editServices // Send service IDs as numbers
+          services_array: editServices, // Send service IDs as numbers
         };
-        
+
         console.log("Updating provider services...");
         console.log("Services payload:", servicesPayload);
-        
+
         await apiService.put(`/providers/updateProviderServices/${user.uid}`, servicesPayload);
         console.log("Provider services updated successfully");
       }
 
       // Step 3: Update Redux store with service names
-      const serviceNames = editServices.map(id => {
-        const service = SERVICES.find(s => s.id === id);
+      const serviceNames = editServices.map((id) => {
+        const service = SERVICES.find((s) => s.id === id);
         return service ? service.name : "ELECTRICITY";
       });
 
       console.log("Updating Redux store...");
-      dispatch(setUser({
-        uid: user.uid!,
-        name: editName.trim(),
-        avatarUrl: user.avatarUrl,
-        userType: user.userType,
-        location: editLocation.trim(),
-        services_array: user.userType === "provider" ? serviceNames : user.services_array,
-        platform_tokens: user.platform_tokens
-      }));
+      dispatch(
+        setUser({
+          uid: user.uid!,
+          name: editName.trim(),
+          avatarUrl: user.avatarUrl,
+          userType: user.userType,
+          location: editLocation.trim(),
+          services_array: user.userType === "provider" ? serviceNames : user.services_array,
+          platform_tokens: user.platform_tokens,
+        })
+      );
 
       showToast("Profile updated successfully!", "success");
       setIsEditing(false);
-
     } catch (error: any) {
       console.error("Error updating profile:", error);
       console.error("Error details:", error.response?.data);
-      
+
       // More specific error handling
       if (error.response?.status === 404) {
         showToast("Provider not found. Please try again.", "error");
@@ -328,15 +329,19 @@ const NavBar: React.FC<NavBarProps> = ({ userName, avatarUrl, onToggleTheme }) =
 
           {/* Button Group */}
           <Box sx={{ display: "flex", alignItems: "center" }}>
-            <Box onClick={() => navigate("/dashboard/purchase")} aria-label="purchase tokens" sx={{
-              ...buttonBoxStyle,
-              display: "flex",
-              alignItems: "center",
-              gap: 0.5,
-              px: 1.5
-            }}>
+            <Box
+              onClick={() => navigate("/dashboard/purchase")}
+              aria-label="purchase tokens"
+              sx={{
+                ...buttonBoxStyle,
+                display: "flex",
+                alignItems: "center",
+                gap: 0.5,
+                px: 1.5,
+              }}
+            >
               <TokenRounded fontSize="small" />
-              <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.875rem' }}>
+              <Typography variant="body2" sx={{ fontWeight: 600, fontSize: "0.875rem" }}>
                 {user.platform_tokens || 0}
               </Typography>
             </Box>
@@ -413,9 +418,9 @@ const NavBar: React.FC<NavBarProps> = ({ userName, avatarUrl, onToggleTheme }) =
       >
         <DialogTitle
           sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
             pb: 1,
           }}
         >
@@ -454,7 +459,7 @@ const NavBar: React.FC<NavBarProps> = ({ userName, avatarUrl, onToggleTheme }) =
                 p: 2,
                 borderRadius: 2,
                 bgcolor: alpha(theme.palette.info.main, 0.05),
-                border: `1px solid ${alpha(theme.palette.info.main, 0.1)}`
+                border: `1px solid ${alpha(theme.palette.info.main, 0.1)}`,
               }}
             >
               <Box display="flex" alignItems="center" gap={1} mb={1}>
@@ -463,7 +468,7 @@ const NavBar: React.FC<NavBarProps> = ({ userName, avatarUrl, onToggleTheme }) =
                   User ID
                 </Typography>
               </Box>
-              <Typography variant="body2" sx={{ fontFamily: 'monospace', wordBreak: 'break-all' }}>
+              <Typography variant="body2" sx={{ fontFamily: "monospace", wordBreak: "break-all" }}>
                 {user.uid}
               </Typography>
             </Paper>
@@ -532,13 +537,13 @@ const NavBar: React.FC<NavBarProps> = ({ userName, avatarUrl, onToggleTheme }) =
                     Services Offered
                   </Typography>
                 </Box>
-                
+
                 {isEditing ? (
                   <Box>
                     {/* Current Selected Services with Close Icons */}
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mb: 2 }}>
                       {editServices.map((serviceId) => {
-                        const service = SERVICES.find(s => s.id === serviceId);
+                        const service = SERVICES.find((s) => s.id === serviceId);
                         return (
                           <Chip
                             key={serviceId}
@@ -547,74 +552,71 @@ const NavBar: React.FC<NavBarProps> = ({ userName, avatarUrl, onToggleTheme }) =
                             variant="filled"
                             size="small"
                             onDelete={() => {
-                              setEditServices(prev => prev.filter(id => id !== serviceId));
+                              setEditServices((prev) => prev.filter((id) => id !== serviceId));
                             }}
                             deleteIcon={
-                              <Close 
-                                sx={{ 
-                                  fontSize: '16px !important',
-                                  '&:hover': { color: 'error.main' }
-                                }} 
+                              <Close
+                                sx={{
+                                  fontSize: "16px !important",
+                                  "&:hover": { color: "error.main" },
+                                }}
                               />
                             }
                             sx={{
-                              '& .MuiChip-deleteIcon': {
-                                color: 'rgba(255, 255, 255, 0.7)',
-                                '&:hover': {
-                                  color: '#ff1744',
+                              "& .MuiChip-deleteIcon": {
+                                color: "rgba(255, 255, 255, 0.7)",
+                                "&:hover": {
+                                  color: "#ff1744",
                                 },
                               },
                             }}
                           />
                         );
                       })}
-                      
+
                       {editServices.length === 0 && (
                         <Typography variant="body2" color="text.secondary" sx={{ py: 1 }}>
                           No services selected. Please add at least one service.
                         </Typography>
                       )}
                     </Box>
-                    
+
                     {/* Add New Service Dropdown */}
                     <FormControl fullWidth size="small">
                       <InputLabel>Add Service</InputLabel>
                       <Select
                         value=""
                         onChange={(e) => {
-                          const newServiceId = e.target.value as number;
+                          const newServiceId = Number(e.target.value);
                           if (newServiceId && !editServices.includes(newServiceId)) {
-                            setEditServices(prev => [...prev, newServiceId]);
+                            setEditServices((prev) => [...prev, newServiceId]);
                           }
                         }}
                         input={<OutlinedInput label="Add Service" />}
                         displayEmpty
                       >
-                        <MenuItem value="" disabled>
-                        </MenuItem>
-                        {SERVICES
-                          .filter(service => !editServices.includes(service.id))
-                          .map(service => (
-                            <MenuItem key={service.id} value={service.id}>
-                              <Box display="flex" alignItems="center" gap={1}>
-                                {service.label}
-                              </Box>
-                            </MenuItem>
-                          ))}
+                        <MenuItem value="" disabled></MenuItem>
+                        {SERVICES.filter((service) => !editServices.includes(service.id)).map((service) => (
+                          <MenuItem key={service.id} value={service.id}>
+                            <Box display="flex" alignItems="center" gap={1}>
+                              {service.label}
+                            </Box>
+                          </MenuItem>
+                        ))}
                       </Select>
                     </FormControl>
-                    
+
                     {/* Service Count Info */}
-                    <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-                      {editServices.length} service{editServices.length !== 1 ? 's' : ''} selected
-                      {editServices.length === 0 && ' (minimum 1 required)'}
+                    <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: "block" }}>
+                      {editServices.length} service{editServices.length !== 1 ? "s" : ""} selected
+                      {editServices.length === 0 && " (minimum 1 required)"}
                     </Typography>
                   </Box>
                 ) : (
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                  <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
                     {user.services_array && user.services_array.length > 0 ? (
                       user.services_array.map((service, index) => {
-                        const serviceObj = SERVICES.find(s => s.name === service);
+                        const serviceObj = SERVICES.find((s) => s.name === service);
                         return (
                           <Chip
                             key={index}
@@ -666,14 +668,10 @@ const NavBar: React.FC<NavBarProps> = ({ userName, avatarUrl, onToggleTheme }) =
         <Divider />
 
         <DialogActions sx={{ p: 3, gap: 1 }}>
-          <Button
-            onClick={handleCloseProfileDialog}
-            variant="outlined"
-            disabled={saving}
-          >
+          <Button onClick={handleCloseProfileDialog} variant="outlined" disabled={saving}>
             Close
           </Button>
-          
+
           {isEditing ? (
             <>
               <Button
@@ -696,12 +694,7 @@ const NavBar: React.FC<NavBarProps> = ({ userName, avatarUrl, onToggleTheme }) =
               </Button>
             </>
           ) : (
-            <Button
-              onClick={handleEditToggle}
-              variant="contained"
-              color="primary"
-              startIcon={<Edit />}
-            >
+            <Button onClick={handleEditToggle} variant="contained" color="primary" startIcon={<Edit />}>
               Edit Profile
             </Button>
           )}
@@ -712,13 +705,13 @@ const NavBar: React.FC<NavBarProps> = ({ userName, avatarUrl, onToggleTheme }) =
       <Snackbar
         open={toast.open}
         autoHideDuration={6000}
-        onClose={() => setToast(prev => ({ ...prev, open: false }))}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        onClose={() => setToast((prev) => ({ ...prev, open: false }))}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
       >
-        <Alert 
-          onClose={() => setToast(prev => ({ ...prev, open: false }))} 
+        <Alert
+          onClose={() => setToast((prev) => ({ ...prev, open: false }))}
           severity={toast.severity}
-          sx={{ width: '100%' }}
+          sx={{ width: "100%" }}
         >
           {toast.message}
         </Alert>
