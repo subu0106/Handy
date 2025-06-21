@@ -143,7 +143,29 @@ const deleteOffer = async (req, res) => {
       });
     }
 
-    // Now get the request details to find the consumer and emit notification
+    // Get provider details to refund the platform token
+    const provider = await db.getOne(
+      constant.DB_TABLES.USERS,
+      "WHERE user_id = $1",
+      [offer.provider_id]
+    );
+
+    if (!provider) {
+      return res.status(constant.HTTP_STATUS.NOT_FOUND).json({
+        message: "Provider not found"
+      });
+    }
+
+    // Refund 1 platform token to provider
+    const updatedTokens = provider.platform_tokens + 1;
+    await db.update(
+      constant.DB_TABLES.USERS,
+      { platform_tokens: updatedTokens },
+      'WHERE user_id = $1',
+      [offer.provider_id]
+    );
+
+    // Get the request details to find the consumer and emit notification
     const request = await db.getOne(
       constant.DB_TABLES.REQUESTS,
       "WHERE request_id = $1",
@@ -151,13 +173,6 @@ const deleteOffer = async (req, res) => {
     );
 
     if (request) {
-      // Get provider details for the notification
-      const provider = await db.getOne(
-        constant.DB_TABLES.USERS,
-        "WHERE user_id = $1",
-        [offer.provider_id]
-      );
-
       // Get io instance from app
       const io = req.app.get("io");
       
@@ -189,7 +204,9 @@ const deleteOffer = async (req, res) => {
     
     if (deletedOffer) {
       res.status(constant.HTTP_STATUS.OK).json({ 
-        message: "Offer deleted successfully" 
+        message: "Offer deleted successfully",
+        platform_tokens: updatedTokens,
+        refund_given: true
       });
     } else {
       res.status(constant.HTTP_STATUS.NOT_FOUND).json({ 
@@ -241,7 +258,7 @@ const getOffersByProviderId = async (req, res) => {
       });
     }
 
-    const condition = "WHERE provider_id = $1 ORDER BY created_at DESC";
+    const condition = "WHERE provider_id = $1 AND status = 'pending' ORDER BY created_at DESC";
     const offers = await db.getAll(constant.DB_TABLES.OFFERS, condition, [provider_id]);
     
     const enrichedOffers = await Promise.all(
