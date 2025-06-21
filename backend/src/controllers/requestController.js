@@ -13,11 +13,37 @@ const createRequest = async (req, res) => {
       return res.status(constant.HTTP_STATUS.BAD_REQUEST).json({message: "consumer_id is required"});
     }
 
+    // Check if consumer has enough platform tokens
+    const consumer = await db.getOne(
+      constant.DB_TABLES.USERS, 
+      "WHERE user_id = $1", 
+      [data.user_id]
+    );
+
+    if (!consumer) {
+      return res.status(constant.HTTP_STATUS.NOT_FOUND).json({message: "Consumer not found"});
+    }
+
+    if (consumer.platform_tokens < 1) {
+      return res.status(constant.HTTP_STATUS.BAD_REQUEST).json({
+        message: "Insufficient platform tokens. You need at least 1 token to create a request."
+      });
+    }
+
     const request = await db.create(constant.DB_TABLES.REQUESTS, data);
 
     if (!request) {
       return res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR).json({message: "Failed to create request"});
     }
+
+    // Deduct 1 platform token from consumer
+    const updatedTokens = consumer.platform_tokens - 1;
+    await db.update(
+      constant.DB_TABLES.USERS,
+      { platform_tokens: updatedTokens },
+      'WHERE user_id = $1',
+      [data.user_id]
+    );
 
     const serviceId = data.service_id
     const service = await db.getOne(constant.DB_TABLES.SERVICES, "WHERE service_id = $1", [serviceId]);
@@ -33,10 +59,15 @@ const createRequest = async (req, res) => {
       request: request
     });
 
-    return res.status(constant.HTTP_STATUS.CREATED).json(request);
+    return res.status(constant.HTTP_STATUS.CREATED).json({
+      ...request,
+      platform_tokens: updatedTokens
+    });
 
   } catch (err) {
-    return res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR);
+    return res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      message: "Internal server error"
+    });
   }
 };
 
@@ -54,7 +85,7 @@ const getRequestById = async (req, res) => {
     
     res.status(constant.HTTP_STATUS.OK).json(request);
   } catch (err) {
-    console.error('Error fetching request:', err);
+    // console.error('Error fetching request:', err);
     res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       message: "Internal server error"
     });
@@ -82,7 +113,7 @@ const updateRequestStatus = async (req, res) => {
       return res.status(constant.HTTP_STATUS.NOT_FOUND).json({message:"Request Not Found"});
 
     } catch (error) {
-      console.error("Error updating request status:", error);
+      // console.error("Error updating request status:", error);
       return res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
         message: "Internal server error"
       });
@@ -151,14 +182,84 @@ const getAllActiveRequests = async (req, res) => {
 const deleteRequest = async (req, res) => {
   const request_id = req.params.request_id;
   const condition = 'WHERE request_id=$1';
+  
   try {
-    const deletedRequest = await db.remove(constant.DB_TABLES.REQUESTS, condition, [request_id]);
-    if (deletedRequest) {
-      return res.status(constant.HTTP_STATUS.OK).json({message: "Request deleted successfully"});
+    // First, get the request details to find the consumer
+    const request = await db.getOne(
+      constant.DB_TABLES.REQUESTS,
+      condition,
+      [request_id]
+    );
+
+    if (!request) {
+      return res.status(constant.HTTP_STATUS.NOT_FOUND).json({message: "Request Not Found"});
     }
+
+    // Check if there are any offers for this request
+    const existingOffers = await db.getAll(
+      constant.DB_TABLES.OFFERS,
+      "WHERE request_id = $1",
+      [request_id]
+    );
+
+    let updatedTokens = null;
+
+    // Only refund platform token if there are no offers
+    if (!existingOffers || existingOffers.length === 0) {
+      // Get consumer details to refund the platform token
+      const consumer = await db.getOne(
+        constant.DB_TABLES.USERS,
+        "WHERE user_id = $1",
+        [request.user_id]
+      );
+
+      if (consumer) {
+        // Refund 1 platform token to consumer
+        updatedTokens = consumer.platform_tokens + 1;
+        await db.update(
+          constant.DB_TABLES.USERS,
+          { platform_tokens: updatedTokens },
+          'WHERE user_id = $1',
+          [request.user_id]
+        );
+      }
+    }
+
+    // Delete all offers associated with this request (if any)
+    if (existingOffers && existingOffers.length > 0) {
+      await db.remove(
+        constant.DB_TABLES.OFFERS,
+        "WHERE request_id = $1",
+        [request_id]
+      );
+    }
+
+    // Delete the request
+    const deletedRequest = await db.remove(constant.DB_TABLES.REQUESTS, condition, [request_id]);
+    
+    if (deletedRequest) {
+      const response = {
+        message: "Request deleted successfully",
+      };
+
+      // Only include platform_tokens in response if refund was given
+      if (updatedTokens !== null) {
+        response.platform_tokens = updatedTokens;
+        response.refund_given = true;
+      } else {
+        response.refund_given = false;
+        response.reason = "No refund given - offers exist for this request";
+      }
+
+      return res.status(constant.HTTP_STATUS.OK).json(response);
+    }
+    
     return res.status(constant.HTTP_STATUS.NOT_FOUND).json({message: "Request Not Found"});
   } catch (error) {
-    return res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR);
+    console.error("Error deleting request:", error);
+    return res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      message: "Internal server error"
+    });
   }
 }
 
