@@ -94,7 +94,7 @@ const Splash: React.FC = () => {
             sx={{ flexWrap: { xs: "wrap", sm: "nowrap" }, minHeight: { xs: 0, sm: 400 } }}
           >
             {/* Consumer Card */}
-            <Grid item xs={12} sm={6} sx={{ display: "flex", mb: { xs: 1, sm: 0 }, width: "100%", minWidth: 0 }}>
+            <Grid size={{ xs: 12, sm: 6 }} sx={{ display: "flex", mb: { xs: 1, sm: 0 }, width: "100%", minWidth: 0 }}>
               <Card
                 sx={{
                   width: "100%",
@@ -171,7 +171,7 @@ const Splash: React.FC = () => {
             </Grid>
 
             {/* Provider Card */}
-            <Grid item xs={12} sm={6} sx={{ display: "flex", mb: { xs: 1, sm: 0 }, width: "100%", minWidth: 0 }}>
+            <Grid size={{ xs: 12, sm: 6 }} sx={{ display: "flex", mb: { xs: 1, sm: 0 }, width: "100%", minWidth: 0 }}>
               <Card
                 sx={{
                   width: "100%",

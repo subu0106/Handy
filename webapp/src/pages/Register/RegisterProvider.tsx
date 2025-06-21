@@ -1,17 +1,27 @@
 import { useState } from "react";
 import {
-  Box, Typography, Paper, Button, TextField, MenuItem, Select, InputLabel,
-  FormControl, OutlinedInput, Chip, useMediaQuery
+  Box,
+  Typography,
+  Paper,
+  Button,
+  TextField,
+  MenuItem,
+  Select,
+  InputLabel,
+  FormControl,
+  OutlinedInput,
+  Chip,
+  useMediaQuery,
 } from "@mui/material";
 import SvgIcon from "@mui/material/SvgIcon";
-import Visibility from '@mui/icons-material/Visibility';
-import VisibilityOff from '@mui/icons-material/VisibilityOff';
+import Visibility from "@mui/icons-material/Visibility";
+import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import { auth } from "@config/firebase.ts";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   GoogleAuthProvider,
-  signInWithPopup
+  signInWithPopup,
 } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
@@ -37,17 +47,29 @@ function GoogleFavicon(props: any) {
   return (
     <SvgIcon {...props} viewBox="0 0 48 48" sx={{ width: 24, height: 24 }}>
       <g>
-        <path fill="#4285F4" d="M43.6 20.5h-1.9V20H24v8h11.3c-1.6 4.3-5.7 7.5-10.3 7.5-6.1 0-11-4.9-11-11s4.9-11 11-11c2.6 0 5 .9 6.9 2.4l6.1-6.1C34.2 7.6 29.4 5.5 24 5.5 13.8 5.5 5.5 13.8 5.5 24S13.8 42.5 24 42.5c9.9 0 18-8.1 18-18 0-1.2-.1-2.1-.4-3z" />
-        <path fill="#34A853" d="M6.3 14.1l6.6 4.8C14.5 16.1 18.8 13 24 13c2.6 0 5 .9 6.9 2.4l6.1-6.1C34.2 7.6 29.4 5.5 24 5.5c-6.6 0-12.2 3.4-15.7 8.6z" />
-        <path fill="#FBBC05" d="M24 42.5c5.4 0 10.2-1.8 13.9-4.9l-6.4-5.2c-2 1.4-4.5 2.2-7.5 2.2-4.6 0-8.7-3.2-10.3-7.5l-6.6 5.1C8.1 38.6 15.4 42.5 24 42.5z" />
-        <path fill="#EA4335" d="M43.6 20.5h-1.9V20H24v8h11.3c-0.7 2-2.1 3.7-3.9 4.9l6.4 5.2c-0.6 0.6 6.2-4.5 6.2-13.1 0-1.2-.1-2.1-.4-3z" />
+        <path
+          fill="#4285F4"
+          d="M43.6 20.5h-1.9V20H24v8h11.3c-1.6 4.3-5.7 7.5-10.3 7.5-6.1 0-11-4.9-11-11s4.9-11 11-11c2.6 0 5 .9 6.9 2.4l6.1-6.1C34.2 7.6 29.4 5.5 24 5.5 13.8 5.5 5.5 13.8 5.5 24S13.8 42.5 24 42.5c9.9 0 18-8.1 18-18 0-1.2-.1-2.1-.4-3z"
+        />
+        <path
+          fill="#34A853"
+          d="M6.3 14.1l6.6 4.8C14.5 16.1 18.8 13 24 13c2.6 0 5 .9 6.9 2.4l6.1-6.1C34.2 7.6 29.4 5.5 24 5.5c-6.6 0-12.2 3.4-15.7 8.6z"
+        />
+        <path
+          fill="#FBBC05"
+          d="M24 42.5c5.4 0 10.2-1.8 13.9-4.9l-6.4-5.2c-2 1.4-4.5 2.2-7.5 2.2-4.6 0-8.7-3.2-10.3-7.5l-6.6 5.1C8.1 38.6 15.4 42.5 24 42.5z"
+        />
+        <path
+          fill="#EA4335"
+          d="M43.6 20.5h-1.9V20H24v8h11.3c-0.7 2-2.1 3.7-3.9 4.9l6.4 5.2c-0.6 0.6 6.2-4.5 6.2-13.1 0-1.2-.1-2.1-.4-3z"
+        />
       </g>
     </SvgIcon>
   );
 }
 
 export default function RegisterProvider() {
-  const [mode, setMode] = useState<'register' | 'signin'>('register');
+  const [mode, setMode] = useState<"register" | "signin">("register");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -68,31 +90,19 @@ export default function RegisterProvider() {
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   // Pending user states for different registration methods
-  const [pendingGoogleUser, setPendingGoogleUser] = useState<{ avatarUrl: string, email: string } | null>(null);
-  const [pendingEmailUser, setPendingEmailUser] = useState<{ avatarUrl: string, email: string } | null>(null);
+  const [pendingGoogleUser, setPendingGoogleUser] = useState<{ avatarUrl: string; email: string } | null>(null);
+  const [pendingEmailUser, setPendingEmailUser] = useState<{ avatarUrl: string; email: string } | null>(null);
 
   // Show extra fields after Google or email registration
   const showExtraFieldsForm = (avatarUrl: string, userEmail: string) => (
     <Box width="100%" maxWidth={isMobile ? 1 : 400}>
-      <TextField
-        fullWidth
-        label="Full Name"
-        value={name}
-        onChange={e => setName(e.target.value)}
-        sx={{ mb: 2 }}
-      />
-      <TextField
-        fullWidth
-        label="Phone"
-        value={phone}
-        onChange={e => setPhone(e.target.value)}
-        sx={{ mb: 2 }}
-      />
+      <TextField fullWidth label="Full Name" value={name} onChange={(e) => setName(e.target.value)} sx={{ mb: 2 }} />
+      <TextField fullWidth label="Phone" value={phone} onChange={(e) => setPhone(e.target.value)} sx={{ mb: 2 }} />
       <TextField
         fullWidth
         label="Location"
         value={location}
-        onChange={e => setLocation(e.target.value)}
+        onChange={(e) => setLocation(e.target.value)}
         sx={{ mb: 2 }}
       />
       <FormControl fullWidth sx={{ mb: 2 }}>
@@ -101,18 +111,18 @@ export default function RegisterProvider() {
           labelId="services-label"
           multiple
           value={servicesArray}
-          onChange={e => setServicesArray(e.target.value as number[])}
+          onChange={(e) => setServicesArray(e.target.value as number[])}
           input={<OutlinedInput label="Services" />}
           renderValue={(selected) => (
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
               {(selected as number[]).map((id) => {
-                const service = SERVICES.find(s => s.id === id);
+                const service = SERVICES.find((s) => s.id === id);
                 return <Chip key={id} label={service?.label} />;
               })}
             </Box>
           )}
         >
-          {SERVICES.map(service => (
+          {SERVICES.map((service) => (
             <MenuItem key={service.id} value={service.id}>
               {service.label}
             </MenuItem>
@@ -123,13 +133,15 @@ export default function RegisterProvider() {
         fullWidth
         label="Bio"
         value={bio}
-        onChange={e => setBio(e.target.value)}
+        onChange={(e) => setBio(e.target.value)}
         multiline
         rows={3}
         sx={{ mb: 2 }}
       />
       {registerError && (
-        <Typography color="error" variant="body2" mb={1}>{registerError}</Typography>
+        <Typography color="error" variant="body2" mb={1}>
+          {registerError}
+        </Typography>
       )}
       <Button
         variant="contained"
@@ -137,14 +149,14 @@ export default function RegisterProvider() {
         onClick={() => handleExtraFieldsSubmit(avatarUrl, userEmail)}
         disabled={registerLoading}
         sx={{
-          background: '#111',
-          color: '#fff',
+          background: "#111",
+          color: "#fff",
           fontWeight: 700,
-          fontSize: '1.1rem',
+          fontSize: "1.1rem",
           borderRadius: 2,
           py: 1.2,
-          boxShadow: 'none',
-          '&:hover': { background: '#222' },
+          boxShadow: "none",
+          "&:hover": { background: "#222" },
         }}
       >
         {registerLoading ? "Submitting..." : "Submit"}
@@ -183,18 +195,22 @@ export default function RegisterProvider() {
 
       await apiService.post("/providers/registerProvider", payload);
 
-      dispatch(setUser({
-        uid: user.uid,
-        name: name || user.displayName || user.email || "",
-        avatarUrl: avatarUrl || "",
-        userType: "provider",
-        location: location || "",
-        services_array: servicesArray,
-        platform_tokens: 30,
-      }));
+      dispatch(
+        setUser({
+          uid: user.uid,
+          name: name || user.displayName || user.email || "",
+          avatarUrl: avatarUrl || "",
+          userType: "provider",
+          location: location || "",
+          services_array: servicesArray.map((id) => {
+            const service = SERVICES.find((s) => s.id === id);
+            return service ? service.name : "ELECTRICITY";
+          }),
+          platform_tokens: 30,
+        })
+      );
 
       navigate("/dashboard");
-
     } catch (error: any) {
       if (error.response && error.response.data && error.response.data.error) {
         setRegisterError(error.response.data.error);
@@ -234,15 +250,17 @@ export default function RegisterProvider() {
 
         const userData = userResponse.data;
 
-        dispatch(setUser({
-          uid: user.uid,
-          name: user.displayName || user.email || "",
-          avatarUrl: user.photoURL || "",
-          userType: "provider",
-          location: userData.location || "",
-          services_array: userData.services_array || [],
-          platform_tokens: userData.platform_tokens,
-        }));
+        dispatch(
+          setUser({
+            uid: user.uid,
+            name: user.displayName || user.email || "",
+            avatarUrl: user.photoURL || "",
+            userType: "provider",
+            location: userData.location || "",
+            services_array: userData.services_array || [],
+            platform_tokens: userData.platform_tokens,
+          })
+        );
         navigate("/dashboard");
       }
     } catch (error: any) {
@@ -274,7 +292,6 @@ export default function RegisterProvider() {
       });
       setShowExtraFields(true);
       setRegisterLoading(false);
-
     } catch (error: any) {
       if (error.code === "auth/email-already-in-use") {
         setRegisterError("Email already registered.");
@@ -295,7 +312,7 @@ export default function RegisterProvider() {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
-      
+
       const userResponse = await apiService.get(`users/user_info/${user.uid}`);
 
       if (userResponse.status !== 200) {
@@ -304,15 +321,17 @@ export default function RegisterProvider() {
 
       const userData = userResponse.data;
 
-      dispatch(setUser({
-        uid: user.uid,
-        name: user.displayName || user.email || "",
-        avatarUrl: user.photoURL || "",
-        userType: "provider",
-        location: userData.location || "",
-        services_array: userData.services_array || [],
-        platform_tokens: userData.platform_tokens,
-      }));
+      dispatch(
+        setUser({
+          uid: user.uid,
+          name: user.displayName || user.email || "",
+          avatarUrl: user.photoURL || "",
+          userType: "provider",
+          location: userData.location || "",
+          services_array: userData.services_array || [],
+          platform_tokens: userData.platform_tokens,
+        })
+      );
       navigate("/dashboard");
     } catch (error: any) {
       if (error.code === "auth/user-not-found" || error.code === "auth/wrong-password") {
@@ -326,32 +345,39 @@ export default function RegisterProvider() {
 
   return (
     <Box display="flex" justifyContent="center" alignItems="center" minHeight="70vh" sx={{ px: 1 }}>
-      <Paper sx={{
-        p: isMobile ? 2 : 4,
-        width: "100%",
-        maxWidth: isMobile ? 1 : 420,
-        borderRadius: 4,
-        boxShadow: 3,
-      }}>
+      <Paper
+        sx={{
+          p: isMobile ? 2 : 4,
+          width: "100%",
+          maxWidth: isMobile ? 1 : 420,
+          borderRadius: 4,
+          boxShadow: 3,
+        }}
+      >
         <Box display="flex" flexDirection="column" alignItems="center" gap={2}>
           <Typography variant={isMobile ? "h6" : "h5"} fontWeight={700} mb={1}>
-            {mode === 'register' ? 'Provider Registration' : 'Provider Sign In'}
+            {mode === "register" ? "Provider Registration" : "Provider Sign In"}
           </Typography>
           {showExtraFields && (pendingGoogleUser || pendingEmailUser) ? (
             showExtraFieldsForm(
               (pendingGoogleUser || pendingEmailUser)?.avatarUrl || "",
               (pendingGoogleUser || pendingEmailUser)?.email || ""
             )
-          ) : mode === 'register' ? (
+          ) : mode === "register" ? (
             <>
               <Box width="100%" maxWidth={isMobile ? 1 : 400}>
-                <form onSubmit={(e) => { e.preventDefault(); handleRegister(); }}>
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleRegister();
+                  }}
+                >
                   <TextField
                     fullWidth
                     label="Email"
                     type="email"
                     value={email}
-                    onChange={e => setEmail(e.target.value)}
+                    onChange={(e) => setEmail(e.target.value)}
                     autoComplete="email"
                     required
                     sx={{ mb: 2 }}
@@ -359,9 +385,9 @@ export default function RegisterProvider() {
                   <TextField
                     fullWidth
                     label="Password"
-                    type={showPassword ? 'text' : 'password'}
+                    type={showPassword ? "text" : "password"}
                     value={password}
-                    onChange={e => setPassword(e.target.value)}
+                    onChange={(e) => setPassword(e.target.value)}
                     autoComplete="new-password"
                     required
                     sx={{ mb: 2 }}
@@ -370,7 +396,7 @@ export default function RegisterProvider() {
                         <Button
                           type="button"
                           onClick={() => setShowPassword((show) => !show)}
-                          sx={{ minWidth: 0, p: 0, color: '#888' }}
+                          sx={{ minWidth: 0, p: 0, color: "#888" }}
                           tabIndex={-1}
                         >
                           {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
@@ -379,7 +405,9 @@ export default function RegisterProvider() {
                     }}
                   />
                   {registerError && (
-                    <Typography color="error" variant="body2" mb={1}>{registerError}</Typography>
+                    <Typography color="error" variant="body2" mb={1}>
+                      {registerError}
+                    </Typography>
                   )}
                   <Button
                     variant="contained"
@@ -387,14 +415,14 @@ export default function RegisterProvider() {
                     type="submit"
                     disabled={registerLoading}
                     sx={{
-                      background: '#111',
-                      color: '#fff',
+                      background: "#111",
+                      color: "#fff",
                       fontWeight: 700,
-                      fontSize: '1.1rem',
+                      fontSize: "1.1rem",
                       borderRadius: 2,
                       py: 1.2,
-                      boxShadow: 'none',
-                      '&:hover': { background: '#222' },
+                      boxShadow: "none",
+                      "&:hover": { background: "#222" },
                     }}
                   >
                     {registerLoading ? "Signing up..." : "Sign up"}
@@ -403,8 +431,8 @@ export default function RegisterProvider() {
                 <Button
                   variant="text"
                   fullWidth
-                  onClick={() => setMode('signin')}
-                  sx={{ mt: 1, color: '#1976d2', fontWeight: 600, textTransform: 'none' }}
+                  onClick={() => setMode("signin")}
+                  sx={{ mt: 1, color: "#1976d2", fontWeight: 600, textTransform: "none" }}
                 >
                   Already have an account? Sign in
                 </Button>
@@ -413,7 +441,7 @@ export default function RegisterProvider() {
                   fullWidth
                   startIcon={<GoogleFavicon />}
                   onClick={handleGoogleSignIn}
-                  sx={{ mt: 1, color: '#4285F4', fontWeight: 600, textTransform: 'none' }}
+                  sx={{ mt: 1, color: "#4285F4", fontWeight: 600, textTransform: "none" }}
                 >
                   Continue with Google
                 </Button>
@@ -422,13 +450,18 @@ export default function RegisterProvider() {
           ) : (
             <>
               <Box width="100%" maxWidth={isMobile ? 1 : 400}>
-                <form onSubmit={(e) => { e.preventDefault(); handleLogin(); }}>
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleLogin();
+                  }}
+                >
                   <TextField
                     fullWidth
                     label="Email"
                     type="email"
                     value={email}
-                    onChange={e => setEmail(e.target.value)}
+                    onChange={(e) => setEmail(e.target.value)}
                     autoComplete="email"
                     required
                     sx={{ mb: 2 }}
@@ -436,9 +469,9 @@ export default function RegisterProvider() {
                   <TextField
                     fullWidth
                     label="Password"
-                    type={showPassword ? 'text' : 'password'}
+                    type={showPassword ? "text" : "password"}
                     value={password}
-                    onChange={e => setPassword(e.target.value)}
+                    onChange={(e) => setPassword(e.target.value)}
                     autoComplete="current-password"
                     required
                     sx={{ mb: 2 }}
@@ -447,7 +480,7 @@ export default function RegisterProvider() {
                         <Button
                           type="button"
                           onClick={() => setShowPassword((show) => !show)}
-                          sx={{ minWidth: 0, p: 0, color: '#888' }}
+                          sx={{ minWidth: 0, p: 0, color: "#888" }}
                           tabIndex={-1}
                         >
                           {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
@@ -456,7 +489,9 @@ export default function RegisterProvider() {
                     }}
                   />
                   {registerError && (
-                    <Typography color="error" variant="body2" mb={1}>{registerError}</Typography>
+                    <Typography color="error" variant="body2" mb={1}>
+                      {registerError}
+                    </Typography>
                   )}
                   <Button
                     variant="contained"
@@ -464,14 +499,14 @@ export default function RegisterProvider() {
                     type="submit"
                     disabled={registerLoading}
                     sx={{
-                      background: '#111',
-                      color: '#fff',
+                      background: "#111",
+                      color: "#fff",
                       fontWeight: 700,
-                      fontSize: '1.1rem',
+                      fontSize: "1.1rem",
                       borderRadius: 2,
                       py: 1.2,
-                      boxShadow: 'none',
-                      '&:hover': { background: '#222' },
+                      boxShadow: "none",
+                      "&:hover": { background: "#222" },
                     }}
                   >
                     {registerLoading ? "Signing in..." : "Sign in"}
@@ -480,8 +515,8 @@ export default function RegisterProvider() {
                 <Button
                   variant="text"
                   fullWidth
-                  onClick={() => setMode('register')}
-                  sx={{ mt: 1, color: '#1976d2', fontWeight: 600, textTransform: 'none' }}
+                  onClick={() => setMode("register")}
+                  sx={{ mt: 1, color: "#1976d2", fontWeight: 600, textTransform: "none" }}
                 >
                   Don't have an account? Sign up
                 </Button>
@@ -490,7 +525,7 @@ export default function RegisterProvider() {
                   fullWidth
                   startIcon={<GoogleFavicon />}
                   onClick={handleGoogleSignIn}
-                  sx={{ mt: 1, color: '#4285F4', fontWeight: 600, textTransform: 'none' }}
+                  sx={{ mt: 1, color: "#4285F4", fontWeight: 600, textTransform: "none" }}
                 >
                   Continue with Google
                 </Button>

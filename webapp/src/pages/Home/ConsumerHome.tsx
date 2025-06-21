@@ -27,18 +27,18 @@ import { fetchOffers } from "@store/offersSlice";
 import { createOrGetChat } from "@utils/chatUtils";
 import React, { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
-import { 
-  AddCircleOutline, 
-  Assignment, 
-  LocalOffer, 
-  Chat, 
-  CheckCircle, 
-  Work, 
+import {
+  AddCircleOutline,
+  Assignment,
+  LocalOffer,
+  Chat,
+  CheckCircle,
+  Work,
   Star,
   RateReview,
   Close,
   Delete,
-  Warning
+  Warning,
 } from "@mui/icons-material";
 import { fetchServiceRequestsForConsumer, setSelectedRequestId } from "@store/serviceRequestsSlice";
 import { setUser } from "@store/userSlice";
@@ -89,8 +89,8 @@ const ConsumerHome: React.FC = () => {
   // Filter requests by current user (consumer)
   const safeRequests = Array.isArray(requests)
     ? requests
-      .filter((req) => req.user_id === user.uid)
-      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        .filter((req) => req.user_id === user.uid)
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
     : [];
 
   // Sort offers by latest first
@@ -112,7 +112,7 @@ const ConsumerHome: React.FC = () => {
 
   // Fetch paired jobs when the jobs tab is active
   useEffect(() => {
-    if (activeTab === 'jobs' && user.uid) {
+    if (activeTab === "jobs" && user.uid) {
       fetchPairedJobs();
     }
   }, [activeTab, user.uid]);
@@ -208,8 +208,10 @@ const ConsumerHome: React.FC = () => {
 
     setDeletingRequest(true);
     try {
-      const response = await apiService.delete(`/requests/deleteRequest/${requestToDelete.request_id || requestToDelete.id}`);
-      
+      const response = await apiService.delete(
+        `/requests/deleteRequest/${requestToDelete.request_id || requestToDelete.id}`
+      );
+
       // Update user's platform tokens if refund was given
       if (response.data.platform_tokens !== undefined) {
         dispatch(
@@ -226,7 +228,7 @@ const ConsumerHome: React.FC = () => {
       }
 
       console.log("SUCCESS: Request deleted successfully!");
-      
+
       // If this was the selected request, clear the selection
       if (selectedRequestId === (requestToDelete.request_id || requestToDelete.id)) {
         dispatch(setSelectedRequestId(null));
@@ -269,14 +271,14 @@ const ConsumerHome: React.FC = () => {
     try {
       await apiService.put(`/pairedJobs/${selectedJob.job_id}/rate`, {
         rating,
-        review: review.trim() || null
+        review: review.trim() || null,
       });
 
       console.log("SUCCESS: Rating and review submitted successfully!");
-      
+
       // Refresh paired jobs
       await fetchPairedJobs();
-      
+
       // Close dialog and reset state
       setRatingDialogOpen(false);
       setSelectedJob(null);
@@ -305,19 +307,60 @@ const ConsumerHome: React.FC = () => {
   const isRequestAssigned = selectedRequest?.status === "assigned";
 
   // Enhanced chip styling for better dark theme visibility
-  const getChipStyles = (color: 'primary' | 'secondary' | 'success' | 'error' | 'warning' | 'info', variant: 'filled' | 'outlined' = 'filled') => {
+  const getChipStyles = (
+    color: "primary" | "secondary" | "success" | "error" | "warning" | "info",
+    variant: "filled" | "outlined" = "filled"
+  ) => {
     const themeColor = theme.palette[color];
 
     return {
-      fontWeight: 'medium',
-      borderWidth: variant === 'outlined' ? 2 : 0,
-      backgroundColor: variant === 'filled' ? undefined : alpha(themeColor.main, 0.1),
-      borderColor: variant === 'outlined' ? themeColor.main : undefined,
-      color: variant === 'outlined' ? themeColor.main : themeColor.contrastText,
-      '&:hover': {
-        backgroundColor: alpha(themeColor.main, variant === 'outlined' ? 0.2 : 0.8)
-      }
+      fontWeight: "medium",
+      borderWidth: variant === "outlined" ? 2 : 0,
+      backgroundColor: variant === "filled" ? undefined : alpha(themeColor.main, 0.1),
+      borderColor: variant === "outlined" ? themeColor.main : undefined,
+      color: variant === "outlined" ? themeColor.main : themeColor.contrastText,
+      "&:hover": {
+        backgroundColor: alpha(themeColor.main, variant === "outlined" ? 0.2 : 0.8),
+      },
     };
+  };
+
+  // Render star rating display for providers
+  const renderProviderRating = (rating: any, reviewCount: any = 0) => {
+    // Convert rating to number and handle edge cases
+    const numericRating = rating ? Number(rating) : 0;
+    const validRating = isNaN(numericRating) ? 0 : numericRating;
+
+    // Convert review count to number and handle edge cases
+    const numericReviewCount = reviewCount ? Number(reviewCount) : 0;
+    const validReviewCount = isNaN(numericReviewCount) ? 0 : numericReviewCount;
+
+    if (validRating === 0 || validRating === null || validRating === undefined) {
+      return (
+        <Box display="flex" alignItems="center" gap={0.5}>
+          <Typography variant="body2" color="textSecondary" fontSize="0.8rem">
+            No rating yet
+          </Typography>
+        </Box>
+      );
+    }
+
+    return (
+      <Box display="flex" alignItems="center" gap={0.5}>
+        {[1, 2, 3, 4, 5].map((star) => (
+          <Star
+            key={star}
+            sx={{
+              fontSize: 16,
+              color: star <= validRating ? theme.palette.warning.main : theme.palette.grey[300],
+            }}
+          />
+        ))}
+        <Typography variant="body2" color="textSecondary" ml={0.5} fontSize="0.8rem">
+          ({validRating.toFixed(1)}/5{validReviewCount > 0 ? `, ${validReviewCount} reviews` : ""})
+        </Typography>
+      </Box>
+    );
   };
 
   // Render Requests & Offers Tab Content
@@ -330,17 +373,19 @@ const ConsumerHome: React.FC = () => {
         position: "fixed",
         top: 112,
         left: 0,
-        overflow: "hidden"
+        overflow: "hidden",
       }}
     >
       {/* Left: My Service Requests */}
-      <div style={{
-        width: "50%",
-        height: "100vh",
-        display: "flex",
-        alignItems: "stretch",
-        minHeight: 0
-      }}>
+      <div
+        style={{
+          width: "50%",
+          height: "100vh",
+          display: "flex",
+          alignItems: "stretch",
+          minHeight: 0,
+        }}
+      >
         <div
           style={{
             margin: 12,
@@ -353,17 +398,19 @@ const ConsumerHome: React.FC = () => {
             display: "flex",
             flexDirection: "column",
             minHeight: 0,
-            overflow: "hidden"
+            overflow: "hidden",
           }}
         >
           {/* Header - Fixed height */}
-          <div style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            padding: "12px 24px 12px 24px",
-            flexShrink: 0
-          }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "12px 24px 12px 24px",
+              flexShrink: 0,
+            }}
+          >
             <Assignment color="primary" style={{ fontSize: 28 }} />
             <Typography variant="h6" gutterBottom style={{ margin: 0 }}>
               My Service Requests ({safeRequests.length})
@@ -382,10 +429,12 @@ const ConsumerHome: React.FC = () => {
           </div>
 
           {/* Create Service Request Button - Fixed height */}
-          <div style={{
-            padding: "0 24px 12px 24px",
-            flexShrink: 0
-          }}>
+          <div
+            style={{
+              padding: "0 24px 12px 24px",
+              flexShrink: 0,
+            }}
+          >
             <button
               onClick={() => navigate("/dashboard/create-service-request")}
               style={{
@@ -420,13 +469,15 @@ const ConsumerHome: React.FC = () => {
           </div>
 
           {/* Scrollable content area */}
-          <div style={{
-            flex: 1,
-            overflowY: "auto",
-            overflowX: "hidden",
-            padding: "12px 24px 24px 24px",
-            minHeight: 0
-          }}>
+          <div
+            style={{
+              flex: 1,
+              overflowY: "auto",
+              overflowX: "hidden",
+              padding: "12px 24px 24px 24px",
+              minHeight: 0,
+            }}
+          >
             {requestsStatus === "loading" ? (
               <div>Loading...</div>
             ) : safeRequests.length === 0 ? (
@@ -487,11 +538,11 @@ const ConsumerHome: React.FC = () => {
                               color="success"
                               size="small"
                               variant="filled"
-                              sx={getChipStyles('success', 'filled')}
+                              sx={getChipStyles("success", "filled")}
                             />
                           )}
                         </div>
-                        
+
                         {/* Delete button - only show if request is not assigned */}
                         {req.status !== "assigned" && (
                           <IconButton
@@ -500,7 +551,7 @@ const ConsumerHome: React.FC = () => {
                             onClick={(e) => handleDeleteRequest(req, e)}
                             sx={{
                               opacity: 0.7,
-                              '&:hover': {
+                              "&:hover": {
                                 opacity: 1,
                                 backgroundColor: alpha(theme.palette.error.main, 0.1),
                               },
@@ -513,10 +564,7 @@ const ConsumerHome: React.FC = () => {
 
                       {req.description && (
                         <Typography variant="body2" color="textSecondary">
-                          {req.description.length > 100
-                            ? `${req.description.substring(0, 100)}...`
-                            : req.description
-                          }
+                          {req.description.length > 100 ? `${req.description.substring(0, 100)}...` : req.description}
                         </Typography>
                       )}
 
@@ -526,7 +574,7 @@ const ConsumerHome: React.FC = () => {
                           color="success"
                           variant="outlined"
                           size="small"
-                          sx={getChipStyles('success', 'outlined')}
+                          sx={getChipStyles("success", "outlined")}
                         />
                         {req.timeframe && (
                           <Chip
@@ -534,13 +582,14 @@ const ConsumerHome: React.FC = () => {
                             color="info"
                             variant="outlined"
                             size="small"
-                            sx={getChipStyles('info', 'outlined')}
+                            sx={getChipStyles("info", "outlined")}
                           />
                         )}
                       </Stack>
 
                       <Typography variant="caption" color="textSecondary">
-                        Posted on {new Date(req.created_at).toLocaleDateString()} at {new Date(req.created_at).toLocaleTimeString()}
+                        Posted on {new Date(req.created_at).toLocaleDateString()} at{" "}
+                        {new Date(req.created_at).toLocaleTimeString()}
                       </Typography>
                     </Box>
                   );
@@ -552,12 +601,14 @@ const ConsumerHome: React.FC = () => {
       </div>
 
       {/* Right: Offers for Selected Request */}
-      <div style={{
-        width: "50%",
-        height: "100vh",
-        alignItems: "stretch",
-        minHeight: 0
-      }}>
+      <div
+        style={{
+          width: "50%",
+          height: "100vh",
+          alignItems: "stretch",
+          minHeight: 0,
+        }}
+      >
         <div
           style={{
             margin: 12,
@@ -570,17 +621,19 @@ const ConsumerHome: React.FC = () => {
             display: "flex",
             flexDirection: "column",
             minHeight: 0,
-            overflow: "hidden"
+            overflow: "hidden",
           }}
         >
           {/* Header - Fixed height */}
-          <div style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            padding: "12px 24px 12px 24px",
-            flexShrink: 0
-          }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "12px 24px 12px 24px",
+              flexShrink: 0,
+            }}
+          >
             <LocalOffer color="primary" style={{ fontSize: 28 }} />
             <Typography variant="h6" gutterBottom style={{ margin: 0 }}>
               {selectedRequestId ? `Offers (${safeOffers.length})` : "Select a Service Request"}
@@ -588,20 +641,20 @@ const ConsumerHome: React.FC = () => {
           </div>
 
           {/* Scrollable content area */}
-          <div style={{
-            flex: 1,
-            overflowY: "auto",
-            overflowX: "hidden",
-            padding: "12px 24px 24px 24px",
-            minHeight: 0
-          }}>
+          <div
+            style={{
+              flex: 1,
+              overflowY: "auto",
+              overflowX: "hidden",
+              padding: "12px 24px 24px 24px",
+              minHeight: 0,
+            }}
+          >
             {selectedRequestId ? (
               offersStatus === "loading" ? (
                 <div>Loading offers...</div>
               ) : safeOffers.length === 0 ? (
-                <div
-                  style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, marginTop: 40 }}
-                >
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, marginTop: 40 }}>
                   <LocalOffer color="disabled" style={{ fontSize: 48 }} />
                   <Typography variant="body1" color="textSecondary" textAlign="center">
                     No offers found for this request.
@@ -626,13 +679,11 @@ const ConsumerHome: React.FC = () => {
                         gap: 1,
                         transition: "all 0.3s ease",
                         cursor: "pointer",
-                        backgroundColor: offer.status === "accepted"
-                          ? alpha(theme.palette.success.main, 0.08)
-                          : "transparent",
+                        backgroundColor:
+                          offer.status === "accepted" ? alpha(theme.palette.success.main, 0.08) : "transparent",
                         "&:hover": {
-                          bgcolor: offer.status === "accepted"
-                            ? alpha(theme.palette.success.main, 0.12)
-                            : "action.hover",
+                          bgcolor:
+                            offer.status === "accepted" ? alpha(theme.palette.success.main, 0.12) : "action.hover",
                           boxShadow: `0 4px 16px ${alpha(theme.palette.primary.main, 0.3)}`,
                           transform: "translateY(-2px)",
                           borderColor: "primary.main",
@@ -653,7 +704,7 @@ const ConsumerHome: React.FC = () => {
                             size="small"
                             variant="filled"
                             icon={<CheckCircle />}
-                            sx={getChipStyles('success', 'filled')}
+                            sx={getChipStyles("success", "filled")}
                           />
                         )}
                       </div>
@@ -665,7 +716,7 @@ const ConsumerHome: React.FC = () => {
                             color="info"
                             variant="outlined"
                             size="small"
-                            sx={getChipStyles('info', 'outlined')}
+                            sx={getChipStyles("info", "outlined")}
                           />
                         )}
                         {offer.provider_name && (
@@ -674,10 +725,17 @@ const ConsumerHome: React.FC = () => {
                             color="primary"
                             variant="outlined"
                             size="small"
-                            sx={getChipStyles('primary', 'outlined')}
+                            sx={getChipStyles("primary", "outlined")}
                           />
                         )}
                       </Stack>
+
+                      {/* Provider Rating */}
+                      {offer.provider_name && (
+                        <Box mt={1}>
+                          {renderProviderRating(offer.provider_rating || 0, offer.provider_review_count || 0)}
+                        </Box>
+                      )}
 
                       <Typography variant="caption" color="textSecondary">
                         Received on {new Date(offer.created_at).toLocaleDateString()} at{" "}
@@ -742,7 +800,7 @@ const ConsumerHome: React.FC = () => {
         position: "fixed",
         top: 112,
         left: 0,
-        overflow: "hidden"
+        overflow: "hidden",
       }}
     >
       <div
@@ -755,17 +813,19 @@ const ConsumerHome: React.FC = () => {
           color: theme.palette.text.primary,
           display: "flex",
           flexDirection: "column",
-          overflow: "hidden"
+          overflow: "hidden",
         }}
       >
         {/* Header */}
-        <div style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
-          padding: "12px 24px 12px 24px",
-          flexShrink: 0
-        }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "12px 24px 12px 24px",
+            flexShrink: 0,
+          }}
+        >
           <Work color="primary" style={{ fontSize: 28 }} />
           <Typography variant="h6" gutterBottom style={{ margin: 0 }}>
             My Paired Jobs ({pairedJobs.length})
@@ -783,13 +843,15 @@ const ConsumerHome: React.FC = () => {
         </div>
 
         {/* Content */}
-        <div style={{
-          flex: 1,
-          overflowY: "auto",
-          overflowX: "hidden",
-          padding: "12px 24px 24px 24px",
-          minHeight: 0
-        }}>
+        <div
+          style={{
+            flex: 1,
+            overflowY: "auto",
+            overflowX: "hidden",
+            padding: "12px 24px 24px 24px",
+            minHeight: 0,
+          }}
+        >
           {pairedJobsLoading ? (
             <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "200px" }}>
               <Typography>Loading paired jobs...</Typography>
@@ -854,27 +916,27 @@ const ConsumerHome: React.FC = () => {
                       color="success"
                       variant="outlined"
                       size="small"
-                      sx={getChipStyles('success', 'outlined')}
+                      sx={getChipStyles("success", "outlined")}
                     />
                     <Chip
-                      label={`Provider: ${job.provider_name || 'Unknown'}`}
+                      label={`Provider: ${job.provider_name || "Unknown"}`}
                       color="info"
                       variant="outlined"
                       size="small"
-                      sx={getChipStyles('info', 'outlined')}
+                      sx={getChipStyles("info", "outlined")}
                     />
                     <Chip
                       label={`Job ID: ${job.job_id}`}
                       color="info"
                       variant="outlined"
                       size="small"
-                      sx={getChipStyles('info', 'outlined')}
+                      sx={getChipStyles("info", "outlined")}
                     />
                   </Stack>
 
                   {job.review && (
                     <Box sx={{ mt: 1, p: 1.5, bgcolor: alpha(theme.palette.info.main, 0.05), borderRadius: 1 }}>
-                      <Typography variant="body2" style={{ fontStyle: 'italic' }}>
+                      <Typography variant="body2" style={{ fontStyle: "italic" }}>
                         "{job.review}"
                       </Typography>
                     </Box>
@@ -934,26 +996,16 @@ const ConsumerHome: React.FC = () => {
           variant="fullWidth"
           sx={{
             minHeight: 48,
-            '& .MuiTab-root': {
+            "& .MuiTab-root": {
               minHeight: 48,
-              textTransform: 'none',
+              textTransform: "none",
               fontWeight: 600,
-              fontSize: '1rem',
+              fontSize: "1rem",
             },
           }}
         >
-          <Tab
-            value="requests"
-            label="Requests & Offers"
-            icon={<Assignment />}
-            iconPosition="start"
-          />
-          <Tab
-            value="jobs"
-            label="Paired Jobs"
-            icon={<Work />}
-            iconPosition="start"
-          />
+          <Tab value="requests" label="Requests & Offers" icon={<Assignment />} iconPosition="start" />
+          <Tab value="jobs" label="Paired Jobs" icon={<Work />} iconPosition="start" />
         </Tabs>
       </Box>
 
@@ -965,8 +1017,8 @@ const ConsumerHome: React.FC = () => {
           height: "calc(100vh - 128px)",
         }}
       >
-        {activeTab === 'requests' && renderRequestsAndOffers()}
-        {activeTab === 'jobs' && renderPairedJobs()}
+        {activeTab === "requests" && renderRequestsAndOffers()}
+        {activeTab === "jobs" && renderPairedJobs()}
       </Box>
 
       {/* Offer Confirmation Dialog */}
@@ -978,7 +1030,7 @@ const ConsumerHome: React.FC = () => {
         PaperProps={{
           sx: {
             borderRadius: 2,
-            maxHeight: '90vh',
+            maxHeight: "90vh",
             backgroundColor: theme.palette.background.paper,
             color: theme.palette.text.primary,
           },
@@ -986,9 +1038,9 @@ const ConsumerHome: React.FC = () => {
       >
         <DialogTitle
           sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
             pb: 1,
             backgroundColor: theme.palette.background.paper,
             color: theme.palette.text.primary,
@@ -1027,7 +1079,7 @@ const ConsumerHome: React.FC = () => {
                   p: 3,
                   borderRadius: 2,
                   bgcolor: alpha(theme.palette.success.main, 0.05),
-                  border: `1px solid ${alpha(theme.palette.success.main, 0.1)}`
+                  border: `1px solid ${alpha(theme.palette.success.main, 0.1)}`,
                 }}
               >
                 <Box display="flex" alignItems="center" gap={1} mb={2}>
@@ -1042,21 +1094,31 @@ const ConsumerHome: React.FC = () => {
                     label={`Budget: LKR ${selectedOffer.budget}`}
                     color="success"
                     variant="filled"
-                    sx={getChipStyles('success', 'filled')}
+                    sx={getChipStyles("success", "filled")}
                   />
                   <Chip
                     label={`Timeframe: ${selectedOffer.timeframe}`}
                     color="info"
                     variant="outlined"
-                    sx={getChipStyles('info', 'outlined')}
+                    sx={getChipStyles("info", "outlined")}
                   />
                   <Chip
                     label={`Provider: ${selectedOffer.provider_name || "Provider"}`}
                     color="primary"
                     variant="outlined"
-                    sx={getChipStyles('primary', 'outlined')}
+                    sx={getChipStyles("primary", "outlined")}
                   />
                 </Stack>
+
+                {/* Provider Rating in confirmation dialog */}
+                {selectedOffer.provider_name && (
+                  <Box mb={2}>
+                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                      Provider Rating:
+                    </Typography>
+                    {renderProviderRating(selectedOffer.provider_rating || 0, selectedOffer.provider_review_count || 0)}
+                  </Box>
+                )}
 
                 <Typography variant="body2" color="text.secondary" mt={2}>
                   By accepting this offer, a job will be created and this request will be marked as assigned. You'll be
@@ -1070,12 +1132,7 @@ const ConsumerHome: React.FC = () => {
         <Divider />
 
         <DialogActions sx={{ p: 3, gap: 1, backgroundColor: theme.palette.background.paper }}>
-          <Button
-            onClick={() => setConfirmDialogOpen(false)}
-            variant="outlined"
-            size="large"
-            disabled={acceptingOffer}
-          >
+          <Button onClick={() => setConfirmDialogOpen(false)} variant="outlined" size="large" disabled={acceptingOffer}>
             Cancel
           </Button>
           <Button
@@ -1100,7 +1157,7 @@ const ConsumerHome: React.FC = () => {
         PaperProps={{
           sx: {
             borderRadius: 2,
-            maxHeight: '90vh',
+            maxHeight: "90vh",
             backgroundColor: theme.palette.background.paper,
             color: theme.palette.text.primary,
           },
@@ -1108,9 +1165,9 @@ const ConsumerHome: React.FC = () => {
       >
         <DialogTitle
           sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
             pb: 1,
             backgroundColor: theme.palette.background.paper,
             color: theme.palette.text.primary,
@@ -1135,10 +1192,7 @@ const ConsumerHome: React.FC = () => {
               </Typography>
             </Box>
           </Box>
-          <IconButton
-            onClick={handleCloseDeleteDialog}
-            sx={{ color: theme.palette.text.secondary }}
-          >
+          <IconButton onClick={handleCloseDeleteDialog} sx={{ color: theme.palette.text.secondary }}>
             <Close />
           </IconButton>
         </DialogTitle>
@@ -1155,7 +1209,7 @@ const ConsumerHome: React.FC = () => {
                   p: 3,
                   borderRadius: 2,
                   bgcolor: alpha(theme.palette.error.main, 0.05),
-                  border: `1px solid ${alpha(theme.palette.error.main, 0.1)}`
+                  border: `1px solid ${alpha(theme.palette.error.main, 0.1)}`,
                 }}
               >
                 <Typography variant="h6" fontWeight="bold" color="error" gutterBottom>
@@ -1172,22 +1226,22 @@ const ConsumerHome: React.FC = () => {
               </Paper>
 
               {/* Warning Message */}
-              <Alert 
-                severity="warning" 
+              <Alert
+                severity="warning"
                 icon={<Warning />}
-                sx={{ 
+                sx={{
                   borderRadius: 2,
-                  '& .MuiAlert-message': {
-                    fontSize: '0.95rem',
-                  }
+                  "& .MuiAlert-message": {
+                    fontSize: "0.95rem",
+                  },
                 }}
               >
                 <Typography variant="body2" fontWeight="bold" gutterBottom>
                   Important: Platform Token Refund Policy
                 </Typography>
                 <Typography variant="body2">
-                  Platform tokens may not be refunded if providers have already submitted offers for this request. 
-                  By deleting this request, you acknowledge that token refunds are subject to our policy.
+                  Platform tokens may not be refunded if providers have already submitted offers for this request. By
+                  deleting this request, you acknowledge that token refunds are subject to our policy.
                 </Typography>
               </Alert>
 
@@ -1201,12 +1255,7 @@ const ConsumerHome: React.FC = () => {
         <Divider />
 
         <DialogActions sx={{ p: 3, gap: 1, backgroundColor: theme.palette.background.paper }}>
-          <Button
-            onClick={handleCloseDeleteDialog}
-            variant="outlined"
-            size="large"
-            disabled={deletingRequest}
-          >
+          <Button onClick={handleCloseDeleteDialog} variant="outlined" size="large" disabled={deletingRequest}>
             Cancel
           </Button>
           <Button
@@ -1231,7 +1280,7 @@ const ConsumerHome: React.FC = () => {
         PaperProps={{
           sx: {
             borderRadius: 2,
-            maxHeight: '90vh',
+            maxHeight: "90vh",
             backgroundColor: theme.palette.background.paper,
             color: theme.palette.text.primary,
           },
@@ -1239,9 +1288,9 @@ const ConsumerHome: React.FC = () => {
       >
         <DialogTitle
           sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
             pb: 1,
             backgroundColor: theme.palette.background.paper,
             color: theme.palette.text.primary,
@@ -1266,10 +1315,7 @@ const ConsumerHome: React.FC = () => {
               </Typography>
             </Box>
           </Box>
-          <IconButton
-            onClick={handleCloseRatingDialog}
-            sx={{ color: theme.palette.text.secondary }}
-          >
+          <IconButton onClick={handleCloseRatingDialog} sx={{ color: theme.palette.text.secondary }}>
             <Close />
           </IconButton>
         </DialogTitle>
@@ -1286,7 +1332,7 @@ const ConsumerHome: React.FC = () => {
                   p: 3,
                   borderRadius: 2,
                   bgcolor: alpha(theme.palette.primary.main, 0.05),
-                  border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`
+                  border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
                 }}
               >
                 <Typography variant="h6" fontWeight="bold" color="primary" gutterBottom>
@@ -1311,16 +1357,16 @@ const ConsumerHome: React.FC = () => {
                     onChange={(_, newValue) => setRating(newValue || 0)}
                     size="large"
                     sx={{
-                      '& .MuiRating-iconFilled': {
+                      "& .MuiRating-iconFilled": {
                         color: theme.palette.warning.main,
                       },
-                      '& .MuiRating-iconHover': {
+                      "& .MuiRating-iconHover": {
                         color: theme.palette.warning.light,
                       },
                     }}
                   />
                   <Typography variant="body2" color="text.secondary" ml={1}>
-                    {rating > 0 && `${rating} star${rating !== 1 ? 's' : ''}`}
+                    {rating > 0 && `${rating} star${rating !== 1 ? "s" : ""}`}
                   </Typography>
                 </Box>
               </Box>
@@ -1339,14 +1385,14 @@ const ConsumerHome: React.FC = () => {
                   fullWidth
                   variant="outlined"
                   sx={{
-                    '& .MuiOutlinedInput-root': {
-                      '&:hover fieldset': {
+                    "& .MuiOutlinedInput-root": {
+                      "&:hover fieldset": {
                         borderColor: alpha(theme.palette.primary.main, 0.5),
                       },
                     },
                   }}
                 />
-                <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: "block" }}>
                   Your review will help other consumers make informed decisions.
                 </Typography>
               </Box>
@@ -1357,12 +1403,7 @@ const ConsumerHome: React.FC = () => {
         <Divider />
 
         <DialogActions sx={{ p: 3, gap: 1, backgroundColor: theme.palette.background.paper }}>
-          <Button
-            onClick={handleCloseRatingDialog}
-            variant="outlined"
-            size="large"
-            disabled={submittingRating}
-          >
+          <Button onClick={handleCloseRatingDialog} variant="outlined" size="large" disabled={submittingRating}>
             Cancel
           </Button>
           <Button
