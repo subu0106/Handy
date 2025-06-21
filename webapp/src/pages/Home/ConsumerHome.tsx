@@ -18,6 +18,7 @@ import {
   TextField,
   Rating,
   IconButton,
+  Alert,
 } from "@mui/material";
 import apiService from "@utils/apiService";
 import type { RootState } from "@store/store";
@@ -36,8 +37,11 @@ import {
   Star,
   RateReview,
   Close,
+  Delete,
+  Warning,
 } from "@mui/icons-material";
 import { fetchServiceRequestsForConsumer, setSelectedRequestId } from "@store/serviceRequestsSlice";
+import { setUser } from "@store/userSlice";
 
 const ConsumerHome: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -56,6 +60,11 @@ const ConsumerHome: React.FC = () => {
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [selectedOffer, setSelectedOffer] = useState<any>(null);
   const [acceptingOffer, setAcceptingOffer] = useState(false);
+
+  // State for delete confirmation
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [requestToDelete, setRequestToDelete] = useState<any>(null);
+  const [deletingRequest, setDeletingRequest] = useState(false);
 
   // State for paired jobs
   const [pairedJobs, setPairedJobs] = useState<any[]>([]);
@@ -143,6 +152,7 @@ const ConsumerHome: React.FC = () => {
       // Accept the offer
       await apiService.put(`/offers/updateStatus/${selectedOffer.offer_id}`, {
         status: "accepted",
+        request_id: selectedRequestId,
       });
 
       // Create paired job
@@ -175,6 +185,63 @@ const ConsumerHome: React.FC = () => {
     } finally {
       setAcceptingOffer(false);
     }
+  };
+
+  // Handle request deletion
+  const handleDeleteRequest = (request: any, event: React.MouseEvent) => {
+    event.stopPropagation(); // Prevent triggering the request selection
+    setRequestToDelete(request);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteRequest = async () => {
+    if (!requestToDelete) return;
+
+    setDeletingRequest(true);
+    try {
+      const response = await apiService.delete(
+        `/requests/deleteRequest/${requestToDelete.request_id || requestToDelete.id}`
+      );
+
+      // Update user's platform tokens if refund was given
+      if (response.data.platform_tokens !== undefined) {
+        dispatch(
+          setUser({
+            uid: user.uid!,
+            name: user.name,
+            avatarUrl: user.avatarUrl,
+            userType: user.userType,
+            location: user.location,
+            services_array: user.services_array,
+            platform_tokens: response.data.platform_tokens,
+          })
+        );
+      }
+
+      console.log("SUCCESS: Request deleted successfully!");
+
+      // If this was the selected request, clear the selection
+      if (selectedRequestId === (requestToDelete.request_id || requestToDelete.id)) {
+        dispatch(setSelectedRequestId(null));
+      }
+
+      // Refresh requests
+      if (user.uid) {
+        dispatch(fetchServiceRequestsForConsumer(user.uid));
+      }
+
+      setDeleteDialogOpen(false);
+      setRequestToDelete(null);
+    } catch (error) {
+      console.error("Error deleting request:", error);
+    } finally {
+      setDeletingRequest(false);
+    }
+  };
+
+  const handleCloseDeleteDialog = () => {
+    setDeleteDialogOpen(false);
+    setRequestToDelete(null);
   };
 
   // Handle rating and review
@@ -444,25 +511,45 @@ const ConsumerHome: React.FC = () => {
                       }}
                       onClick={() => handleRequestClick(requestId)}
                     >
-                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <Assignment color={isSelected ? "primary" : "action"} style={{ fontSize: 22 }} />
-                        <Typography
-                          variant="h6"
-                          style={{
-                            fontWeight: isSelected ? 600 : 500,
-                            color: isSelected ? theme.palette.primary.main : undefined,
-                          }}
-                        >
-                          {req.title}
-                        </Typography>
-                        {req.status === "assigned" && (
-                          <Chip
-                            label="Assigned"
-                            color="success"
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <Assignment color={isSelected ? "primary" : "action"} style={{ fontSize: 22 }} />
+                          <Typography
+                            variant="h6"
+                            style={{
+                              fontWeight: isSelected ? 600 : 500,
+                              color: isSelected ? theme.palette.primary.main : undefined,
+                            }}
+                          >
+                            {req.title}
+                          </Typography>
+                          {req.status === "assigned" && (
+                            <Chip
+                              label="Assigned"
+                              color="success"
+                              size="small"
+                              variant="filled"
+                              sx={getChipStyles("success", "filled")}
+                            />
+                          )}
+                        </div>
+
+                        {/* Delete button - only show if request is not assigned */}
+                        {req.status !== "assigned" && (
+                          <IconButton
                             size="small"
-                            variant="filled"
-                            sx={getChipStyles("success", "filled")}
-                          />
+                            color="error"
+                            onClick={(e) => handleDeleteRequest(req, e)}
+                            sx={{
+                              opacity: 0.7,
+                              "&:hover": {
+                                opacity: 1,
+                                backgroundColor: alpha(theme.palette.error.main, 0.1),
+                              },
+                            }}
+                          >
+                            <Delete fontSize="small" />
+                          </IconButton>
                         )}
                       </div>
 
@@ -1048,6 +1135,129 @@ const ConsumerHome: React.FC = () => {
             startIcon={<CheckCircle />}
           >
             {acceptingOffer ? "Accepting..." : "Accept Offer"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete Request Confirmation Dialog */}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={handleCloseDeleteDialog}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            maxHeight: "90vh",
+            backgroundColor: theme.palette.background.paper,
+            color: theme.palette.text.primary,
+          },
+        }}
+      >
+        <DialogTitle
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            pb: 1,
+            backgroundColor: theme.palette.background.paper,
+            color: theme.palette.text.primary,
+          }}
+        >
+          <Box display="flex" alignItems="center" gap={2}>
+            <Avatar
+              sx={{
+                bgcolor: theme.palette.error.main,
+                width: 48,
+                height: 48,
+              }}
+            >
+              <Warning />
+            </Avatar>
+            <Box>
+              <Typography variant="h5" component="div" fontWeight="bold">
+                Delete Service Request
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                This action cannot be undone
+              </Typography>
+            </Box>
+          </Box>
+          <IconButton onClick={handleCloseDeleteDialog} sx={{ color: theme.palette.text.secondary }}>
+            <Close />
+          </IconButton>
+        </DialogTitle>
+
+        <Divider />
+
+        <DialogContent sx={{ p: 3, backgroundColor: theme.palette.background.paper }}>
+          {requestToDelete && (
+            <Stack spacing={3}>
+              {/* Request Information */}
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 3,
+                  borderRadius: 2,
+                  bgcolor: alpha(theme.palette.error.main, 0.05),
+                  border: `1px solid ${alpha(theme.palette.error.main, 0.1)}`,
+                }}
+              >
+                <Typography variant="h6" fontWeight="bold" color="error" gutterBottom>
+                  {requestToDelete.title}
+                </Typography>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Budget: LKR {requestToDelete.budget}
+                </Typography>
+                {requestToDelete.timeframe && (
+                  <Typography variant="body2" color="text.secondary">
+                    Timeframe: {requestToDelete.timeframe}
+                  </Typography>
+                )}
+              </Paper>
+
+              {/* Warning Message */}
+              <Alert
+                severity="warning"
+                icon={<Warning />}
+                sx={{
+                  borderRadius: 2,
+                  "& .MuiAlert-message": {
+                    fontSize: "0.95rem",
+                  },
+                }}
+              >
+                <Typography variant="body2" fontWeight="bold" gutterBottom>
+                  Important: Platform Token Refund Policy
+                </Typography>
+                <Typography variant="body2">
+                  Platform tokens may not be refunded if providers have already submitted offers for this request. By
+                  deleting this request, you acknowledge that token refunds are subject to our policy.
+                </Typography>
+              </Alert>
+
+              <Typography variant="body2" color="text.secondary">
+                Are you sure you want to delete this service request? This action cannot be undone.
+              </Typography>
+            </Stack>
+          )}
+        </DialogContent>
+
+        <Divider />
+
+        <DialogActions sx={{ p: 3, gap: 1, backgroundColor: theme.palette.background.paper }}>
+          <Button onClick={handleCloseDeleteDialog} variant="outlined" size="large" disabled={deletingRequest}>
+            Cancel
+          </Button>
+          <Button
+            onClick={confirmDeleteRequest}
+            variant="contained"
+            color="error"
+            size="large"
+            disabled={deletingRequest}
+            startIcon={<Delete />}
+          >
+            {deletingRequest ? "Deleting..." : "Delete Request"}
           </Button>
         </DialogActions>
       </Dialog>

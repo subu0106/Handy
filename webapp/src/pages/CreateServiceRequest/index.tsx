@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Box, Paper, Typography, Button, MenuItem, TextField, useTheme, IconButton, alpha } from "@mui/material";
-import { useAppSelector } from "@store/hooks";
+import { useAppSelector, useAppDispatch } from "@store/hooks";
 import { ArrowBack } from "@mui/icons-material";
 import apiService from "@utils/apiService";
 import CONSTANTS from "@config/constants";
+import { setUser } from "@store/userSlice";
 
 const SERVICE_TYPES = [
   { value: "electricity", label: "Electricity", id: 1 },
@@ -22,11 +23,13 @@ const SERVICE_TYPES = [
 const CreateServiceRequest: React.FC = () => {
   const navigate = useNavigate();
   const theme = useTheme();
+  const dispatch = useAppDispatch();
   const [serviceType, setServiceType] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const user = useAppSelector((state) => state.user);
   const [location, setLocation] = useState("");
   const [budget, setBudget] = useState<number | null>(null);
@@ -40,24 +43,47 @@ const CreateServiceRequest: React.FC = () => {
     e.preventDefault();
     setLoading(true);
     setError("");
+    setSuccess("");
+    
     const data = {
       user_id: user.uid,
       service_id: SERVICE_TYPES.find((type) => type.value === serviceType)?.id,
       title,
       description,
-      location: user.location || location, //need to add this to user data interface.
+      location: user.location || location,
       budget,
       timeframe,
       status: CONSTANTS.REQUEST_STATUS.PENDING,
       created_at: new Date().toISOString(),
     };
 
-    // console.log("Creating service request with data:", data);
     try {
-      await apiService.post("/requests/createRequest", data);
-      navigate("/dashboard");
+      const response = await apiService.post("/requests/createRequest", data);
+
+      // Update the user's platform tokens in Redux store
+      if (response.data.platform_tokens !== undefined) {
+        dispatch(
+          setUser({
+            uid: user.uid!,
+            name: user.name,
+            avatarUrl: user.avatarUrl,
+            userType: user.userType,
+            location: user.location,
+            services_array: user.services_array,
+            platform_tokens: response.data.platform_tokens, // Updated token count
+          })
+        );
+      }
+
+      setSuccess("Request created successfully!");
+      
+      // Navigate after a short delay to show success message
+      setTimeout(() => {
+        navigate("/dashboard");
+      }, 1500);
+      
     } catch (err: any) {
-      setError("Failed to create service request");
+      setError(err.response?.data?.message || "Failed to create service request");
     } finally {
       setLoading(false);
     }
@@ -79,11 +105,11 @@ const CreateServiceRequest: React.FC = () => {
         overflowY: "auto",
       }}
     >
-      <Paper 
-        sx={{ 
-          p: 4, 
-          minWidth: 400, 
-          maxWidth: 600, 
+      <Paper
+        sx={{
+          p: 4,
+          minWidth: 400,
+          maxWidth: 600,
           width: "100%",
           borderRadius: 2,
           boxShadow: "0 4px 24px rgba(0,0,0,0.12)",
@@ -107,6 +133,7 @@ const CreateServiceRequest: React.FC = () => {
             Create Service Request
           </Typography>
         </Box>
+        
         <form onSubmit={handleSubmit}>
           <TextField
             select
@@ -123,6 +150,7 @@ const CreateServiceRequest: React.FC = () => {
               </MenuItem>
             ))}
           </TextField>
+          
           <TextField
             label="Service Title"
             value={title}
@@ -131,6 +159,7 @@ const CreateServiceRequest: React.FC = () => {
             required
             margin="normal"
           />
+          
           <TextField
             label="Service Description"
             value={description}
@@ -161,6 +190,7 @@ const CreateServiceRequest: React.FC = () => {
             required
             margin="normal"
           />
+          
           <TextField
             label="Timeframe"
             value={timeframe}
@@ -177,20 +207,26 @@ const CreateServiceRequest: React.FC = () => {
             </Typography>
           )}
 
+          {success && (
+            <Typography color="success.main" variant="body2" sx={{ mt: 2 }}>
+              {success}
+            </Typography>
+          )}
+
           <Box mt={3} display="flex" justifyContent="flex-end" gap={2}>
-            <Button 
-              variant="outlined" 
-              color="primary" 
+            <Button
+              variant="outlined"
+              color="primary"
               onClick={handleCancel}
               disabled={loading}
               sx={{ minWidth: 100 }}
             >
               Cancel
             </Button>
-            <Button 
-              type="submit" 
-              variant="contained" 
-              color="primary" 
+            <Button
+              type="submit"
+              variant="contained"
+              color="primary"
               disabled={loading}
               sx={{ minWidth: 100 }}
             >
