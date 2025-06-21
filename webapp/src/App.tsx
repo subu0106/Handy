@@ -10,7 +10,6 @@ import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { fetchServiceRequestsBasedOnService } from "@store/serviceRequestsSlice";
 import { ThemeProvider, createTheme, CssBaseline, Snackbar, Alert, CircularProgress } from "@mui/material";
-import { off, set } from "firebase/database";
 import { fetchProviderOffers } from "./store/providerOffersSlice";
 
 /**
