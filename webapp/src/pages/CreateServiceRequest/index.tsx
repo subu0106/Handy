@@ -1,8 +1,26 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Box, Paper, Typography, Button, MenuItem, TextField, useTheme, IconButton, alpha } from "@mui/material";
+import { 
+  Box, 
+  Paper, 
+  Typography, 
+  Button, 
+  MenuItem, 
+  TextField, 
+  useTheme, 
+  IconButton, 
+  alpha,
+  Card,
+  CardMedia,
+  CircularProgress
+} from "@mui/material";
 import { useAppSelector, useAppDispatch } from "@store/hooks";
-import { ArrowBack } from "@mui/icons-material";
+import { 
+  ArrowBack,
+  PhotoCamera,
+  Delete as DeleteIcon,
+  CloudUpload
+} from "@mui/icons-material";
 import apiService from "@utils/apiService";
 import CONSTANTS from "@config/constants";
 import { setUser } from "@store/userSlice";
@@ -34,9 +52,75 @@ const CreateServiceRequest: React.FC = () => {
   const [location, setLocation] = useState("");
   const [budget, setBudget] = useState<number | null>(null);
   const [timeframe, setTimeframe] = useState("");
+  
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [imageUrl, setImageUrl] = useState<string>("");
 
   const handleCancel = () => {
     navigate("/dashboard");
+  };
+
+  const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+      if (!validTypes.includes(file.type)) {
+        setError("Please select a valid image file (JPEG, PNG, WebP)");
+        return;
+      }
+
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      if (file.size > maxSize) {
+        setError("Image size should be less than 5MB");
+        return;
+      }
+
+      setSelectedImage(file);
+      setError("");
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagePreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // NEW: Upload image to Cloudinary
+  const uploadImageToCloudinary = async (file: File): Promise<string> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET);
+
+    try {
+      const response = await fetch(
+        `https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME}/image/upload`,
+        {
+          method: 'POST',
+          body: formData,
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error.message || 'Cloudinary upload failed');
+      }
+
+      const data = await response.json();
+      return data.secure_url; // The HTTPS URL of the uploaded image
+    } catch (err: any) {
+      console.error("Error uploading image to Cloudinary:", err);
+      throw new Error(`Failed to upload image: ${err.message}`);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setSelectedImage(null);
+    setImagePreview(null);
+    setImageUrl("");
+    setError("");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -45,22 +129,39 @@ const CreateServiceRequest: React.FC = () => {
     setError("");
     setSuccess("");
     
-    const data = {
-      user_id: user.uid,
-      service_id: SERVICE_TYPES.find((type) => type.value === serviceType)?.id,
-      title,
-      description,
-      location: user.location || location,
-      budget,
-      timeframe,
-      status: CONSTANTS.REQUEST_STATUS.PENDING,
-      created_at: new Date().toISOString(),
-    };
-
     try {
+      let finalImageUrl = "";
+
+      if (selectedImage) {
+        setUploadingImage(true);
+        try {
+          // UPDATED: Call the new Cloudinary upload function
+          finalImageUrl = await uploadImageToCloudinary(selectedImage);
+          setImageUrl(finalImageUrl);
+        } catch (uploadError: any) {
+          setError(uploadError.message || "Failed to upload image. Please try again.");
+          setLoading(false);
+          setUploadingImage(false);
+          return;
+        }
+        setUploadingImage(false);
+      }
+
+      const data = {
+        user_id: user.uid,
+        service_id: SERVICE_TYPES.find((type) => type.value === serviceType)?.id,
+        title,
+        description,
+        location: user.location || location,
+        budget,
+        timeframe,
+        status: CONSTANTS.REQUEST_STATUS.PENDING,
+        created_at: new Date().toISOString(),
+        image_url: finalImageUrl || null,
+      };
+
       const response = await apiService.post("/requests/createRequest", data);
 
-      // Update the user's platform tokens in Redux store
       if (response.data.platform_tokens !== undefined) {
         dispatch(
           setUser({
@@ -70,14 +171,13 @@ const CreateServiceRequest: React.FC = () => {
             userType: user.userType,
             location: user.location,
             services_array: user.services_array,
-            platform_tokens: response.data.platform_tokens, // Updated token count
+            platform_tokens: response.data.platform_tokens,
           })
         );
       }
 
       setSuccess("Request created successfully!");
       
-      // Navigate after a short delay to show success message
       setTimeout(() => {
         navigate("/dashboard");
       }, 1500);
@@ -86,34 +186,33 @@ const CreateServiceRequest: React.FC = () => {
       setError(err.response?.data?.message || "Failed to create service request");
     } finally {
       setLoading(false);
+      setUploadingImage(false);
     }
   };
 
   return (
     <Box
       sx={{
-        width: "100vw",
-        height: "calc(100vh - 64px)",
-        position: "absolute",
-        top: 64,
-        left: 0,
+        minHeight: "100vh",
+        paddingTop: "80px",
+        paddingBottom: 3,
+        paddingX: 3,
         display: "flex",
-        alignItems: "center",
+        alignItems: "flex-start",
         justifyContent: "center",
         backgroundColor: theme.palette.background.default,
-        padding: 3,
-        overflowY: "auto",
       }}
     >
       <Paper
         sx={{
           p: 4,
           minWidth: 400,
-          maxWidth: 600,
+          maxWidth: 700,
           width: "100%",
           borderRadius: 2,
           boxShadow: "0 4px 24px rgba(0,0,0,0.12)",
           backgroundColor: theme.palette.background.paper,
+          my: 2,
         }}
       >
         {/* Header with back button */}
@@ -143,6 +242,7 @@ const CreateServiceRequest: React.FC = () => {
             fullWidth
             required
             margin="normal"
+            helperText="Select the type of service you need"
           >
             {SERVICE_TYPES.map((option) => (
               <MenuItem key={option.value} value={option.value}>
@@ -158,6 +258,8 @@ const CreateServiceRequest: React.FC = () => {
             fullWidth
             required
             margin="normal"
+            placeholder="e.g., Fix kitchen sink plumbing"
+            helperText="Provide a clear, descriptive title for your service request"
           />
           
           <TextField
@@ -169,6 +271,8 @@ const CreateServiceRequest: React.FC = () => {
             margin="normal"
             multiline
             minRows={3}
+            placeholder="Describe the service you need in detail..."
+            helperText="Include as much detail as possible to help providers understand your needs"
           />
 
           <TextField
@@ -178,62 +282,166 @@ const CreateServiceRequest: React.FC = () => {
             fullWidth
             required
             margin="normal"
-            placeholder="e.g., No 123, sample location"
+            placeholder="e.g., No 123, Main Street, Colombo"
+            helperText="Where will the service be performed?"
           />
 
           <TextField
-            label="Budget"
+            label="Budget (LKR)"
             type="number"
             value={budget || ""}
             onChange={(e) => setBudget(Number(e.target.value))}
             fullWidth
             required
             margin="normal"
+            placeholder="Enter your budget in LKR"
+            helperText="What's your budget for this service?"
+            inputProps={{ min: 1, step: 0.01 }}
           />
           
           <TextField
-            label="Timeframe"
+            label="Expected Timeframe"
             value={timeframe}
             onChange={(e) => setTimeframe(e.target.value)}
             fullWidth
             required
             margin="normal"
-            placeholder="e.g., 1 week, 2 days"
+            placeholder="e.g., Within 1 week, ASAP, Next month"
+            helperText="When do you need this service completed?"
           />
 
-          {error && (
-            <Typography color="error" variant="body2" sx={{ mt: 2 }}>
-              {error}
+          {/* Image Upload Section */}
+          <Box mt={3} mb={2}>
+            <Typography variant="h6" gutterBottom>
+              Add Image (Optional)
             </Typography>
+            <Typography variant="body2" color="text.secondary" gutterBottom>
+              Upload an image to help providers understand your request better
+            </Typography>
+            
+            {!imagePreview ? (
+              <Box>
+                <input
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  id="image-upload"
+                  type="file"
+                  onChange={handleImageSelect}
+                />
+                <label htmlFor="image-upload">
+                  <Button
+                    variant="outlined"
+                    component="span"
+                    startIcon={<PhotoCamera />}
+                    sx={{
+                      mt: 1,
+                      borderStyle: 'dashed',
+                      borderWidth: 2,
+                      p: 2,
+                      "&:hover": {
+                        backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                      },
+                    }}
+                  >
+                    Select Image
+                  </Button>
+                </label>
+              </Box>
+            ) : (
+              <Box mt={2}>
+                <Card sx={{ maxWidth: 300, position: 'relative' }}>
+                  <CardMedia
+                    component="img"
+                    height="200"
+                    image={imagePreview}
+                    alt="Service request image preview"
+                    sx={{ objectFit: 'cover' }}
+                  />
+                  <IconButton
+                    onClick={handleRemoveImage}
+                    sx={{
+                      position: 'absolute',
+                      top: 8,
+                      right: 8,
+                      backgroundColor: alpha(theme.palette.error.main, 0.8),
+                      color: 'white',
+                      '&:hover': {
+                        backgroundColor: theme.palette.error.main,
+                      },
+                    }}
+                    size="small"
+                  >
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
+                </Card>
+                <Typography variant="caption" color="text.secondary" display="block" mt={1}>
+                  {selectedImage?.name} ({((selectedImage?.size || 0) / (1024 * 1024)).toFixed(2)} MB)
+                </Typography>
+              </Box>
+            )}
+          </Box>
+
+          {error && (
+            <Box mt={2} p={1.5} sx={{ backgroundColor: alpha(theme.palette.error.main, 0.1), borderRadius: 1, border: `1px solid ${alpha(theme.palette.error.main, 0.2)}` }}>
+              <Typography color="error" variant="body2">
+                {error}
+              </Typography>
+            </Box>
           )}
 
           {success && (
-            <Typography color="success.main" variant="body2" sx={{ mt: 2 }}>
-              {success}
-            </Typography>
+            <Box mt={2} p={1.5} sx={{ backgroundColor: alpha(theme.palette.success.main, 0.1), borderRadius: 1, border: `1px solid ${alpha(theme.palette.success.main, 0.2)}` }}>
+              <Typography color="success.main" variant="body2">
+                {success}
+              </Typography>
+            </Box>
           )}
 
           <Box mt={3} display="flex" justifyContent="flex-end" gap={2}>
-            <Button
-              variant="outlined"
-              color="primary"
-              onClick={handleCancel}
-              disabled={loading}
-              sx={{ minWidth: 100 }}
-            >
+            <Button variant="outlined" color="primary" onClick={handleCancel} disabled={loading || uploadingImage} sx={{ minWidth: 100 }}>
               Cancel
             </Button>
             <Button
               type="submit"
               variant="contained"
               color="primary"
-              disabled={loading}
-              sx={{ minWidth: 100 }}
+              disabled={loading || uploadingImage}
+              startIcon={
+                uploadingImage ? <CircularProgress size={16} color="inherit" /> : 
+                loading ? <CircularProgress size={16} color="inherit" /> : 
+                <CloudUpload />
+              }
+              sx={{ minWidth: 140 }}
             >
-              {loading ? "Creating..." : "Create"}
+              {uploadingImage ? "Uploading..." : loading ? "Creating..." : "Create Request"}
             </Button>
           </Box>
         </form>
+
+        {/* Help Text */}
+        <Box 
+          mt={3} 
+          p={2} 
+          sx={{ 
+            backgroundColor: alpha(theme.palette.info.main, 0.1),
+            borderRadius: 1,
+            border: `1px solid ${alpha(theme.palette.info.main, 0.2)}`,
+          }}
+        >
+          <Typography variant="body2">
+            <strong>Tips for a great service request:</strong>
+            <br />
+            • Be specific about what you need
+            <br />
+            • Include relevant images to show the problem
+            <br />
+            • Set a realistic budget and timeframe
+            <br />
+            • Provide clear location details
+            <br />
+            • You can chat with providers after they submit offers
+          </Typography>
+        </Box>
       </Paper>
     </Box>
   );
