@@ -19,7 +19,8 @@ import {
   Stack,
   Paper,
   Tabs,
-  Tab
+  Tab,
+  Alert
 } from "@mui/material";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { fetchServiceRequestsBasedOnService } from "../../store/serviceRequestsSlice";
@@ -41,9 +42,11 @@ import DescriptionIcon from "@mui/icons-material/Description";
 import WorkIcon from "@mui/icons-material/Work";
 import StarIcon from "@mui/icons-material/Star";
 import RateReviewIcon from "@mui/icons-material/RateReview";
+import Warning from "@mui/icons-material/Warning";
 import { useNavigate } from "react-router-dom";
 import apiService from "@utils/apiService";
 import { createOrGetChat } from "@utils/chatUtils";
+import { setUser } from "../../store/userSlice";
 
 const ProviderHome: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -70,6 +73,11 @@ const ProviderHome: React.FC = () => {
   // State for offer details modal
   const [selectedOffer, setSelectedOffer] = useState<any>(null);
   const [offerDetailsModalOpen, setOfferDetailsModalOpen] = useState(false);
+
+  // State for delete confirmation
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [offerToDelete, setOfferToDelete] = useState<any>(null);
+  const [deletingOffer, setDeletingOffer] = useState(false);
 
   // State for paired jobs
   const [pairedJobs, setPairedJobs] = useState<any[]>([]);
@@ -131,14 +139,53 @@ const ProviderHome: React.FC = () => {
     navigate(`/dashboard/create-offer/${requestId}`);
   };
 
-  const handleDeleteOffer = async (offerId: string) => {
-    if (window.confirm('Are you sure you want to delete this offer?')) {
-      try {
-        await dispatch(deleteProviderOffer(offerId));
-      } catch (error) {
-        console.error('Error deleting offer:', error);
+  const handleDeleteOffer = (offerId: string, offerData: any) => {
+    setOfferToDelete({ id: offerId, ...offerData });
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteOffer = async () => {
+    if (!offerToDelete) return;
+
+    setDeletingOffer(true);
+    try {
+      // Call the backend API directly to handle token refund
+      const response = await apiService.delete(`/offers/deleteOffer/${offerToDelete.id}`);
+      
+      // Update user's platform tokens if refund was given
+      if (response.data.platform_tokens !== undefined) {
+        dispatch(
+          setUser({
+            uid: user.uid!,
+            name: user.name,
+            avatarUrl: user.avatarUrl,
+            userType: user.userType,
+            location: user.location,
+            services_array: user.services_array,
+            platform_tokens: response.data.platform_tokens,
+          })
+        );
       }
+
+      console.log('SUCCESS: Offer deleted successfully and platform token refunded!');
+      
+      // Refresh offers from the backend
+      if (user.uid) {
+        dispatch(fetchProviderOffers(user.uid));
+      }
+
+      setDeleteDialogOpen(false);
+      setOfferToDelete(null);
+    } catch (error) {
+      console.error('Error deleting offer:', error);
+    } finally {
+      setDeletingOffer(false);
     }
+  };
+
+  const handleCloseDeleteDialog = () => {
+    setDeleteDialogOpen(false);
+    setOfferToDelete(null);
   };
 
   const handleEditOffer = (offer: any) => {
@@ -408,7 +455,7 @@ const ProviderHome: React.FC = () => {
                               size="small"
                               color="error"
                               startIcon={<DeleteIcon />}
-                              onClick={() => handleDeleteOffer(existingOffer.offer_id)}
+                              onClick={() => handleDeleteOffer(existingOffer.offer_id, existingOffer)}
                             >
                               Delete Offer
                             </Button>
@@ -612,7 +659,7 @@ const ProviderHome: React.FC = () => {
                           size="small"
                           color="error"
                           startIcon={<DeleteIcon />}
-                          onClick={() => handleDeleteOffer(offer.offer_id)}
+                          onClick={() => handleDeleteOffer(offer.offer_id, offer)}
                         >
                           Delete
                         </Button>
@@ -1311,7 +1358,7 @@ const ProviderHome: React.FC = () => {
                 startIcon={<DeleteIcon />}
                 onClick={() => {
                   handleCloseOfferDetails();
-                  handleDeleteOffer(selectedOffer.offer_id);
+                  handleDeleteOffer(selectedOffer.offer_id, selectedOffer);
                 }}
               >
                 Delete Offer
@@ -1565,6 +1612,117 @@ const ProviderHome: React.FC = () => {
               Message Consumer
             </Button>
           )}
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete Offer Confirmation Dialog */}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={handleCloseDeleteDialog}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            maxHeight: '90vh',
+            backgroundColor: theme.palette.background.paper,
+            color: theme.palette.text.primary,
+          },
+        }}
+      >
+        <DialogTitle
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            pb: 1,
+            backgroundColor: theme.palette.background.paper,
+            color: theme.palette.text.primary,
+          }}
+        >
+          <Box display="flex" alignItems="center" gap={2}>
+            <Avatar
+              sx={{
+                bgcolor: theme.palette.error.main,
+                width: 48,
+                height: 48,
+              }}
+            >
+              <Warning />
+            </Avatar>
+            <Box>
+              <Typography variant="h5" component="div" fontWeight="bold">
+                Delete Offer
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                This action cannot be undone
+              </Typography>
+            </Box>
+          </Box>
+          <IconButton
+            onClick={handleCloseDeleteDialog}
+            sx={{ color: theme.palette.text.secondary }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+
+        <Divider />
+
+        <DialogContent sx={{ p: 3, backgroundColor: theme.palette.background.paper }}>
+          {offerToDelete && (
+            <Stack spacing={3}>
+              {/* Offer Information */}
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 3,
+                  borderRadius: 2,
+                  bgcolor: alpha(theme.palette.error.main, 0.05),
+                  border: `1px solid ${alpha(theme.palette.error.main, 0.1)}`
+                }}
+              >
+                <Typography variant="h6" fontWeight="bold" color="error" gutterBottom>
+                  {offerToDelete.request_title || `Request #${offerToDelete.request_id}`}
+                </Typography>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Your Quote: LKR {offerToDelete.budget}
+                </Typography>
+                {offerToDelete.timeframe && (
+                  <Typography variant="body2" color="text.secondary">
+                    Timeframe: {offerToDelete.timeframe}
+                  </Typography>
+                )}
+              </Paper>
+
+              <Typography variant="body2" color="text.secondary">
+                Are you sure you want to delete this offer? This action cannot be undone.
+              </Typography>
+            </Stack>
+          )}
+        </DialogContent>
+
+        <Divider />
+
+        <DialogActions sx={{ p: 3, gap: 1, backgroundColor: theme.palette.background.paper }}>
+          <Button
+            onClick={handleCloseDeleteDialog}
+            variant="outlined"
+            size="large"
+            disabled={deletingOffer}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={confirmDeleteOffer}
+            variant="contained"
+            color="error"
+            size="large"
+            disabled={deletingOffer}
+            startIcon={<DeleteIcon />}
+          >
+            {deletingOffer ? "Deleting..." : "Delete Offer"}
+          </Button>
         </DialogActions>
       </Dialog>
     </>

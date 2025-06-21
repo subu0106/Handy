@@ -106,23 +106,16 @@ const getPairedJobs = async (req, res) => {
       jobs.map(async (job) => {
         try {
           // Get consumer details
-          const consumer = await db.getOne(
+          const user = await db.getAll(
             constant.DB_TABLES.USERS,
-            "WHERE user_id = $1",
-            [job.consumer_id]
-          );
-          
-          // Get provider details
-          const provider = await db.getOne(
-            constant.DB_TABLES.USERS,
-            "WHERE user_id = $1",
-            [job.provider_id]
+            "WHERE user_id = $1 OR user_id = $2",
+            [job.consumer_id, job.provider_id]
           );
           
           return {
             ...job,
-            consumer_name: consumer?.name || "Consumer",
-            provider_name: provider?.name || "Provider"
+            consumer_name: user[0].user_type === "consumer" ? user[0]?.name : user[1]?.name || "Consumer",
+            provider_name: user[1].user_type === "provider" ? user[1]?.name : user[0]?.name || "Provider"
           };
         } catch (error) {
           console.error("Error enriching job data:", error);
