@@ -29,13 +29,14 @@ const io = new Server(server, {
 
 app.set("io", io);
 
-app.use(cors({
-  // origin: ["http://localhost:5173", "http://localhost:3000", process.env.FRONTEND_URL],
-  origin: "*",
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
-}));
+// app.use(cors({
+//   // origin: ["http://localhost:5173", "http://localhost:3000", process.env.FRONTEND_URL],
+//   origin: "*",
+//   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+//   allowedHeaders: ['Content-Type', 'Authorization'],
+//   credentials: true
+// }));
+app.use(cors());
 
 app.use(express.json());
 
