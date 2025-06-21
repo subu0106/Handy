@@ -58,8 +58,18 @@ const ProviderHome: React.FC = () => {
   const { items: requests = [], status: requestsStatus = "" } = serviceRequests;
   const { items: myOffers = [] } = providerOffers;
 
+  const getInitialTab = (): 'requests' | 'jobs' => {
+    const savedTab = localStorage.getItem('providerActiveTab');
+    return (savedTab === 'requests' || savedTab === 'jobs') ? savedTab : 'requests';
+  };
+
   // Tab state
-  const [activeTab, setActiveTab] = useState<"requests" | "jobs">("requests");
+  const [activeTab, setActiveTab] = useState<'requests' | 'jobs'>(getInitialTab());
+
+  // Persist activeTab to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('providerActiveTab', activeTab);
+  }, [activeTab]);
 
   // State for editing offers
   const [editingOfferId, setEditingOfferId] = useState<string | null>(null);
@@ -165,7 +175,7 @@ const ProviderHome: React.FC = () => {
             userType: user.userType,
             location: user.location,
             services_array: user.services_array,
-            platform_tokens: response.data.platform_tokens,
+            platform_tokens: user.platform_tokens! + 1,
           })
         );
       }
