@@ -71,6 +71,7 @@ export const createAppRouter = (mainLayoutProps: any) =>
       children: [
         { path: "", element: <Home /> },
         { path: "chats", element: <WhatsAppChat /> },
+        { path: "chats/:chatId", element: <WhatsAppChat /> },
         { path: "register", element: <Register /> },
         { path: "register/provider", element: <RegisterProvider /> },
         { path: "register/consumer", element: <RegisterConsumer /> },
