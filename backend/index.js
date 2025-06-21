@@ -60,7 +60,7 @@ io.on("connection", (socket) => {
 });
 
 server.listen(port, () => {
-  // console.log(`Server is running on port ${port}`);
+  console.log(`Server is running on port ${port}`);
+  console.log('WebSocket server ready for connections');
   // console.log(`Test the server at: http://localhost:${port}/api/v1/health`);
-  // console.log('WebSocket server ready for connections');
 });
