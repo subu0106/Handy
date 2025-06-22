@@ -104,7 +104,7 @@ const getOfferById = async (req, res) => {
 
 const updateOfferStatus = async (req, res) => {
   const offer_id = req.params.offer_id;
-  const newStatus = req.body.status
+  const newStatus = req.body.status;
   const validOfferStatusArray = [constant.OFFERS_STATUS.ACCEPTED, constant.OFFERS_STATUS.PENDING, constant.OFFERS_STATUS.REJECTED];
   const condition = 'WHERE offer_id=$1';
 
@@ -438,6 +438,104 @@ const updateOfferBudget = async (req, res) => {
   }
 };
 
+const rejectOtherOffers = async (req, res) => {
+  const { request_id } = req.params;
+  const { accepted_offer_id } = req.body;
+
+  try {
+    // Validate input
+    if (!request_id || !accepted_offer_id) {
+      return res.status(constant.HTTP_STATUS.BAD_REQUEST).json({
+        message: "request_id and accepted_offer_id are required"
+      });
+    }
+
+    // Get all pending offers for this request except the accepted one
+    const offersToReject = await db.getAll(
+      constant.DB_TABLES.OFFERS,
+      "WHERE request_id = $1 AND offer_id != $2 AND status = $3",
+      [request_id, accepted_offer_id, constant.OFFERS_STATUS.PENDING]
+    );
+
+    if (offersToReject.length === 0) {
+      return res.status(constant.HTTP_STATUS.OK).json({
+        message: "No other offers to reject",
+        rejected_count: 0
+      });
+    }    // Update all other offers to rejected status
+    // Using direct query since dbHelper doesn't handle complex WHERE clauses with SET parameters correctly
+    const updateQuery = `
+      UPDATE ${constant.DB_TABLES.OFFERS} 
+      SET status = $4 
+      WHERE request_id = $1 AND offer_id != $2 AND status = $3
+      RETURNING *
+    `;
+    
+    const updateResult = await db.query(updateQuery, [
+      request_id, 
+      accepted_offer_id, 
+      constant.OFFERS_STATUS.PENDING,
+      constant.OFFERS_STATUS.REJECTED
+    ]);
+
+    // Get request details for notifications
+    const request = await db.getOne(
+      constant.DB_TABLES.REQUESTS,
+      "WHERE request_id = $1",
+      [request_id]
+    );
+
+    // Send notifications to all rejected providers
+    const io = req.app.get("io");
+    if (io && request) {
+      const rejectionPromises = offersToReject.map(async (offer) => {
+        // Get provider details
+        const provider = await db.getOne(
+          constant.DB_TABLES.USERS,
+          "WHERE user_id = $1",
+          [offer.provider_id]
+        );
+
+        // Refund platform token to provider
+        if (provider) {
+          const updatedTokens = provider.platform_tokens + 1;
+          await db.update(
+            constant.DB_TABLES.USERS,
+            { platform_tokens: updatedTokens },
+            'WHERE user_id = $1',
+            [offer.provider_id]
+          );
+
+          // Send rejection notification
+          const notificationData = {
+            offer_id: offer.offer_id,
+            request_id: request_id,
+            request_title: request.title,
+            message: `Your offer for "${request.title}" was not selected. Platform token refunded.`,
+            platform_tokens: updatedTokens
+          };
+
+          io.emit(`offer_declined_${offer.provider_id}`, notificationData);
+        }
+      });
+
+      await Promise.all(rejectionPromises);
+    }
+
+    res.status(constant.HTTP_STATUS.OK).json({
+      message: "Other offers rejected successfully",
+      rejected_count: offersToReject.length
+    });
+
+  } catch (err) {
+    console.error("Error rejecting other offers:", err);
+    res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      message: "Internal server error",
+      details: err.message
+    });
+  }
+};
+
 module.exports = {
   createOffers,
   getOfferById,
@@ -446,5 +544,6 @@ module.exports = {
   deleteOffer,
   getOffersByRequestId,
   getOffersByProviderId,
-  getOfferByProviderAndRequest
+  getOfferByProviderAndRequest,
+  rejectOtherOffers
 };
