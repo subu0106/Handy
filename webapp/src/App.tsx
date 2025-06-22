@@ -17,7 +17,11 @@ import { fetchProviderOffers } from "./store/providerOffersSlice";
  */
 const THEME_KEY = "handy_theme_mode";
 const SOCKET_IO_BASE_URL = import.meta.env.VITE_SOCKET_IO_BASE_URL || "http://localhost:5000";
-const socket = io(SOCKET_IO_BASE_URL, { autoConnect: false });
+const SOCKET_IO_PATH = import.meta.env.VITE_SOCKET_IO_PATH || "/socket.io";
+const socket = io(SOCKET_IO_BASE_URL, {
+  autoConnect: false,
+  path: SOCKET_IO_PATH,
+});
 
 /**
  * Get theme mode from localStorage or system preference
@@ -70,17 +74,17 @@ const App = () => {
           mode: themeMode,
           ...(themeMode === "dark"
             ? {
-              primary: { main: "#1976d2" },
-              secondary: { main: "#90caf9" },
-              background: { default: "#23272f", paper: "#2c313a" },
-              text: { primary: "#f3f6fa", secondary: "#b0b8c1" },
-            }
+                primary: { main: "#1976d2" },
+                secondary: { main: "#90caf9" },
+                background: { default: "#23272f", paper: "#2c313a" },
+                text: { primary: "#f3f6fa", secondary: "#b0b8c1" },
+              }
             : {
-              primary: { main: "#1565c0" },
-              secondary: { main: "#1565c0" },
-              background: { default: "#f4f6fa", paper: "#fff" },
-              text: { primary: "#23272f", secondary: "#5c6b7a" },
-            }),
+                primary: { main: "#1565c0" },
+                secondary: { main: "#1565c0" },
+                background: { default: "#f4f6fa", paper: "#fff" },
+                text: { primary: "#23272f", secondary: "#5c6b7a" },
+              }),
         },
         shape: { borderRadius: 12 },
         typography: {
@@ -129,25 +133,26 @@ const App = () => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       try {
         if (firebaseUser) {
-
-          const isInRegistration = window.location.pathname.includes('/register');
+          const isInRegistration = window.location.pathname.includes("/register");
 
           try {
             const token = await firebaseUser.getIdToken();
             const userInfoResponse = await apiService.get(`/users/user_info/${firebaseUser.uid}`, {
-              headers: { Authorization: `Bearer ${token}` }
+              headers: { Authorization: `Bearer ${token}` },
             });
 
             const userData = userInfoResponse.data;
-            dispatch(setUser({
-              uid: firebaseUser.uid,
-              name: userData.name || firebaseUser.displayName || firebaseUser.email || "",
-              avatarUrl: userData.avatar || firebaseUser.photoURL || "",
-              userType: userData.user_type || "",
-              platform_tokens: userData.platform_tokens,
-              location: userData.location || "",
-              services_array: userData.services_array || [],
-            }));
+            dispatch(
+              setUser({
+                uid: firebaseUser.uid,
+                name: userData.name || firebaseUser.displayName || firebaseUser.email || "",
+                avatarUrl: userData.avatar || firebaseUser.photoURL || "",
+                userType: userData.user_type || "",
+                platform_tokens: userData.platform_tokens,
+                location: userData.location || "",
+                services_array: userData.services_array || [],
+              })
+            );
           } catch (userFetchError: any) {
             // If user doesn't exist in backend but we're not in registration, sign out
             if (!isInRegistration && userFetchError.response?.status === 404) {
@@ -215,21 +220,21 @@ const App = () => {
 
         socket.off(offerRejectionTopic);
         socket.on(offerRejectionTopic, (rejectionData) => {
-          showToast(
-            rejectionData.message 
-          );
+          showToast(rejectionData.message);
           if (user?.uid) {
             dispatch(fetchServiceRequestsBasedOnService(user.uid));
             dispatch(fetchProviderOffers(user.uid));
-            dispatch(setUser({
-              uid: user.uid!,
-              name: user.name,
-              avatarUrl: user.avatarUrl,
-              userType: user.userType,
-              location: user.location,
-              services_array: user.services_array,
-              platform_tokens: rejectionData.platform_tokens || user.platform_tokens,
-            }))
+            dispatch(
+              setUser({
+                uid: user.uid!,
+                name: user.name,
+                avatarUrl: user.avatarUrl,
+                userType: user.userType,
+                location: user.location,
+                services_array: user.services_array,
+                platform_tokens: rejectionData.platform_tokens || user.platform_tokens,
+              })
+            );
           }
         });
 
