@@ -217,6 +217,9 @@ const deleteRequest = async (req, res) => {
       return res.status(constant.HTTP_STATUS.NOT_FOUND).json({message: "Request Not Found"});
     }
 
+    // Get io instance for emitting events
+    const io = req.app.get("io");
+
     // Check if there are any offers for this request
     const existingOffers = await db.getAll(
       constant.DB_TABLES.OFFERS,
@@ -225,10 +228,10 @@ const deleteRequest = async (req, res) => {
     );
 
     let updatedTokens = null;
+    let refundedProviders = [];
 
-    // Only refund platform token if there are no offers
     if (!existingOffers || existingOffers.length === 0) {
-      // Get consumer details to refund the platform token
+      // No offers: refund consumer
       const consumer = await db.getOne(
         constant.DB_TABLES.USERS,
         "WHERE user_id = $1",
@@ -236,7 +239,6 @@ const deleteRequest = async (req, res) => {
       );
 
       if (consumer) {
-        // Refund 1 platform token to consumer
         updatedTokens = consumer.platform_tokens + 1;
         await db.update(
           constant.DB_TABLES.USERS,
@@ -245,10 +247,35 @@ const deleteRequest = async (req, res) => {
           [request.user_id]
         );
       }
-    }
+    } else {
+      // Refund all providers who submitted offers
+      for (const offer of existingOffers) {
+        const provider = await db.getOne(
+          constant.DB_TABLES.USERS,
+          "WHERE user_id = $1",
+          [offer.provider_id]
+        );
+        if (provider) {
+          const newTokens = provider.platform_tokens + 1;
+          await db.update(
+            constant.DB_TABLES.USERS,
+            { platform_tokens: newTokens },
+            'WHERE user_id = $1',
+            [offer.provider_id]
+          );
+          refundedProviders.push({ provider_id: offer.provider_id, platform_tokens: newTokens });
 
-    // Delete all offers associated with this request (if any)
-    if (existingOffers && existingOffers.length > 0) {
+          // Emit refund event to provider
+          if (io) {
+            io.emit(`offer_declined_${offer.provider_id}`, {
+              message: `Your offer for "${request.title}" was declined and your platform token refunded.`,
+              platform_tokens: newTokens,
+              request_id: request_id,
+            });
+          }
+        }
+      }
+      // Delete all offers associated with this request
       await db.remove(
         constant.DB_TABLES.OFFERS,
         "WHERE request_id = $1",
@@ -264,13 +291,16 @@ const deleteRequest = async (req, res) => {
         message: "Request deleted successfully",
       };
 
-      // Only include platform_tokens in response if refund was given
       if (updatedTokens !== null) {
         response.platform_tokens = updatedTokens;
         response.refund_given = true;
+        response.refunded_providers = [];
       } else {
         response.refund_given = false;
-        response.reason = "No refund given - offers exist for this request";
+        response.refunded_providers = refundedProviders;
+        if (refundedProviders.length === 0) {
+          response.reason = "No refund given - no providers found for offers";
+        }
       }
 
       return res.status(constant.HTTP_STATUS.OK).json(response);
