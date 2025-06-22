@@ -21,6 +21,7 @@ import {
   Tabs,
   Tab,
   CardMedia,
+  Grid,
 } from "@mui/material";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { fetchServiceRequestsBasedOnService } from "../../store/serviceRequestsSlice";
@@ -1172,10 +1173,84 @@ const ProviderHome: React.FC = () => {
                 </Card>
               </Box>
 
-              {selectedRequest.image_url && (
+              {/* Request Images */}
+              {selectedRequest.image_urls && Array.isArray(selectedRequest.image_urls) && selectedRequest.image_urls.length > 0 && (
                 <Box mt={2} mb={2}>
                   <Typography variant="h6" gutterBottom>
-                    Image
+                    Request Images ({selectedRequest.image_urls.length})
+                  </Typography>
+                  {selectedRequest.image_urls.length === 1 ? (
+                    // Single image - display larger
+                    <Card sx={{ maxWidth: 400, borderRadius: 2 }}>
+                      <CardMedia
+                        component="img"
+                        height="250"
+                        image={selectedRequest.image_urls[0]}
+                        alt="Service request image"
+                        sx={{
+                          objectFit: "cover",
+                          cursor: "pointer",
+                          transition: "transform 0.2s",
+                          "&:hover": {
+                            transform: "scale(1.02)",
+                          },
+                        }}
+                        onClick={() => window.open(selectedRequest.image_urls[0], "_blank")}
+                      />
+                    </Card>
+                  ) : (
+                    // Multiple images - display in grid
+                    <Grid container spacing={2}>
+                      {selectedRequest.image_urls.map((imageUrl: string, index: number) => (
+                        <Grid key={index} xs={6} sm={4}>
+                          <Card sx={{ position: 'relative', borderRadius: 1 }}>
+                            <CardMedia
+                              component="img"
+                              height="150"
+                              image={imageUrl}
+                              alt={`Request image ${index + 1}`}
+                              sx={{
+                                objectFit: "cover",
+                                cursor: "pointer",
+                                transition: "transform 0.2s",
+                                "&:hover": {
+                                  transform: "scale(1.05)",
+                                },
+                              }}
+                              onClick={() => window.open(imageUrl, "_blank")}
+                            />
+                            <Box
+                              sx={{
+                                position: 'absolute',
+                                bottom: 4,
+                                right: 4,
+                                backgroundColor: alpha(theme.palette.common.black, 0.7),
+                                color: 'white',
+                                px: 1,
+                                py: 0.5,
+                                borderRadius: 1,
+                              }}
+                            >
+                              <Typography variant="caption">
+                                {index + 1}/{selectedRequest.image_urls.length}
+                              </Typography>
+                            </Box>
+                          </Card>
+                        </Grid>
+                      ))}
+                    </Grid>
+                  )}
+                  <Typography variant="caption" color="text.secondary" display="block" mt={1}>
+                    Click images to view full size
+                  </Typography>
+                </Box>
+              )}
+
+              {/* Fallback for single image (backward compatibility) */}
+              {!selectedRequest.image_urls && selectedRequest.image_url && (
+                <Box mt={2} mb={2}>
+                  <Typography variant="h6" gutterBottom>
+                    Request Image
                   </Typography>
                   <Card sx={{ maxWidth: 400, borderRadius: 2 }}>
                     <CardMedia

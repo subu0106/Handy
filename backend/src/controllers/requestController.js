@@ -8,12 +8,22 @@ const createRequest = async (req, res) => {
     data.status = constant.REQUESTS_STATUS.PENDING;
     data.created_at = new Date().toISOString();
 
-    // Check if required fields are present
+    if (data.image_urls && Array.isArray(data.image_urls)) {
+      data.image_urls = data.image_urls.filter(url => url && url.trim());
+      if (data.image_urls.length === 0) {
+        data.image_urls = null;
+      }
+    } else if (data.image_url) {
+      data.image_urls = [data.image_url];
+      delete data.image_url;
+    } else {
+      data.image_urls = null;
+    }
+
     if (!data.user_id) {
       return res.status(constant.HTTP_STATUS.BAD_REQUEST).json({message: "consumer_id is required"});
     }
 
-    // Check if consumer has enough platform tokens
     const consumer = await db.getOne(
       constant.DB_TABLES.USERS, 
       "WHERE user_id = $1", 
@@ -30,10 +40,17 @@ const createRequest = async (req, res) => {
       });
     }
 
+    console.log("Creating request with data:", data);
+
     const request = await db.create(constant.DB_TABLES.REQUESTS, data);
 
     if (!request) {
       return res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR).json({message: "Failed to create request"});
+    }
+
+    
+    if (request.image_urls && request.image_urls.length > 0) {
+      request.image_url = request.image_urls[0]; // First image for backward compatibility
     }
 
     // Deduct 1 platform token from consumer
@@ -45,19 +62,23 @@ const createRequest = async (req, res) => {
       [data.user_id]
     );
 
-    const serviceId = data.service_id
+    const serviceId = data.service_id;
     const service = await db.getOne(constant.DB_TABLES.SERVICES, "WHERE service_id = $1", [serviceId]);
     if (!service) {
       return res.status(constant.HTTP_STATUS.BAD_REQUEST).json({message: "Invalid service_id provided"});
     }
     const serviceName = service.name;
+    
     // Emit event to all clients
     const io = req.app.get("io");
-    io.emit(`new_request_${serviceName}`, {
-      title: data.title,
-      budget: data.budget,
-      request: request
-    });
+    if (io) {
+      io.emit(`new_request_${serviceName}`, {
+        title: data.title,
+        budget: data.budget,
+        request: request,
+        image_urls: request.image_urls || null
+      });
+    }
 
     return res.status(constant.HTTP_STATUS.CREATED).json({
       ...request,
@@ -65,6 +86,7 @@ const createRequest = async (req, res) => {
     });
 
   } catch (err) {
+    console.error("Error creating request:", err);
     return res.status(constant.HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       message: "Internal server error"
     });
@@ -263,6 +285,41 @@ const deleteRequest = async (req, res) => {
   }
 }
 
+// ✅ Update enrichRequestsWithUserInfo function
+const enrichRequestsWithUserInfo = async (requests) => {
+  return await Promise.all(
+    requests.map(async (request) => {
+      try {
+        // Get user details for the request creator
+        const user = await db.getOne(
+          constant.DB_TABLES.USERS,
+          "WHERE user_id = $1",
+          [request.user_id]
+        );
+        
+        // ✅ PostgreSQL arrays come as arrays - no parsing needed!
+        const imageUrls = request.image_urls || null;
+        
+        return {
+          ...request,
+          customer_name: user?.name || "Unknown Customer",
+          image_urls: imageUrls,
+          // Keep single image_url for backward compatibility (first image)
+          image_url: imageUrls && imageUrls.length > 0 ? imageUrls[0] : null
+        };
+      } catch (error) {
+        console.error("Error enriching request with user data:", error);
+        return {
+          ...request,
+          customer_name: "Unknown Customer",
+          image_urls: null,
+          image_url: null
+        };
+      }
+    })
+  );
+};
+
 module.exports = {
   createRequest,
   getRequestById,
@@ -270,5 +327,6 @@ module.exports = {
   getAllActiveRequests,
   getAllActiveRequestsForProvider,
   getAllActiveRequestsForConsumer,
-  deleteRequest
+  deleteRequest,
+  enrichRequestsWithUserInfo
 };
