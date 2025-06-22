@@ -189,11 +189,11 @@ const ConsumerHome: React.FC = () => {
       // Refresh data
       if (user.uid) {
         dispatch(fetchServiceRequestsForConsumer(user.uid));
-        dispatch(fetchOffers(selectedRequestId));
       }
-
-      setConfirmDialogOpen(false);
+      // Clear selected request and offers
+      dispatch(setSelectedRequestId(null));
       setSelectedOffer(null);
+      setConfirmDialogOpen(false);
     } catch (error) {
       console.error("Error accepting offer:", error);
     } finally {
