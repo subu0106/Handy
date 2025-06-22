@@ -1202,7 +1202,7 @@ const ProviderHome: React.FC = () => {
                     // Multiple images - display in grid
                     <Grid container spacing={2}>
                       {selectedRequest.image_urls.map((imageUrl: string, index: number) => (
-                        <Grid key={index} xs={6} sm={4}>
+                        <Grid key={index} size={{ xs: 6, sm: 4 }}>
                           <Card sx={{ position: 'relative', borderRadius: 1 }}>
                             <CardMedia
                               component="img"
