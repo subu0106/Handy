@@ -9,7 +9,8 @@ const {
   deleteOffer, 
   getOffersByRequestId,
   getOffersByProviderId,
-  getOfferByProviderAndRequest
+  getOfferByProviderAndRequest,
+  rejectOtherOffers // Import the rejectOtherOffers function
 } = require('../controllers/offerController');
 const {authenticateToken} = require('../middlewares/authenticate');
 
@@ -22,5 +23,6 @@ router.route("/:offer_id").get(authenticateToken, getOfferById); // Generic rout
 router.route("/updateStatus/:offer_id").put(authenticateToken, updateOfferStatus);
 router.route("/updateBudget/:offer_id").put(authenticateToken, updateOfferBudget); // Add this new route
 router.route("/deleteOffer/:offer_id").delete(authenticateToken, deleteOffer);
+router.route("/rejectOtherOffers/:request_id").put(authenticateToken, rejectOtherOffers); // Add this route to your offers router file
 
 module.exports = {router};

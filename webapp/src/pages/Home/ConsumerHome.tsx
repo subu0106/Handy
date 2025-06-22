@@ -164,6 +164,11 @@ const ConsumerHome: React.FC = () => {
         request_id: selectedRequestId,
       });
 
+      // Reject all other offers for this request
+      await apiService.put(`/offers/rejectOtherOffers/${selectedRequestId}`, {
+        accepted_offer_id: selectedOffer.offer_id,
+      });
+
       // Create paired job
       await apiService.post("/pairedJobs/create", {
         consumer_id: user.uid,

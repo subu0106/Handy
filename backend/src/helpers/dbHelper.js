@@ -65,13 +65,15 @@ const dbHelper = {
     const result = await query(queryText, [...params, ...values]);
     return result.rows[0];
   },
-
   // DELETE FROM table WHERE conditions
   remove: async (table, conditions, params = []) => {
     const queryText = `DELETE FROM ${table} ${conditions} RETURNING *`;
     const result = await query(queryText, params);
     return result.rows[0];
   },
+
+  // Direct query execution
+  query: query,
 };
 
 module.exports = dbHelper;
