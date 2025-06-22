@@ -13,9 +13,17 @@ import {
   Card,
   CardMedia,
   CircularProgress,
+  Grid,
+  Chip,
 } from "@mui/material";
 import { useAppSelector, useAppDispatch } from "@store/hooks";
-import { ArrowBack, PhotoCamera, Delete as DeleteIcon, CloudUpload } from "@mui/icons-material";
+import {
+  ArrowBack,
+  PhotoCamera,
+  Delete as DeleteIcon,
+  CloudUpload,
+  Add as AddIcon,
+} from "@mui/icons-material";
 import apiService from "@utils/apiService";
 import CONSTANTS from "@config/constants";
 import { setUser } from "@store/userSlice";
@@ -48,71 +56,119 @@ const CreateServiceRequest: React.FC = () => {
   const [budget, setBudget] = useState<number | null>(null);
   const [timeframe, setTimeframe] = useState("");
 
-  const [selectedImage, setSelectedImage] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [uploadingImage, setUploadingImage] = useState(false);
+  // Updated for multiple images
+  const [selectedImages, setSelectedImages] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [uploadingImages, setUploadingImages] = useState(false);
+
+  const MAX_IMAGES = 5;
+  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
   const handleCancel = () => {
     navigate("/dashboard");
   };
 
+  // Handle multiple image selection
   const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const validTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+    const files = Array.from(event.target.files || []);
+
+    if (files.length === 0) return;
+
+    // Check if adding these files would exceed the maximum
+    if (selectedImages.length + files.length > MAX_IMAGES) {
+      setError(`You can only upload a maximum of ${MAX_IMAGES} images`);
+      return;
+    }
+
+    const validTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+    const validFiles: File[] = [];
+    const newPreviews: string[] = [];
+
+    for (const file of files) {
+      // Validate file type
       if (!validTypes.includes(file.type)) {
-        setError("Please select a valid image file (JPEG, PNG, WebP)");
-        return;
+        setError(`${file.name} is not a valid image file (JPEG, PNG, WebP)`);
+        continue;
       }
 
-      const maxSize = 5 * 1024 * 1024; // 5MB
-      if (file.size > maxSize) {
-        setError("Image size should be less than 5MB");
-        return;
+      // Validate file size
+      if (file.size > MAX_FILE_SIZE) {
+        setError(`${file.name} is too large. Maximum size is 5MB`);
+        continue;
       }
 
-      setSelectedImage(file);
-      setError("");
+      validFiles.push(file);
 
+      // Create preview
       const reader = new FileReader();
       reader.onload = (e) => {
-        setImagePreview(e.target?.result as string);
+        const result = e.target?.result as string;
+        newPreviews.push(result);
+
+        // Update previews when all files are processed
+        if (newPreviews.length === validFiles.length) {
+          setImagePreviews((prev) => [...prev, ...newPreviews]);
+        }
       };
       reader.readAsDataURL(file);
     }
-  };
 
-  // NEW: Upload image to Cloudinary
-  const uploadImageToCloudinary = async (file: File): Promise<string> => {
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("upload_preset", import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET);
-
-    try {
-      const response = await fetch(
-        `https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME}/image/upload`,
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error.message || "Cloudinary upload failed");
-      }
-
-      const data = await response.json();
-      return data.secure_url; // The HTTPS URL of the uploaded image
-    } catch (err: any) {
-      console.error("Error uploading image to Cloudinary:", err);
-      throw new Error(`Failed to upload image: ${err.message}`);
+    if (validFiles.length > 0) {
+      setSelectedImages((prev) => [...prev, ...validFiles]);
+      setError(""); // Clear any previous errors
     }
+
+    // Clear the input value to allow selecting the same files again
+    event.target.value = "";
   };
 
-  const handleRemoveImage = () => {
-    setSelectedImage(null);
-    setImagePreview(null);
+  // Upload multiple images to Cloudinary
+  const uploadImagesToCloudinary = async (files: File[]): Promise<string[]> => {
+    const uploadPromises = files.map(async (file, index) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("upload_preset", import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET);
+      formData.append("folder", "handy-requests");
+
+      try {
+        console.log(`Uploading file ${index + 1}/${files.length}: ${file.name}`);
+
+        const response = await fetch(
+          `https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME}/image/upload`,
+          {
+            method: "POST",
+            body: formData,
+          }
+        );
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error.message || "Cloudinary upload failed");
+        }
+
+        const data = await response.json();
+        console.log(`Successfully uploaded ${file.name}`);
+        return data.secure_url;
+      } catch (err: any) {
+        console.error(`Error uploading ${file.name}:`, err);
+        throw new Error(`Failed to upload ${file.name}: ${err.message}`);
+      }
+    });
+
+    return Promise.all(uploadPromises);
+  };
+
+  // Remove a specific image
+  const handleRemoveImage = (index: number) => {
+    setSelectedImages((prev) => prev.filter((_, i) => i !== index));
+    setImagePreviews((prev) => prev.filter((_, i) => i !== index));
+    setError("");
+  };
+
+  // Clear all images
+  const handleClearAllImages = () => {
+    setSelectedImages([]);
+    setImagePreviews([]);
     setError("");
   };
 
@@ -123,20 +179,20 @@ const CreateServiceRequest: React.FC = () => {
     setSuccess("");
 
     try {
-      let finalImageUrl = "";
+      let finalImageUrls: string[] = [];
 
-      if (selectedImage) {
-        setUploadingImage(true);
+      // Upload images if selected
+      if (selectedImages.length > 0) {
+        setUploadingImages(true);
         try {
-          // UPDATED: Call the new Cloudinary upload function
-          finalImageUrl = await uploadImageToCloudinary(selectedImage);
+          finalImageUrls = await uploadImagesToCloudinary(selectedImages);
         } catch (uploadError: any) {
-          setError(uploadError.message || "Failed to upload image. Please try again.");
+          setError(uploadError.message || "Failed to upload images. Please try again.");
           setLoading(false);
-          setUploadingImage(false);
+          setUploadingImages(false);
           return;
         }
-        setUploadingImage(false);
+        setUploadingImages(false);
       }
 
       const data = {
@@ -149,7 +205,7 @@ const CreateServiceRequest: React.FC = () => {
         timeframe,
         status: CONSTANTS.REQUEST_STATUS.PENDING,
         created_at: new Date().toISOString(),
-        image_url: finalImageUrl || null,
+        image_urls: finalImageUrls.length > 0 ? finalImageUrls : null, // Changed to array
       };
 
       const response = await apiService.post("/requests/createRequest", data);
@@ -177,7 +233,7 @@ const CreateServiceRequest: React.FC = () => {
       setError(err.response?.data?.message || "Failed to create service request");
     } finally {
       setLoading(false);
-      setUploadingImage(false);
+      setUploadingImages(false);
     }
   };
 
@@ -301,72 +357,125 @@ const CreateServiceRequest: React.FC = () => {
             helperText="When do you need this service completed?"
           />
 
-          {/* Image Upload Section */}
+          {/* Multiple Images Upload Section */}
           <Box mt={3} mb={2}>
-            <Typography variant="h6" gutterBottom>
-              Add Image (Optional)
-            </Typography>
+            <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
+              <Typography variant="h6">Add Images (Optional)</Typography>
+              {selectedImages.length > 0 && (
+                <Chip
+                  label={`${selectedImages.length}/${MAX_IMAGES} images`}
+                  size="small"
+                  color="primary"
+                  variant="outlined"
+                />
+              )}
+            </Box>
             <Typography variant="body2" color="text.secondary" gutterBottom>
-              Upload an image to help providers understand your request better
+              Upload up to {MAX_IMAGES} images to help providers understand your request better
             </Typography>
 
-            {!imagePreview ? (
-              <Box>
-                <input
-                  accept="image/*"
-                  style={{ display: "none" }}
-                  id="image-upload"
-                  type="file"
-                  onChange={handleImageSelect}
-                />
-                <label htmlFor="image-upload">
-                  <Button
-                    variant="outlined"
-                    component="span"
-                    startIcon={<PhotoCamera />}
-                    sx={{
-                      mt: 1,
-                      borderStyle: "dashed",
-                      borderWidth: 2,
-                      p: 2,
-                      "&:hover": {
-                        backgroundColor: alpha(theme.palette.primary.main, 0.1),
-                      },
-                    }}
-                  >
-                    Select Image
-                  </Button>
-                </label>
-              </Box>
-            ) : (
-              <Box mt={2}>
-                <Card sx={{ maxWidth: 300, position: "relative" }}>
-                  <CardMedia
-                    component="img"
-                    height="200"
-                    image={imagePreview}
-                    alt="Service request image preview"
-                    sx={{ objectFit: "cover" }}
-                  />
-                  <IconButton
-                    onClick={handleRemoveImage}
-                    sx={{
-                      position: "absolute",
-                      top: 8,
-                      right: 8,
-                      backgroundColor: alpha(theme.palette.error.main, 0.8),
-                      color: "white",
-                      "&:hover": {
-                        backgroundColor: theme.palette.error.main,
-                      },
-                    }}
-                    size="small"
-                  >
-                    <DeleteIcon fontSize="small" />
-                  </IconButton>
-                </Card>
+            {/* Upload Button */}
+            <Box mb={2}>
+              <input
+                accept="image/*"
+                style={{ display: "none" }}
+                id="image-upload"
+                type="file"
+                multiple
+                onChange={handleImageSelect}
+                disabled={selectedImages.length >= MAX_IMAGES}
+              />
+              <label htmlFor="image-upload">
+                <Button
+                  variant="outlined"
+                  component="span"
+                  startIcon={selectedImages.length === 0 ? <PhotoCamera /> : <AddIcon />}
+                  disabled={selectedImages.length >= MAX_IMAGES}
+                  sx={{
+                    borderStyle: "dashed",
+                    borderWidth: 2,
+                    p: 2,
+                    "&:hover": {
+                      backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                    },
+                  }}
+                >
+                  {selectedImages.length === 0 ? "Select Images" : "Add More Images"}
+                </Button>
+              </label>
+              {selectedImages.length >= MAX_IMAGES && (
                 <Typography variant="caption" color="text.secondary" display="block" mt={1}>
-                  {selectedImage?.name} ({((selectedImage?.size || 0) / (1024 * 1024)).toFixed(2)} MB)
+                  Maximum number of images reached
+                </Typography>
+              )}
+            </Box>
+
+            {/* Image Previews Grid */}
+            {imagePreviews.length > 0 && (
+              <Box>
+                <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
+                  <Typography variant="subtitle2">
+                    Selected Images:
+                  </Typography>
+                  <Button
+                    size="small"
+                    color="error"
+                    onClick={handleClearAllImages}
+                    startIcon={<DeleteIcon />}
+                  >
+                    Clear All
+                  </Button>
+                </Box>
+                <Grid container spacing={2}>
+                  {imagePreviews.map((preview, index) => (
+                    <Grid key={index} size={{ xs: 6, sm: 4, md: 3 }}>
+                      <Card sx={{ position: 'relative', borderRadius: 1 }}>
+                        <CardMedia
+                          component="img"
+                          height="120"
+                          image={preview}
+                          alt={`Preview ${index + 1}`}
+                          sx={{ objectFit: 'cover' }}
+                        />
+                        <IconButton
+                          onClick={() => handleRemoveImage(index)}
+                          sx={{
+                            position: 'absolute',
+                            top: 4,
+                            right: 4,
+                            backgroundColor: alpha(theme.palette.error.main, 0.8),
+                            color: 'white',
+                            width: 24,
+                            height: 24,
+                            '&:hover': {
+                              backgroundColor: theme.palette.error.main,
+                            },
+                          }}
+                          size="small"
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                        <Box
+                          sx={{
+                            position: 'absolute',
+                            bottom: 0,
+                            left: 0,
+                            right: 0,
+                            backgroundColor: alpha(theme.palette.common.black, 0.7),
+                            color: 'white',
+                            p: 0.5,
+                          }}
+                        >
+                          <Typography variant="caption" noWrap>
+                            {selectedImages[index]?.name}
+                          </Typography>
+                        </Box>
+                      </Card>
+                    </Grid>
+                  ))}
+                </Grid>
+                <Typography variant="caption" color="text.secondary" display="block" mt={1}>
+                  Total size: {(selectedImages.reduce((total, file) => total + file.size, 0) / (1024 * 1024)).toFixed(2)} MB
                 </Typography>
               </Box>
             )}
@@ -409,7 +518,7 @@ const CreateServiceRequest: React.FC = () => {
               variant="outlined"
               color="primary"
               onClick={handleCancel}
-              disabled={loading || uploadingImage}
+              disabled={loading || uploadingImages}
               sx={{ minWidth: 100 }}
             >
               Cancel
@@ -418,9 +527,9 @@ const CreateServiceRequest: React.FC = () => {
               type="submit"
               variant="contained"
               color="primary"
-              disabled={loading || uploadingImage}
+              disabled={loading || uploadingImages}
               startIcon={
-                uploadingImage ? (
+                uploadingImages ? (
                   <CircularProgress size={16} color="inherit" />
                 ) : loading ? (
                   <CircularProgress size={16} color="inherit" />
@@ -430,7 +539,7 @@ const CreateServiceRequest: React.FC = () => {
               }
               sx={{ minWidth: 140 }}
             >
-              {uploadingImage ? "Uploading..." : loading ? "Creating..." : "Create Request"}
+              {uploadingImages ? "Uploading..." : loading ? "Creating..." : "Create Request"}
             </Button>
           </Box>
         </form>
@@ -450,12 +559,15 @@ const CreateServiceRequest: React.FC = () => {
             <br />
             • Be specific about what you need
             <br />
-            • Include relevant images to show the problem
+            • Include multiple images from different angles
+            <br />
+            • Show the problem area clearly
             <br />
             • Set a realistic budget and timeframe
             <br />
             • Provide clear location details
-            <br />• You can chat with providers after they submit offers
+            <br />
+            • You can chat with providers after they submit offers
           </Typography>
         </Box>
       </Paper>
