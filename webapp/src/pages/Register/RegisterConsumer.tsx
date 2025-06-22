@@ -32,7 +32,7 @@ function GoogleFavicon(props: any) {
 }
 
 export default function RegisterConsumer() {
-  const [mode, setMode] = useState<'register' | 'signin'>('register');
+  const [mode, setMode] = useState<'register' | 'signin'>('signin');
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
