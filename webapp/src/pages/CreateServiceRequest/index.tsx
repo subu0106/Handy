@@ -27,6 +27,7 @@ import {
 import apiService from "@utils/apiService";
 import CONSTANTS from "@config/constants";
 import { setUser } from "@store/userSlice";
+import { getEnvVar } from "@utils/envConfig";
 
 const SERVICE_TYPES = [
   { value: "electricity", label: "Electricity", id: 1 },
@@ -127,14 +128,14 @@ const CreateServiceRequest: React.FC = () => {
     const uploadPromises = files.map(async (file, index) => {
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("upload_preset", import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET);
+      formData.append("upload_preset", getEnvVar('VITE_CLOUDINARY_UPLOAD_PRESET'));
       formData.append("folder", "handy-requests");
 
       try {
         console.log(`Uploading file ${index + 1}/${files.length}: ${file.name}`);
 
         const response = await fetch(
-          `https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME}/image/upload`,
+          `https://api.cloudinary.com/v1_1/${getEnvVar('VITE_CLOUDINARY_CLOUD_NAME')}/image/upload`,
           {
             method: "POST",
             body: formData,

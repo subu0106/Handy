@@ -4,8 +4,9 @@
  */
 import axios from "axios";
 import { auth } from "@config/firebase";
+import { getEnvVar } from "@utils/envConfig";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api/v1";
+const API_BASE_URL = getEnvVar('VITE_API_BASE_URL') || "http://localhost:5000/api/v1";
 
 const apiService = axios.create({
   baseURL: API_BASE_URL,
